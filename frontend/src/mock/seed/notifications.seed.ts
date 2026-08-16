@@ -1,0 +1,43 @@
+import { SystemNotification } from "@/types";
+
+export const SEED_NOTIFICATIONS: SystemNotification[] = [
+  {
+    id: "notif-001",
+    recipientUserId: "usr-cust-1",
+    recipientRole: "CUSTOMER",
+    title: "Tagihan Sewa Melebihi Jatuh Tempo",
+    message: "Invoice INV-2026-08-001 sebesar Rp 7.590.000 telah melewati batas jatuh tempo (10 Ags 2026). Denda keterlambatan Rp 150.000 telah dicatat.",
+    category: "BILLING_DUE",
+    relatedEntityId: "inv-001",
+    relatedEntityType: "INVOICE",
+    isRead: false,
+    actionUrl: "/payments",
+    createdAt: "2026-08-11T00:00:00Z",
+  },
+  {
+    id: "notif-002",
+    recipientUserId: "usr-driver-1",
+    recipientRole: "DRIVER",
+    title: "Tugas Pengantaran Baru Ditugaskan",
+    message: "Anda ditugaskan untuk order ORD-2026-0814-01 menuju Jl. Senopati No. 18, Jakarta Selatan.",
+    category: "DRIVER_DISPATCHED",
+    relatedEntityId: "ord-001",
+    relatedEntityType: "ORDER",
+    isRead: false,
+    actionUrl: "/tasks",
+    createdAt: "2026-08-16T13:00:00Z",
+  },
+  {
+    id: "notif-003",
+    recipientUserId: "usr-admin-1",
+    recipientRole: "ADMIN",
+    title: "Permintaan Penjemputan Baru",
+    message: "Customer CV Fresh Frozen Nusantara mengajukan penjemputan 30 Box Salmon dari Pelabuhan Muara Baru.",
+    category: "GOODS_STORED",
+    relatedEntityId: "ord-002",
+    relatedEntityType: "ORDER",
+    isRead: true,
+    actionUrl: "/logistics",
+    createdAt: "2026-08-16T10:05:00Z",
+  },
+];
