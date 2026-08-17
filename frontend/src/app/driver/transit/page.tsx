@@ -25,7 +25,7 @@ export default function DriverTransitPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Navigasi Rute & Status Live Transit GPS
+              Route Navigation & Live Transit GPS Status
             </h1>
             <Badge variant="warning" className="text-[10px] flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-600 animate-pulse" />
@@ -33,7 +33,7 @@ export default function DriverTransitPage() {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Panduan rute GPS pengantaran, monitoring suhu box reefer selama perjalanan, dan tombol lapor kendala.
+            GPS dispatch route navigation, in-transit reefer box temperature monitoring, and incident reporting.
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export default function DriverTransitPage() {
           <Link href="/driver/pod">
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
               <FileCheck className="h-4 w-4" />
-              <span>Tiba di Lokasi & Upload POD</span>
+              <span>Arrive at Destination & Upload POD</span>
             </Button>
           </Link>
         </div>
@@ -50,27 +50,27 @@ export default function DriverTransitPage() {
       {/* 3 Metric Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Estimasi Waktu Tiba (ETA)</span>
+          <span className="text-xs font-semibold text-slate-500">Estimated Time of Arrival (ETA)</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-amber-600 font-mono">35 Menit</p>
-            <Badge variant="outline" className="text-[10px]">Lalu Lintas Lancar</Badge>
+            <p className="text-2xl font-extrabold text-amber-600 font-mono">35 Mins</p>
+            <Badge variant="outline" className="text-[10px]">Smooth Traffic</Badge>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">Tiba sekitar 09:45 WIB</p>
+          <p className="text-[11px] text-slate-400 font-mono">Arriving approx. 09:45 WIB</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Suhu Box Reefer Selama Perjalanan</span>
+          <span className="text-xs font-semibold text-slate-500">In-Transit Reefer Box Temperature</span>
           <div className="flex items-center gap-2">
             <p className="text-2xl font-extrabold text-sky-600 font-mono">-18.2°C</p>
             <Badge variant="success" className="text-[10px]">Optimal</Badge>
           </div>
-          <p className="text-[11px] text-sky-700 font-medium">Kualitas Rantai Dingin Terjaga</p>
+          <p className="text-[11px] text-sky-700 font-medium">Cold Chain Quality Maintained</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Posisi Kendaraan Saat Ini</span>
-          <p className="text-sm font-bold text-slate-900 mt-1">Tol JORR W2S (KM 18)</p>
-          <p className="text-[11px] text-slate-400">Menuju Exit Tol BSD Serpong</p>
+          <span className="text-xs font-semibold text-slate-500">Current Vehicle Location</span>
+          <p className="text-sm font-bold text-slate-900 mt-1">JORR W2S Toll Road (KM 18)</p>
+          <p className="text-[11px] text-slate-400">Heading towards BSD Serpong Toll Exit</p>
         </div>
       </div>
 
@@ -80,10 +80,10 @@ export default function DriverTransitPage() {
           <div className="flex items-center gap-2">
             <Navigation className="h-4.5 w-4.5 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-900">
-              Peta Rute Navigasi Live
+              Live GPS Route Navigation Map
             </h2>
           </div>
-          <span className="text-xs text-slate-500 font-mono">Jarak Tersisa: 22.4 km</span>
+          <span className="text-xs text-slate-500 font-mono">Remaining Distance: 22.4 km</span>
         </div>
 
         {/* Map Canvas Box */}
@@ -97,13 +97,13 @@ export default function DriverTransitPage() {
             </div>
             <div>
               <p className="text-xs font-bold font-mono text-indigo-300">
-                [ SIMULASI GPS LIVE NAVIGATION ]
+                [ LIVE GPS NAVIGATION SIMULATION ]
               </p>
               <p className="text-sm font-bold text-slate-100 mt-0.5">
-                Tol JORR KM 18 $\rightarrow$ FreshMarket BSD
+                JORR Toll KM 18 → FreshMarket BSD
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Kecepatan: 62 km/jam • GPS Sensor Lock: 12 Satelit
+                Speed: 62 km/h • GPS Sensor Lock: 12 Satellites
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function DriverTransitPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>Telemetri real-time otomatis terkirim ke Pusat Dispatch Admin</span>
+            <span>Real-time telemetry is automatically streamed to Admin Dispatch Central</span>
           </div>
 
           <Button
@@ -121,7 +121,7 @@ export default function DriverTransitPage() {
             className="text-xs border-rose-300 text-rose-700 hover:bg-rose-50 h-8.5"
           >
             <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
-            <span>Laporkan Kendala di Jalan / Emergency</span>
+            <span>Report Road Issue / Emergency Incident</span>
           </Button>
         </div>
       </div>

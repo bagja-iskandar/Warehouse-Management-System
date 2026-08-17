@@ -44,13 +44,13 @@ const CUSTOMERS_DATA: CustomerRecord[] = [
     picName: "Hendra Prasetya",
     email: "customer@freshfoods.id",
     phone: "0812-9988-7766",
-    address: "Jl. Industri Raya No. 45, Jakarta Barat",
+    address: "Jl. Industri Raya No. 45, West Jakarta",
     storageType: "COLD_STORAGE",
     rentedSpaceM3: 250,
     storedItemsCount: 450,
     monthlyBillingRp: 12500000,
     paymentStatus: "PAID",
-    contractValidUntil: "31 Des 2026",
+    contractValidUntil: "31 Dec 2026",
   },
   {
     id: "cust-2",
@@ -72,7 +72,7 @@ const CUSTOMERS_DATA: CustomerRecord[] = [
     picName: "Dewi Lestari",
     email: "dewi@sumberfrozen.com",
     phone: "0811-5566-7788",
-    address: "Jl. Muara Baru No. 12, Jakarta Utara",
+    address: "Jl. Muara Baru No. 12, North Jakarta",
     storageType: "COLD_STORAGE",
     rentedSpaceM3: 150,
     storedItemsCount: 190,
@@ -86,7 +86,7 @@ const CUSTOMERS_DATA: CustomerRecord[] = [
     picName: "Surya Dharma",
     email: "surya@logistikindo.co.id",
     phone: "0817-4433-2211",
-    address: "Gedung Cyber 2 Lt. 14, Jakarta Selatan",
+    address: "Gedung Cyber 2 Lt. 14, South Jakarta",
     storageType: "MULTI_ZONE",
     rentedSpaceM3: 200,
     storedItemsCount: 95,
@@ -120,14 +120,14 @@ export default function CustomerManagementPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Manajemen Customer & Penyewa Gudang
+              Customer & Warehouse Tenant Directory
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Active Tenants
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar perusahaan penyewa ruang gudang, utilisasi volume sewa (m³), dan status tagihan bulanan.
+            List of warehouse leasing tenant companies, volume usage (m³), and monthly billing statuses.
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export default function CustomerManagementPage() {
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Tambah Customer Baru</span>
+            <span>Add New Customer</span>
           </Button>
         </div>
       </div>
@@ -150,30 +150,30 @@ export default function CustomerManagementPage() {
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Customer Aktif</span>
-          <p className="text-2xl font-extrabold text-slate-900">{CUSTOMERS_DATA.length} Perusahaan</p>
-          <p className="text-[11px] text-slate-400">Kontrak sewa terverifikasi</p>
+          <span className="text-xs font-semibold text-slate-500">Total Active Customers</span>
+          <p className="text-2xl font-extrabold text-slate-900">{CUSTOMERS_DATA.length} Companies</p>
+          <p className="text-[11px] text-slate-400">Verified lease contracts</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Ruang Disewa</span>
+          <span className="text-xs font-semibold text-slate-500">Total Rented Space</span>
           <p className="text-2xl font-extrabold text-indigo-600">{totalRentedM3} m³</p>
           <p className="text-[11px] text-slate-400 font-mono">Cold & Standard Storage</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Pendapatan Sewa</span>
+          <span className="text-xs font-semibold text-slate-500">Total Rental Revenue</span>
           <p className="text-2xl font-extrabold text-slate-900">
-            Rp {(totalRevenue / 1000000).toFixed(1)} Jt
+            IDR {(totalRevenue / 1000000).toFixed(1)} M
           </p>
           <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>75% Faktur Lunas</span>
+            <span>75% Invoices Paid</span>
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Status Pembayaran</span>
+          <span className="text-xs font-semibold text-slate-500">Payment Status</span>
           <div className="flex items-center gap-2">
             <p className="text-2xl font-extrabold text-rose-600">1 Overdue</p>
             <span className="text-xs text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded font-semibold">
@@ -197,7 +197,7 @@ export default function CustomerManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Customer ({CUSTOMERS_DATA.length})
+              All Customers ({CUSTOMERS_DATA.length})
             </button>
             <button
               onClick={() => setStatusFilter("PAID")}
@@ -207,7 +207,7 @@ export default function CustomerManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Faktur Lunas
+              Invoices Paid
             </button>
             <button
               onClick={() => setStatusFilter("OVERDUE")}
@@ -217,7 +217,7 @@ export default function CustomerManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Jatuh Tempo (Overdue)
+              Overdue Invoices
             </button>
           </div>
 
@@ -225,7 +225,7 @@ export default function CustomerManagementPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari perusahaan, PIC, atau email..."
+              placeholder="Search company, PIC, or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
@@ -238,14 +238,14 @@ export default function CustomerManagementPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">Nama Perusahaan & PIC</th>
-                <th className="py-3 px-3">Kontak & Email</th>
-                <th className="py-3 px-3">Tipe & Ruang Sewa</th>
-                <th className="py-3 px-3">Barang Disimpan</th>
-                <th className="py-3 px-3">Tagihan Bulanan</th>
-                <th className="py-3 px-3">Status Pembayaran</th>
-                <th className="py-3 px-3">Kontrak s/d</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3">Company Name & PIC</th>
+                <th className="py-3 px-3">Contact & Email</th>
+                <th className="py-3 px-3">Storage Type & Space</th>
+                <th className="py-3 px-3">Stored Goods</th>
+                <th className="py-3 px-3">Monthly Billing</th>
+                <th className="py-3 px-3">Payment Status</th>
+                <th className="py-3 px-3">Contract Until</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -295,31 +295,31 @@ export default function CustomerManagementPage() {
                   {/* Stored Items */}
                   <td className="py-3.5 px-3">
                     <span className="font-bold text-slate-900 block">
-                      {cust.storedItemsCount} Koli
+                      {cust.storedItemsCount} Packages
                     </span>
                   </td>
 
                   {/* Monthly Bill */}
                   <td className="py-3.5 px-3">
                     <span className="font-mono font-bold text-slate-900 block">
-                      Rp {cust.monthlyBillingRp.toLocaleString("id-ID")}
+                      IDR {cust.monthlyBillingRp.toLocaleString("en-US")}
                     </span>
-                    <span className="text-[10px] text-slate-400">/ bulan</span>
+                    <span className="text-[10px] text-slate-400">/ month</span>
                   </td>
 
                   {/* Payment Status */}
                   <td className="py-3.5 px-3">
                     {cust.paymentStatus === "PAID" ? (
                       <Badge variant="success" className="text-[10.5px]">
-                        Lunas
+                        Paid
                       </Badge>
                     ) : cust.paymentStatus === "OVERDUE" ? (
                       <Badge variant="destructive" className="text-[10.5px]">
-                        Jatuh Tempo (+Denda)
+                        Overdue (+Late Fee)
                       </Badge>
                     ) : (
                       <Badge variant="warning" className="text-[10.5px]">
-                        Menunggu
+                        Pending
                       </Badge>
                     )}
                   </td>
@@ -339,7 +339,7 @@ export default function CustomerManagementPage() {
                         variant="ghost"
                         className="h-8 px-2.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
                       >
-                        Tagihan →
+                        Invoices →
                       </Button>
                     </Link>
                   </td>

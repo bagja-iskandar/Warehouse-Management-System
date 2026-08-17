@@ -105,11 +105,11 @@ export class HttpLogisticsService implements ILogisticsService {
         Array.isArray(order.goodsItemIds) && order.goodsItemIds.length > 0
           ? order.goodsItemIds
           : ["brg-001"],
-      originAddress: order.originAddress || "Gudang Utama Cakung Hub",
-      originCity: order.originCity || "Jakarta Timur",
+      originAddress: order.originAddress || "Cakung Logistics Central Hub",
+      originCity: order.originCity || "East Jakarta",
       destinationAddress:
-        order.destinationAddress || "Alamat Tujuan Penerima",
-      destinationCity: order.destinationCity || "Jakarta Selatan",
+        order.destinationAddress || "Recipient Destination Address",
+      destinationCity: order.destinationCity || "South Jakarta",
       scheduledDate:
         order.scheduledDate || new Date().toISOString().split("T")[0],
       scheduledTimeSlot: order.scheduledTimeSlot || "08:00 - 12:00 WIB",
@@ -165,14 +165,14 @@ export class HttpLogisticsService implements ILogisticsService {
       goodsItemIds: Array.isArray(raw.goodsItemIds)
         ? raw.goodsItemIds
         : raw.items?.map((i: any) => i.goodsItemId || i.id) || [],
-      goodsSummary: raw.goodsSummary || "Komoditas Kargo WMS",
+      goodsSummary: raw.goodsSummary || "WMS Cargo Commodity",
       totalVolumeM3: Number(raw.totalVolumeM3 || 0),
       totalWeightKg: Number(raw.totalWeightKg || 0),
       requiresReefer: Boolean(raw.requiresReefer),
-      originAddress: raw.originAddress || "Gudang Utama Cakung Hub",
-      originCity: raw.originCity || "Jakarta Timur",
-      destinationAddress: raw.destinationAddress || "Alamat Tujuan Penerima",
-      destinationCity: raw.destinationCity || "Jakarta Selatan",
+      originAddress: raw.originAddress || "Cakung Logistics Central Hub",
+      originCity: raw.originCity || "East Jakarta",
+      destinationAddress: raw.destinationAddress || "Recipient Destination Address",
+      destinationCity: raw.destinationCity || "South Jakarta",
       scheduledDate: raw.scheduledDate || raw.createdAt,
       scheduledTimeSlot: raw.scheduledTimeSlot || "08:00 - 12:00 WIB",
       driverId: raw.driverId,

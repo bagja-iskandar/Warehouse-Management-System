@@ -36,12 +36,12 @@ export default function DigitalPodPage() {
           photoUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500",
           signatureData: "data:image/svg+xml;utf8,<svg>signature</svg>",
           rating: 5,
-          note: "Kargo diterima lengkap dalam kondisi beku optimal, segel utuh.",
+          note: "Cargo received completely in optimal frozen condition, seals intact.",
         },
       });
       setIsSubmitted(true);
-      toast.success("Digital POD Berhasil Disimpan", {
-        description: "Status pengiriman telah diperbarui menjadi DELIVERED.",
+      toast.success("Digital POD Saved Successfully", {
+        description: "Shipment status has been updated to DELIVERED.",
       });
     } catch (err: any) {
       setIsSubmitted(true);
@@ -55,14 +55,14 @@ export default function DigitalPodPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Upload Bukti Serah Terima (Digital POD)
+              Upload Proof of Delivery (Digital POD)
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               DO-2026-001
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Ambil foto dokumentasi barang di lokasi tujuan dan minta tanda tangan digital penerima.
+            Capture goods documentation photos at destination and request recipient&apos;s digital e-signature.
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function DigitalPodPage() {
               variant="outline"
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
             >
-              Kembali ke Dashboard
+              Back to Dashboard
             </Button>
           </Link>
         </div>
@@ -84,24 +84,24 @@ export default function DigitalPodPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h2 className="text-lg font-bold text-slate-900">
-            Digital POD Berhasil Diunggah & Disimpan!
+            Digital POD Uploaded & Saved Successfully!
           </h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Pengiriman <span className="font-mono font-bold text-indigo-600">DO-2026-001</span> telah resmi diselesaikan. Bukti foto dan tanda tangan digital telah tercatat di sistem pusat.
+            Delivery <span className="font-mono font-bold text-indigo-600">DO-2026-001</span> has been officially completed. Photo proof and digital signature have been recorded in the central system.
           </p>
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-mono space-y-1">
-            <p>Penerima: {recipientName} ({recipientRole})</p>
-            <p>Waktu Selesai: 16 Agu 2026, 09:42 WIB</p>
+            <p>Recipient: {recipientName} ({recipientRole})</p>
+            <p>Completion Time: Aug 16, 2026, 09:42 WIB</p>
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link href="/driver/dashboard">
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
-                Kembali ke Dashboard Tugas →
+                Back to Task Dashboard →
               </Button>
             </Link>
             <Link href="/driver/history">
               <Button variant="outline" className="text-xs h-9">
-                Lihat Riwayat Selesai
+                View Completed History
               </Button>
             </Link>
           </div>
@@ -112,7 +112,7 @@ export default function DigitalPodPage() {
             {/* Step 1: Photo Upload */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                1. Foto Bukti Penyerahan Barang di Lokasi
+                1. On-Site Goods Handover Photo Proof
               </h2>
 
               <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl text-center space-y-2">
@@ -121,10 +121,10 @@ export default function DigitalPodPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-800">
-                    Foto Master Box di Area Loading Dock FreshMarket BSD
+                    Master Box Photo at FreshMarket BSD Loading Dock Area
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    [ File: POD-DO-2026-001-FOTO.JPG — 2.1 MB Terlampir ]
+                    [ File: POD-DO-2026-001-PHOTO.JPG — 2.1 MB Attached ]
                   </p>
                 </div>
                 <Button
@@ -133,7 +133,7 @@ export default function DigitalPodPage() {
                   size="sm"
                   className="text-xs border-slate-300 text-slate-700 h-8 mt-1"
                 >
-                  Ganti Foto Dokumentasi
+                  Change Documentation Photo
                 </Button>
               </div>
             </div>
@@ -141,13 +141,13 @@ export default function DigitalPodPage() {
             {/* Step 2: Digital Signature */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                2. Tanda Tangan Digital Penerima (E-Signature)
+                2. Recipient Digital Signature (E-Signature)
               </h2>
 
               <div className="space-y-3">
                 <div className="h-36 bg-slate-50 border border-slate-300 rounded-xl flex items-center justify-center relative p-3">
                   <div className="text-center font-mono text-xs text-indigo-700 italic font-bold">
-                    ✍ [ Tanda Tangan Digital Tervalidasi ]<br />
+                    ✍ [ Validated Digital Signature ]<br />
                     <span className="text-[10.5px] text-slate-500 font-sans">
                       {recipientName} — {recipientRole}
                     </span>
@@ -158,7 +158,7 @@ export default function DigitalPodPage() {
                     size="sm"
                     className="absolute bottom-2 right-2 text-[10.5px] text-slate-400 hover:text-slate-700 h-7"
                   >
-                    Reset Tanda Tangan
+                    Reset Signature
                   </Button>
                 </div>
               </div>
@@ -167,13 +167,13 @@ export default function DigitalPodPage() {
             {/* Step 3: Recipient Identity */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                3. Identitas Lengkap Penerima
+                3. Full Recipient Identity
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Nama Lengkap Penerima
+                    Recipient Full Name
                   </label>
                   <input
                     type="text"
@@ -186,7 +186,7 @@ export default function DigitalPodPage() {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Jabatan / Hubungan
+                    Job Title / Relationship
                   </label>
                   <input
                     type="text"
@@ -203,18 +203,18 @@ export default function DigitalPodPage() {
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                Konfirmasi Penyelesaian DO
+                DO Completion Confirmation
               </h2>
 
               <p className="text-xs text-slate-500 leading-relaxed">
-                Pastikan seluruh 150 Koli muatan dingin telah diperiksa dan diserahterimakan dalam keadaan baik sebelum mengirim POD.
+                Ensure all 150 Packages of cold cargo have been inspected and handed over in good condition before submitting the POD.
               </p>
 
               <Button
                 type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-10 rounded-xl shadow-md shadow-emerald-600/20"
               >
-                Kirim Bukti POD & Selesaikan Tugas
+                Submit Proof of Delivery & Complete Task
               </Button>
             </div>
           </div>

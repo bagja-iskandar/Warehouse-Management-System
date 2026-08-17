@@ -35,7 +35,7 @@ export default function RootPage() {
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         <p className="text-xs font-semibold text-slate-500">
-          Mengarahkan ke Portal WMS Nusantara...
+          Redirecting to WMS Nusantara Portal...
         </p>
       </div>
     </div>

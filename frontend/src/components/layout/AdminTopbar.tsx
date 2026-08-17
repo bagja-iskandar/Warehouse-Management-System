@@ -30,19 +30,19 @@ export function AdminTopbar({
   const { user } = useAuth();
 
   const getPageTitle = () => {
-    if (pathname.includes("/admin/warehouse/capacity")) return "Visualisasi Kapasitas Rak";
+    if (pathname.includes("/admin/warehouse/capacity")) return "Rack Capacity Visualization";
     if (pathname.includes("/admin/warehouse")) return "Multi-Hub Overview";
-    if (pathname.includes("/admin/goods")) return "Manajemen Barang";
-    if (pathname.includes("/admin/logistics")) return "Dispatch Logistik";
-    if (pathname.includes("/admin/fleet")) return "Armada Kendaraan";
-    if (pathname.includes("/admin/monitoring")) return "Sensor & Telemetri";
-    if (pathname.includes("/admin/customers")) return "Customer & Penyewa";
-    if (pathname.includes("/admin/drivers")) return "Driver / Kurir";
-    if (pathname.includes("/admin/billing")) return "Tagihan & Faktur";
-    if (pathname.includes("/admin/reports")) return "Laporan & Ekspor";
-    if (pathname.includes("/admin/dashboard")) return "Dashboard Operasional";
-    if (pathname.includes("/profile")) return "Pengaturan Profil";
-    return "Portal Operasional";
+    if (pathname.includes("/admin/goods")) return "Goods Management";
+    if (pathname.includes("/admin/logistics")) return "Logistics Dispatch";
+    if (pathname.includes("/admin/fleet")) return "Vehicle Fleet";
+    if (pathname.includes("/admin/monitoring")) return "Sensors & Telemetry";
+    if (pathname.includes("/admin/customers")) return "Customers & Tenants";
+    if (pathname.includes("/admin/drivers")) return "Drivers / Couriers";
+    if (pathname.includes("/admin/billing")) return "Billing & Invoices";
+    if (pathname.includes("/admin/reports")) return "Reports & Analytics";
+    if (pathname.includes("/admin/dashboard")) return "Operational Dashboard";
+    if (pathname.includes("/profile")) return "Profile Settings";
+    return "Operations Portal";
   };
 
   return (
@@ -53,7 +53,7 @@ export function AdminTopbar({
           type="button"
           onClick={onOpenMobileMenu}
           className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          aria-label="Buka menu navigasi"
+          aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -74,7 +74,7 @@ export function AdminTopbar({
         >
           <div className="flex items-center gap-2">
             <Search className="h-3.5 w-3.5 text-slate-400" />
-            <span>Cari SKU barang, slot rak, plat armada, atau customer...</span>
+            <span>Search goods SKU, rack slots, fleet plates, or customers...</span>
           </div>
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded-md text-slate-500 shadow-sm">
             ⌘ K
@@ -90,7 +90,7 @@ export function AdminTopbar({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
-          <span>Live Telemetri: Normal • 22°C Hub</span>
+          <span>Live Telemetry: Normal • 22°C Hub</span>
         </div>
 
         {/* Notification Bell Button */}
@@ -98,7 +98,7 @@ export function AdminTopbar({
           type="button"
           onClick={onOpenNotifications}
           className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          aria-label="Lihat Notifikasi"
+          aria-label="View Notifications"
         >
           <Bell className="h-4 w-4" />
           {unreadNotificationsCount > 0 && (
@@ -118,7 +118,7 @@ export function AdminTopbar({
           </div>
           <div className="hidden lg:block text-left">
             <p className="text-xs font-bold text-slate-900 leading-tight">
-              {user?.name || "Admin Gudang"}
+              {user?.name || "Warehouse Admin"}
             </p>
             <p className="text-[10px] text-slate-400 font-mono leading-tight">
               admin@wms.id

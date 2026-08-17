@@ -88,13 +88,13 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
     setProfileError(null);
 
     if (!profileData.name.trim()) {
-      setProfileError("Nama lengkap tidak boleh kosong.");
+      setProfileError("Full name cannot be empty.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(profileData.email.trim())) {
-      setProfileError("Format email tidak valid.");
+      setProfileError("Invalid email format.");
       return;
     }
 
@@ -108,7 +108,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
       });
     } catch (err: unknown) {
       const error = err as Error;
-      setProfileError(error.message || "Gagal memperbarui data profil.");
+      setProfileError(error.message || "Failed to update profile data.");
     }
   };
 
@@ -118,17 +118,17 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
     setPasswordSuccess(false);
 
     if (!passwordData.currentPassword) {
-      setPasswordError("Silakan masukkan kata sandi saat ini.");
+      setPasswordError("Please enter your current password.");
       return;
     }
 
     if (!passwordData.newPassword || passwordData.newPassword.length < 6) {
-      setPasswordError("Kata sandi baru minimal 6 karakter.");
+      setPasswordError("New password must be at least 6 characters.");
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError("Konfirmasi kata sandi baru tidak cocok.");
+      setPasswordError("New password confirmation does not match.");
       return;
     }
 
@@ -145,7 +145,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
       });
     } catch (err: unknown) {
       const error = err as Error;
-      setPasswordError(error.message || "Gagal memperbarui kata sandi.");
+      setPasswordError(error.message || "Failed to update password.");
     }
   };
 
@@ -166,27 +166,27 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
     switch (user?.role) {
       case "ADMIN":
         return {
-          title: "Admin Gudang",
+          title: "Warehouse Admin",
           badgeClass: "bg-indigo-600 text-white",
-          description: "Super User & Pengelola Operasional Hub",
+          description: "Super User & Hub Operations Manager",
         };
       case "CUSTOMER":
         return {
-          title: "Customer Perusahaan",
+          title: "Corporate Customer",
           badgeClass: "bg-emerald-600 text-white",
-          description: "Penyewa Kapasitas Gudang & Pengelola Inventaris",
+          description: "Warehouse Capacity Tenant & Inventory Manager",
         };
       case "DRIVER":
         return {
-          title: "Driver Logistik",
+          title: "Logistics Driver",
           badgeClass: "bg-amber-600 text-white",
-          description: "Operator Armada & Eksekusi Pengiriman",
+          description: "Fleet Operator & Delivery Execution",
         };
       default:
         return {
-          title: "Pengguna Terdaftar",
+          title: "Registered User",
           badgeClass: "bg-slate-700 text-white",
-          description: "Akses Terotentikasi",
+          description: "Authenticated Access",
         };
     }
   };
@@ -201,12 +201,12 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                Pengaturan Profil & Akun
+                Profile & Account Settings
               </h1>
               <Badge className={roleInfo.badgeClass}>{roleInfo.title}</Badge>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Kelola informasi kontak PIC, data perusahaan, keamanan kata sandi, dan riwayat sesi aktif.
+              Manage PIC contact info, company data, password security, and active session logs.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                 variant="outline"
                 className="text-xs border-slate-300 hover:bg-slate-50 text-slate-700"
               >
-                Kembali ke Dashboard
+                Back to Dashboard
               </Button>
             </Link>
           </div>
@@ -247,7 +247,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
               </div>
 
               <h2 className="text-base font-bold text-slate-900 mt-4">
-                {user?.name || "Nama Pengguna"}
+                {user?.name || "User Name"}
               </h2>
               <p className="text-xs text-slate-500 font-mono mt-0.5">
                 {user?.email || "email@wms.id"}
@@ -256,7 +256,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
               <div className="mt-3 flex items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Status: Aktif
+                  Status: Active
                 </span>
               </div>
 
@@ -280,7 +280,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                 }`}
               >
                 <User className="h-4 w-4" />
-                <span>Informasi Profil Pengguna</span>
+                <span>User Profile Information</span>
               </button>
 
               <button
@@ -293,7 +293,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                 }`}
               >
                 <KeyRound className="h-4 w-4" />
-                <span>Keamanan & Kata Sandi</span>
+                <span>Security & Password</span>
               </button>
 
               <button
@@ -306,7 +306,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                 }`}
               >
                 <History className="h-4 w-4" />
-                <span>Sesi & Log Aktivitas</span>
+                <span>Sessions & Activity Log</span>
               </button>
             </div>
 
@@ -314,10 +314,10 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-500 space-y-2">
               <div className="flex items-center gap-1.5 font-semibold text-slate-700">
                 <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                <span>Keamanan Akun Enterprise</span>
+                <span>Enterprise Account Security</span>
               </div>
               <p className="text-[11px] leading-relaxed">
-                Akun terdaftar dilindungi oleh enkripsi 256-bit dan audit trail operasional real-time.
+                Registered accounts are protected with 256-bit encryption and real-time operational audit logs.
               </p>
             </div>
           </div>
@@ -329,10 +329,10 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
               <div className="bg-white border border-slate-200 rounded-lg p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-150">
                 <div className="border-b border-slate-100 pb-4">
                   <h2 className="text-base font-bold text-slate-900">
-                    Informasi Profil Pengguna
+                    User Profile Information
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Perbarui kontak perwakilan PIC dan identitas perusahaan yang terdaftar pada sistem gudang.
+                    Update PIC representative contact info and company identity registered in the warehouse system.
                   </p>
                 </div>
 
@@ -350,7 +350,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                     {/* PIC Full Name */}
                     <div className="space-y-1.5">
                       <Label htmlFor="prof-name" className="text-xs font-semibold text-slate-700">
-                        Nama Lengkap PIC
+                        PIC Full Name
                       </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -373,7 +373,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                     {/* Email */}
                     <div className="space-y-1.5">
                       <Label htmlFor="prof-email" className="text-xs font-semibold text-slate-700">
-                        Email Terdaftar
+                        Registered Email
                       </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -396,7 +396,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                     {/* Phone Number */}
                     <div className="space-y-1.5">
                       <Label htmlFor="prof-phone" className="text-xs font-semibold text-slate-700">
-                        Nomor Telepon / WhatsApp
+                        Phone / WhatsApp Number
                       </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -418,7 +418,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                     {/* Role (Read-only Badge) */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold text-slate-700">
-                        Hak Akses Sistem (Role)
+                        System Access Role
                       </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -437,7 +437,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   {/* Company Name */}
                   <div className="space-y-1.5">
                     <Label htmlFor="prof-company" className="text-xs font-semibold text-slate-700">
-                      Nama Perusahaan / Organisasi Bisnis
+                      Company / Business Organization Name
                     </Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -459,7 +459,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   {/* Operational Address */}
                   <div className="space-y-1.5">
                     <Label htmlFor="prof-address" className="text-xs font-semibold text-slate-700">
-                      Alamat Lengkap Operasional / Kantor
+                      Full Operational / Office Address
                     </Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -488,7 +488,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                       className="text-xs border-slate-300 text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
-                      <span>Batal / Reset</span>
+                      <span>Cancel / Reset</span>
                     </Button>
 
                     <Button
@@ -499,12 +499,12 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                       {isUpdatingProfile ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Menyimpan Perubahan...</span>
+                          <span>Saving Changes...</span>
                         </>
                       ) : (
                         <>
                           <Save className="h-3.5 w-3.5" />
-                          <span>Simpan Perubahan Profil</span>
+                          <span>Save Profile Changes</span>
                         </>
                       )}
                     </Button>
@@ -518,10 +518,10 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
               <div className="bg-white border border-slate-200 rounded-lg p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-150">
                 <div className="border-b border-slate-100 pb-4">
                   <h2 className="text-base font-bold text-slate-900">
-                    Keamanan & Pembaruan Kata Sandi
+                    Security & Password Update
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Ganti kata sandi secara berkala untuk menjaga keamanan akun operasional WMS Anda.
+                    Change your password periodically to maintain the security of your WMS operations account.
                   </p>
                 </div>
 
@@ -529,7 +529,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 py-2.5">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                     <AlertDescription className="text-xs font-medium">
-                      Kata sandi berhasil diubah dan disimpan dengan aman.
+                      Password successfully changed and securely stored.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -547,7 +547,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   {/* Current Password */}
                   <div className="space-y-1.5">
                     <Label htmlFor="curr-pass" className="text-xs font-semibold text-slate-700">
-                      Kata Sandi Saat Ini
+                      Current Password
                     </Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -586,7 +586,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   {/* New Password */}
                   <div className="space-y-1.5">
                     <Label htmlFor="new-pass" className="text-xs font-semibold text-slate-700">
-                      Kata Sandi Baru
+                      New Password
                     </Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -595,7 +595,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                       <Input
                         id="new-pass"
                         type={showNewPass ? "text" : "password"}
-                        placeholder="Minimal 6 karakter"
+                        placeholder="Minimum 6 characters"
                         value={passwordData.newPassword}
                         onChange={(e) =>
                           setPasswordData((prev) => ({
@@ -625,7 +625,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   {/* Confirm New Password */}
                   <div className="space-y-1.5">
                     <Label htmlFor="conf-pass" className="text-xs font-semibold text-slate-700">
-                      Konfirmasi Kata Sandi Baru
+                      Confirm New Password
                     </Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -634,7 +634,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                       <Input
                         id="conf-pass"
                         type={showNewPass ? "text" : "password"}
-                        placeholder="Ulangi kata sandi baru"
+                        placeholder="Repeat new password"
                         value={passwordData.confirmPassword}
                         onChange={(e) =>
                           setPasswordData((prev) => ({
@@ -652,11 +652,11 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                   {/* Password Guidelines Card */}
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-600 space-y-1.5">
                     <div className="font-semibold text-slate-700">
-                      Ketentuan Kata Sandi Enterprise:
+                      Enterprise Password Guidelines:
                     </div>
                     <ul className="list-disc list-inside text-[11px] text-slate-500 space-y-0.5">
-                      <li>Minimal 6 karakter kombinasi huruf dan angka.</li>
-                      <li>Hindari penggunaan nama lengkap atau tanggal lahir.</li>
+                      <li>Minimum 6 characters combining letters and numbers.</li>
+                      <li>Avoid using full names or easily guessed personal dates.</li>
                     </ul>
                   </div>
 
@@ -670,12 +670,12 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                       {isChangingPassword ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Menyimpan Kata Sandi Baru...</span>
+                          <span>Saving New Password...</span>
                         </>
                       ) : (
                         <>
                           <Check className="h-4 w-4" />
-                          <span>Perbarui Kata Sandi</span>
+                          <span>Update Password</span>
                         </>
                       )}
                     </Button>
@@ -689,10 +689,10 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
               <div className="bg-white border border-slate-200 rounded-lg p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in duration-150">
                 <div className="border-b border-slate-100 pb-4">
                   <h2 className="text-base font-bold text-slate-900">
-                    Sesi & Log Akses Aktif
+                    Active Sessions & Access Log
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Daftar perangkat dan browser yang saat ini memiliki akses terotentikasi ke akun Anda.
+                    List of devices and browsers currently having authenticated access to your account.
                   </p>
                 </div>
 
@@ -706,14 +706,14 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-slate-900">
-                            Chrome pada Windows 11 (Perangkat Ini)
+                            Chrome on Windows 11 (This Device)
                           </span>
                           <Badge variant="success" className="text-[10px] py-0">
-                            Sesi Aktif
+                            Active Session
                           </Badge>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-0.5">
-                          IP: <code className="font-mono text-slate-700">192.168.1.102</code> • Lokasi: Jakarta Hub • Terakhir aktif: Baru saja
+                          IP: <code className="font-mono text-slate-700">192.168.1.102</code> • Location: Jakarta Hub • Last active: Just now
                         </p>
                       </div>
                     </div>
@@ -735,7 +735,7 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-0.5">
-                          IP: <code className="font-mono text-slate-700">10.20.44.12</code> • Surabaya Cold Storage Hub • Terakhir aktif: 2 jam lalu
+                          IP: <code className="font-mono text-slate-700">10.20.44.12</code> • Surabaya Cold Storage Hub • Last active: 2 hours ago
                         </p>
                       </div>
                     </div>
@@ -743,12 +743,12 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
                 </div>
 
                 <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-500 flex items-center justify-between">
-                  <span>Melihat aktivitas mencurigakan pada akun Anda?</span>
+                  <span>Seeing suspicious activity on your account?</span>
                   <Button
                     variant="outline"
                     className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50 h-8"
                   >
-                    Keluar dari Semua Perangkat Lain
+                    Sign Out from All Other Devices
                   </Button>
                 </div>
               </div>

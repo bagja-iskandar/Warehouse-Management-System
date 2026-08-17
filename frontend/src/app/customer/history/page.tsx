@@ -37,36 +37,36 @@ const MUTATION_LOGS: MutationLog[] = [
     type: "OUTBOUND",
     refDocNumber: "DO-2026-001",
     sku: "BAR-FRESH-001",
-    itemName: "Daging Sapi Wagyu A5 Import",
+    itemName: "Import Wagyu Beef Ribeye A5",
     quantityKoli: 50,
     volumeM3: 25,
     slotCode: "A-01-01",
     picName: "Ahmad Subarjo (Driver)",
-    timestamp: "16 Agu 2026, 08:15 WIB",
+    timestamp: "Aug 16, 2026, 08:15 WIB",
   },
   {
     id: "mut-2",
     type: "INBOUND",
     refDocNumber: "PO-2026-9912",
     sku: "BAR-FRESH-002",
-    itemName: "Salmon Fillet Premium Norwegia",
+    itemName: "Premium Norwegian Salmon Fillet",
     quantityKoli: 45,
     volumeM3: 22.5,
     slotCode: "A-01-02",
-    picName: "Budianto (Admin Gudang)",
-    timestamp: "15 Agu 2026, 14:30 WIB",
+    picName: "Budianto (Warehouse Admin)",
+    timestamp: "Aug 15, 2026, 14:30 WIB",
   },
   {
     id: "mut-3",
     type: "INBOUND",
     refDocNumber: "PO-2026-9801",
     sku: "BAR-FRESH-001",
-    itemName: "Daging Sapi Wagyu A5 Import",
+    itemName: "Import Wagyu Beef Ribeye A5",
     quantityKoli: 100,
     volumeM3: 50,
     slotCode: "A-01-01",
     picName: "Hendra Wijaya (Admin)",
-    timestamp: "10 Agu 2026, 10:00 WIB",
+    timestamp: "Aug 10, 2026, 10:00 WIB",
   },
 ];
 
@@ -90,14 +90,14 @@ export default function CustomerMutationHistoryPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Riwayat Mutasi & Audit Trail Barang
+              Inventory Mutation History & Audit Trail
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               Audit Log
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Catatan historis seluruh pergerakan barang masuk (Inbound) dan keluar (Outbound) dari ruang sewa gudang Anda.
+            Historical log of all inbound stock receipts and outbound dispatches from your warehouse storage space.
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export default function CustomerMutationHistoryPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Log Mutasi</span>
+            <span>Export Mutation Log</span>
           </Button>
         </div>
       </div>
@@ -124,7 +124,7 @@ export default function CustomerMutationHistoryPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Mutasi
+              All Mutations
             </button>
             <button
               onClick={() => setFilterType("INBOUND")}
@@ -134,7 +134,7 @@ export default function CustomerMutationHistoryPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Barang Masuk (Inbound)
+              Inbound Stock
             </button>
             <button
               onClick={() => setFilterType("OUTBOUND")}
@@ -144,7 +144,7 @@ export default function CustomerMutationHistoryPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Barang Keluar (Outbound)
+              Outbound Stock
             </button>
           </div>
 
@@ -152,7 +152,7 @@ export default function CustomerMutationHistoryPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari no referensi, SKU, atau barang..."
+              placeholder="Search reference number, SKU, or goods..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:bg-white"
@@ -164,13 +164,13 @@ export default function CustomerMutationHistoryPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">Tipe Mutasi</th>
-                <th className="py-3 px-3">No. Dokumen / Ref</th>
-                <th className="py-3 px-3">SKU & Nama Barang</th>
-                <th className="py-3 px-3">Kuantitas & Volume</th>
-                <th className="py-3 px-3">Slot Rak</th>
-                <th className="py-3 px-3">Petugas PIC</th>
-                <th className="py-3 px-3">Waktu Mutasi</th>
+                <th className="py-3 px-3">Mutation Type</th>
+                <th className="py-3 px-3">Document / Ref No.</th>
+                <th className="py-3 px-3">SKU & Goods Name</th>
+                <th className="py-3 px-3">Quantity & Volume</th>
+                <th className="py-3 px-3">Rack Slot</th>
+                <th className="py-3 px-3">PIC Staff</th>
+                <th className="py-3 px-3">Timestamp</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -180,12 +180,12 @@ export default function CustomerMutationHistoryPage() {
                     {log.type === "INBOUND" ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                         <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-600" />
-                        Inbound (Masuk)
+                        Inbound (In)
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
                         <ArrowUpRight className="h-3.5 w-3.5 text-indigo-600" />
-                        Outbound (Keluar)
+                        Outbound (Out)
                       </span>
                     )}
                   </td>
@@ -207,7 +207,7 @@ export default function CustomerMutationHistoryPage() {
 
                   <td className="py-3.5 px-3">
                     <span className="font-bold text-slate-900 block font-mono">
-                      {log.quantityKoli} Koli
+                      {log.quantityKoli} Packages
                     </span>
                     <span className="text-[10.5px] text-slate-400">
                       {log.volumeM3} m³

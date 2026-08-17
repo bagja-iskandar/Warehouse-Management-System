@@ -40,52 +40,52 @@ interface NavGroup {
 
 const CUSTOMER_NAV_GROUPS: NavGroup[] = [
   {
-    group: "LAYANAN PERGUDANGAN",
+    group: "WAREHOUSE SERVICES",
     items: [
       {
-        title: "Dashboard Customer",
+        title: "Customer Dashboard",
         href: "/customer/dashboard",
         icon: LayoutDashboard,
       },
       {
-        title: "Sewa Ruang Gudang",
+        title: "Warehouse Space Rental",
         href: "/customer/rental",
         icon: Warehouse,
-        badge: "Tersedia",
+        badge: "Available",
       },
       {
-        title: "Barang & Inventaris",
+        title: "Goods & Inventory",
         href: "/customer/goods",
         icon: Boxes,
       },
     ],
   },
   {
-    group: "LOGISTIK & DISTRIBUSI",
+    group: "LOGISTICS & DISTRIBUTION",
     items: [
       {
-        title: "Request Pengiriman",
+        title: "Request Delivery",
         href: "/customer/logistics/request",
         icon: Truck,
       },
       {
-        title: "Lacak Pengiriman",
+        title: "Track Deliveries",
         href: "/customer/logistics/tracking",
         icon: Navigation,
-        badge: "1 Transit",
+        badge: "1 In Transit",
       },
     ],
   },
   {
-    group: "KEUANGAN & AKUN",
+    group: "FINANCE & ACCOUNT",
     items: [
       {
-        title: "Tagihan & Faktur",
+        title: "Billing & Invoices",
         href: "/customer/billing",
         icon: Receipt,
       },
       {
-        title: "Riwayat Transaksi",
+        title: "Transaction History",
         href: "/customer/history",
         icon: History,
       },
@@ -124,7 +124,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                 WMS Nusantara
               </span>
               <span className="text-[10px] text-emerald-700 font-semibold leading-tight block mt-0.5">
-                Portal Customer & Penyewa
+                Customer & Tenant Portal
               </span>
             </div>
           </Link>
@@ -134,7 +134,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             <button
               onClick={onClose}
               className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-              aria-label="Tutup navigasi"
+              aria-label="Close navigation"
             >
               <X className="h-4 w-4" />
             </button>
@@ -153,7 +153,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                   Cold Storage Zone A
                 </p>
                 <p className="text-[9.5px] text-emerald-600 font-mono font-medium leading-tight">
-                  250 m³ • Suhu -18.4°C
+                  250 m³ • Temp -18.4°C
                 </p>
               </div>
             </div>
@@ -231,7 +231,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
                   {user?.companyName || user?.name || "PT Fresh Foods"}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium truncate leading-tight">
-                  Customer Perusahaan
+                  Corporate Customer
                 </p>
               </div>
             </Link>
@@ -239,7 +239,7 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             <button
               onClick={() => logout()}
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-              title="Keluar dari sesi"
+              title="Sign out of session"
               aria-label="Logout"
             >
               <LogOut className="h-3.5 w-3.5" />

@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { ProfileView } from "@/components/profile/ProfileView";
 
 export const metadata: Metadata = {
-  title: "Profil & Pengaturan Akun — WMS Nusantara",
+  title: "Profile & Account Settings — WMS Nusantara",
   description:
-    "Kelola data profil, PIC perusahaan, pengaturan kata sandi, dan riwayat sesi pengguna WMS Nusantara.",
+    "Manage user profile data, company PIC, password settings, and active session history for WMS Nusantara.",
 };
 
 export default function ProfilePage() {

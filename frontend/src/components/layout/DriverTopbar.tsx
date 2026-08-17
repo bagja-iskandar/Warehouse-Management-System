@@ -32,13 +32,13 @@ export function DriverTopbar({
   const [isOnDuty, setIsOnDuty] = useState(true);
 
   const getPageTitle = () => {
-    if (pathname.includes("/driver/transit")) return "Rute & Live Transit";
-    if (pathname.includes("/driver/vehicle")) return "Pilih Armada Truk";
-    if (pathname.includes("/driver/pod")) return "Upload Digital POD";
-    if (pathname.includes("/driver/history")) return "Riwayat Pengantaran";
-    if (pathname.includes("/driver/dashboard")) return "Tugas Pengiriman";
-    if (pathname.includes("/profile")) return "Pengaturan Profil";
-    return "Armada Driver";
+    if (pathname.includes("/driver/transit")) return "Route & Live Transit";
+    if (pathname.includes("/driver/vehicle")) return "Select Vehicle Fleet";
+    if (pathname.includes("/driver/pod")) return "Submit Digital POD";
+    if (pathname.includes("/driver/history")) return "Delivery History";
+    if (pathname.includes("/driver/dashboard")) return "Delivery Tasks";
+    if (pathname.includes("/profile")) return "Profile Settings";
+    return "Driver Fleet";
   };
 
   return (
@@ -49,7 +49,7 @@ export function DriverTopbar({
           type="button"
           onClick={onOpenMobileMenu}
           className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          aria-label="Buka menu navigasi"
+          aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -70,7 +70,7 @@ export function DriverTopbar({
         >
           <div className="flex items-center gap-2">
             <Search className="h-3.5 w-3.5 text-slate-400" />
-            <span>Cari no. resi pengiriman, plat truk, atau alamat drop-off...</span>
+            <span>Search delivery order #, vehicle plate, or drop-off address...</span>
           </div>
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded-md text-slate-500 shadow-sm">
             ⌘ K
@@ -100,7 +100,7 @@ export function DriverTopbar({
               isOnDuty ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
             }`}
           />
-          <span>{isOnDuty ? "Siap Bertugas" : "Istirahat"}</span>
+          <span>{isOnDuty ? "On Duty" : "Off Duty"}</span>
         </button>
 
         {/* Notification Bell Button */}
@@ -108,7 +108,7 @@ export function DriverTopbar({
           type="button"
           onClick={onOpenNotifications}
           className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          aria-label="Lihat Notifikasi"
+          aria-label="View Notifications"
         >
           <Bell className="h-4 w-4" />
           {unreadNotificationsCount > 0 && (
@@ -131,7 +131,7 @@ export function DriverTopbar({
               {user?.name || "Ahmad Subarjo"}
             </p>
             <p className="text-[10px] text-slate-400 font-mono leading-tight truncate max-w-[130px]">
-              Driver Logistik
+              Logistics Driver
             </p>
           </div>
         </Link>

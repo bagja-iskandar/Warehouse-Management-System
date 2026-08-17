@@ -44,9 +44,9 @@ const GOODS_DATA: GoodsItem[] = [
   {
     id: "g1",
     sku: "BAR-FRESH-001",
-    name: "Daging Sapi Wagyu A5 Import",
+    name: "Import Wagyu Beef Ribeye A5",
     category: "COLD_STORAGE",
-    zone: "Zona A — Cold Storage",
+    zone: "Zone A — Cold Storage",
     slotCode: "A-01-01",
     tenantName: "PT Fresh Foods Indonesia",
     quantityKoli: 150,
@@ -59,24 +59,24 @@ const GOODS_DATA: GoodsItem[] = [
   {
     id: "g2",
     sku: "BAR-FRESH-002",
-    name: "Salmon Fillet Premium Norwegia",
+    name: "Premium Norwegian Salmon Fillet",
     category: "COLD_STORAGE",
-    zone: "Zona A — Cold Storage",
+    zone: "Zone A — Cold Storage",
     slotCode: "A-01-02",
     tenantName: "PT Fresh Foods Indonesia",
     quantityKoli: 120,
     volumeM3: 60,
     temperature: "-18.2°C",
     batchNumber: "BATCH-SLM-2026-08",
-    expiryDate: "28 Des 2026",
+    expiryDate: "28 Dec 2026",
     status: "GOOD",
   },
   {
     id: "g3",
     sku: "BAR-FURN-001",
-    name: "Sofa Minimalis 3-Seater Fabric",
+    name: "3-Seater Minimalist Fabric Sofa",
     category: "STANDARD",
-    zone: "Zona B — Rak Standar",
+    zone: "Zone B — Standard Rack",
     slotCode: "B-01-01",
     tenantName: "CV Furnitur Nusantara",
     quantityKoli: 8,
@@ -89,9 +89,9 @@ const GOODS_DATA: GoodsItem[] = [
   {
     id: "g4",
     sku: "BAR-FURN-002",
-    name: "Meja Makan Kayu Jati Solid",
+    name: "Solid Teak Wood Dining Table",
     category: "STANDARD",
-    zone: "Zona B — Rak Standar",
+    zone: "Zone B — Standard Rack",
     slotCode: "B-01-02",
     tenantName: "CV Furnitur Nusantara",
     quantityKoli: 4,
@@ -104,9 +104,9 @@ const GOODS_DATA: GoodsItem[] = [
   {
     id: "g5",
     sku: "BAR-FRESH-003",
-    name: "Butter & Dairy Premium Salted",
+    name: "Premium Salted Butter & Dairy",
     category: "COLD_STORAGE",
-    zone: "Zona A — Cold Storage",
+    zone: "Zone A — Cold Storage",
     slotCode: "A-01-03",
     tenantName: "PT Sumber Frozen Makmur",
     quantityKoli: 80,
@@ -119,9 +119,9 @@ const GOODS_DATA: GoodsItem[] = [
   {
     id: "g6",
     sku: "BAR-HVY-001",
-    name: "Pallet Mesin Industri & Sparepart",
+    name: "Industrial Machinery Pallet & Spareparts",
     category: "HEAVY_DUTY",
-    zone: "Zona C — Heavy Duty",
+    zone: "Zone C — Heavy Duty",
     slotCode: "C-01-01",
     tenantName: "PT Logistik Indo Perkasa",
     quantityKoli: 12,
@@ -147,8 +147,8 @@ export default function GoodsManagementPage() {
           name: g.name,
           category: g.requiresColdStorage ? "COLD_STORAGE" : "STANDARD",
           zone: g.requiresColdStorage
-            ? "Zona A — Cold Storage"
-            : "Zona B — Rak Standar",
+            ? "Zone A — Cold Storage"
+            : "Zone B — Standard Rack",
           slotCode: g.slotCode || "A-01-01",
           tenantName: g.customerName || "Tenant WMS",
           quantityKoli: g.quantity,
@@ -186,14 +186,14 @@ export default function GoodsManagementPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Manajemen Barang & Inventaris Gudang
+              Inventory & Goods Master Management
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Master SKU
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar SKU tersimpan, nomor batch kadaluarsa, verifikasi QR code, dan mutasi slot rak.
+            Stored SKU registry, batch expiry tracking, QR code verification, and rack slot transfers.
           </p>
         </div>
 
@@ -203,12 +203,12 @@ export default function GoodsManagementPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Inventaris</span>
+            <span>Export Inventory</span>
           </Button>
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Registrasi Barang Baru</span>
+            <span>Register New Goods</span>
           </Button>
         </div>
       </div>
@@ -216,35 +216,35 @@ export default function GoodsManagementPage() {
       {/* 4 Metric Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total SKU Aktif</span>
-          <p className="text-2xl font-extrabold text-slate-900">{GOODS_DATA.length} SKU</p>
-          <p className="text-[11px] text-slate-400">Terdistribusi di 3 Zona Gudang</p>
+          <span className="text-xs font-semibold text-slate-500">Total Active SKUs</span>
+          <p className="text-2xl font-extrabold text-slate-900">{GOODS_DATA.length} SKUs</p>
+          <p className="text-[11px] text-slate-400">Distributed across 3 Warehouse Zones</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Kuantitas Fisik</span>
-          <p className="text-2xl font-extrabold text-slate-900">{totalKoli} Koli</p>
-          <p className="text-[11px] text-slate-400 font-mono">Setara {totalVolume} m³ Ruang</p>
+          <span className="text-xs font-semibold text-slate-500">Total Physical Quantity</span>
+          <p className="text-2xl font-extrabold text-slate-900">{totalKoli} Packages</p>
+          <p className="text-[11px] text-slate-400 font-mono">Equivalent to {totalVolume} m³ Space</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Barang Cold Storage</span>
+          <span className="text-xs font-semibold text-slate-500">Cold Storage Goods</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-sky-600">{coldCount} SKU</p>
-            <Badge variant="success" className="text-[10px]">Suhu Sub-zero</Badge>
+            <p className="text-2xl font-extrabold text-sky-600">{coldCount} SKUs</p>
+            <Badge variant="success" className="text-[10px]">Sub-zero Temp</Badge>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">Daging, Seafood & Dairy</p>
+          <p className="text-[11px] text-slate-400 font-mono">Meat, Seafood & Dairy</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Peringatan Inventaris</span>
+          <span className="text-xs font-semibold text-slate-500">Inventory Alerts</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-amber-600">2 Item</p>
+            <p className="text-2xl font-extrabold text-amber-600">2 Items</p>
             <span className="text-xs text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-semibold">
-              Perlu Perhatian
+              Needs Attention
             </span>
           </div>
-          <p className="text-[11px] text-slate-400">1 Stok Rendah • 1 Mendekati Exp</p>
+          <p className="text-[11px] text-slate-400">1 Low Stock • 1 Expiring Soon</p>
         </div>
       </div>
 
@@ -261,7 +261,7 @@ export default function GoodsManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Kategori ({GOODS_DATA.length})
+              All Categories ({GOODS_DATA.length})
             </button>
             <button
               onClick={() => setSelectedCategory("COLD_STORAGE")}
@@ -299,7 +299,7 @@ export default function GoodsManagementPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari SKU, nama barang, slot, atau tenant..."
+              placeholder="Search SKU, goods name, slot, or tenant..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
@@ -312,13 +312,13 @@ export default function GoodsManagementPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">SKU & Nama Barang</th>
-                <th className="py-3 px-3">Slot Lokasi & Zona</th>
-                <th className="py-3 px-3">Penyewa (Tenant)</th>
-                <th className="py-3 px-3">Kuantitas & Volume</th>
-                <th className="py-3 px-3">Suhu Aktif</th>
-                <th className="py-3 px-3">Batch & Kadaluarsa</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3">SKU & Goods Name</th>
+                <th className="py-3 px-3">Slot Location & Zone</th>
+                <th className="py-3 px-3">Tenant</th>
+                <th className="py-3 px-3">Quantity & Volume</th>
+                <th className="py-3 px-3">Active Temp</th>
+                <th className="py-3 px-3">Batch & Expiry</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -375,10 +375,10 @@ export default function GoodsManagementPage() {
                   {/* Quantity & Volume */}
                   <td className="py-3.5 px-3">
                     <span className="font-bold text-slate-900 block">
-                      {item.quantityKoli} Koli
+                      {item.quantityKoli} Packages
                     </span>
                     <span className="text-[10.5px] text-slate-400 font-mono">
-                      {item.volumeM3} m³ Ruang
+                      {item.volumeM3} m³ Space
                     </span>
                   </td>
 
@@ -407,7 +407,7 @@ export default function GoodsManagementPage() {
                         variant="ghost"
                         onClick={() => setSelectedQrItem(item)}
                         className="h-8 px-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50"
-                        title="Lihat QR Code"
+                        title="View QR Code"
                       >
                         <QrCode className="h-4 w-4" />
                       </Button>
@@ -417,7 +417,7 @@ export default function GoodsManagementPage() {
                           size="sm"
                           variant="ghost"
                           className="h-8 px-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50"
-                          title="Mutasi Rak"
+                          title="Rack Transfer"
                         >
                           <ArrowRightLeft className="h-4 w-4" />
                         </Button>
@@ -441,7 +441,7 @@ export default function GoodsManagementPage() {
 
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                QR Code Label Barang
+                Goods Label QR Code
               </h3>
               <p className="text-xs font-mono font-bold text-indigo-600 mt-0.5">
                 {selectedQrItem.sku}
@@ -473,10 +473,10 @@ export default function GoodsManagementPage() {
                 onClick={() => setSelectedQrItem(null)}
                 className="w-full text-xs h-9"
               >
-                Tutup
+                Close
               </Button>
               <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9">
-                Cetak Label QR
+                Print QR Label
               </Button>
             </div>
           </div>

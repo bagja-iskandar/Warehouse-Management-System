@@ -29,11 +29,11 @@ export default function DriverTasksListPage() {
           {
             id: "ord-01",
             orderNumber: "DO-2026-001",
-            goodsSummary: "150 Koli Daging Wagyu & Salmon (Reefer -18°C)",
-            originAddress: "Gudang Utama Cakung (JKT-01) — Loading Dock 2",
+            goodsSummary: "150 Packages Wagyu Beef & Salmon (Reefer -18°C)",
+            originAddress: "Cakung Logistics Central Hub (JKT-01) — Loading Dock 2",
             destinationAddress:
-              "FreshMarket Superstore BSD, Tangerang Selatan",
-            customerName: "Pak Hendra",
+              "FreshMarket Superstore BSD, South Tangerang",
+            customerName: "Mr. Hendra",
             customerPhone: "0812-9988-7766",
             status: "IN_TRANSIT" as const,
             scheduledTimeSlot: "08:30 WIB",
@@ -47,14 +47,14 @@ export default function DriverTasksListPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Daftar Tugas Pengiriman Driver
+              Driver Delivery Assignment Queue
             </h1>
             <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
               Dispatch Tasks
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar tugas surat jalan aktif, instruksi rute muatan, dan penyelesaian Digital POD.
+            List of active delivery work orders, cargo route instructions, and Digital POD completion.
           </p>
         </div>
 
@@ -64,7 +64,7 @@ export default function DriverTasksListPage() {
               variant="outline"
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
             >
-              Kembali ke Dashboard
+              Back to Dashboard
             </Button>
           </Link>
         </div>
@@ -93,10 +93,10 @@ export default function DriverTasksListPage() {
                   className="text-[10px]"
                 >
                   {task.status === "DELIVERED"
-                    ? "Selesai"
+                    ? "Completed"
                     : task.status === "IN_TRANSIT"
-                    ? "Dalam Perjalanan"
-                    : "Ditugaskan"}
+                    ? "In Transit"
+                    : "Assigned"}
                 </Badge>
               </div>
 
@@ -113,14 +113,14 @@ export default function DriverTasksListPage() {
               <div className="flex items-start gap-2">
                 <MapPin className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Asal:</span>
+                  <span className="text-[10px] text-slate-400 block">Origin:</span>
                   <span className="font-medium">{task.originAddress}</span>
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Tujuan:</span>
+                  <span className="text-[10px] text-slate-400 block">Destination:</span>
                   <span className="font-medium">{task.destinationAddress}</span>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export default function DriverTasksListPage() {
                   variant="outline"
                   className="text-xs border-slate-300 text-slate-700 h-8.5"
                 >
-                  Detail Instruksi
+                  Instruction Details
                 </Button>
               </Link>
               <Link href="/driver/pod">

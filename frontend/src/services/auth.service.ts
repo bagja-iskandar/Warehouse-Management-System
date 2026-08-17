@@ -24,7 +24,7 @@ export interface IAuthService {
 export class HttpAuthService implements IAuthService {
   async login(credentials: LoginCredentials): Promise<UserProfile> {
     if (!credentials.email || !credentials.password) {
-      throw new Error("Email dan kata sandi wajib diisi.");
+      throw new Error("Email and password are required.");
     }
 
     const res = await apiClient<{
@@ -149,7 +149,7 @@ export class MockAuthService implements IAuthService {
           return roleUser;
         }
       }
-      throw new Error("Email atau password tidak ditemukan.");
+      throw new Error("Invalid email or password.");
     }
     setStoredTokens("mock-jwt-access-token", "mock-jwt-refresh-token");
     return user;
@@ -171,7 +171,7 @@ export class MockAuthService implements IAuthService {
   async registerCustomer(input: RegisterCustomerInput): Promise<UserProfile> {
     const existing = await mockDb.getUserByEmail(input.email);
     if (existing) {
-      throw new Error("Email sudah terdaftar.");
+      throw new Error("Email is already registered.");
     }
 
     const newUser: UserProfile = {
@@ -203,10 +203,10 @@ export class MockAuthService implements IAuthService {
     newPass: string
   ): Promise<boolean> {
     if (!currentPass || !newPass) {
-      throw new Error("Kata sandi saat ini dan kata sandi baru wajib diisi.");
+      throw new Error("Current password and new password are required.");
     }
     if (newPass.length < 6) {
-      throw new Error("Kata sandi baru minimal 6 karakter.");
+      throw new Error("New password must be at least 6 characters.");
     }
     await new Promise((resolve) => setTimeout(resolve, 300));
     return true;

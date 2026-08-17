@@ -14,10 +14,10 @@ export const SEED_ORDERS: DeliveryOrder[] = [
     totalWeightKg: 350,
     requiresReefer: false,
 
-    originAddress: "Gudang Utama Cakung Logistics Hub, RAK-F03",
-    originCity: "Jakarta Timur",
-    destinationAddress: "Restoran Nusantara Rasa, Jl. Senopati No. 18",
-    destinationCity: "Jakarta Selatan",
+    originAddress: "Cakung Logistics Central Hub, RAK-F03",
+    originCity: "East Jakarta",
+    destinationAddress: "Nusantara Rasa Restaurant, Jl. Senopati No. 18",
+    destinationCity: "South Jakarta",
 
     scheduledDate: "2026-08-16",
     scheduledTimeSlot: "14:00 - 17:00",
@@ -54,10 +54,10 @@ export const SEED_ORDERS: DeliveryOrder[] = [
     totalWeightKg: 450,
     requiresReefer: true,
 
-    originAddress: "Pelabuhan Muara Baru Dermaga Timur No. 8",
-    originCity: "Jakarta Utara",
-    destinationAddress: "Gudang Utama Cakung Logistics Hub (Cold Zone)",
-    destinationCity: "Jakarta Timur",
+    originAddress: "Muara Baru Port East Pier No. 8",
+    originCity: "North Jakarta",
+    destinationAddress: "Cakung Logistics Central Hub (Cold Zone)",
+    destinationCity: "East Jakarta",
 
     scheduledDate: "2026-08-17",
     scheduledTimeSlot: "08:00 - 11:00",

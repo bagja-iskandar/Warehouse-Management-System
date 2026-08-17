@@ -60,7 +60,7 @@ export class HttpBillingService implements IBillingService {
       paymentProofUrl: proofUrl,
       amount: Number(amount || 7812000),
       paymentReference: paymentReference || "TRX-PAY-AUTO",
-      notes: notes || "Pembayaran faktur tagihan sewa WMS",
+      notes: notes || "WMS rental invoice payment",
     };
 
     const res = await apiClient<any>(`/billing/invoices/${invoiceId}/pay`, {
@@ -96,14 +96,14 @@ export class HttpBillingService implements IBillingService {
       customerName: raw.customerName || raw.customer?.name || "Customer",
       customerEmail:
         raw.customerEmail || raw.customer?.email || "customer@wms.id",
-      billingMonth: raw.billingMonth || "Agustus 2026",
+      billingMonth: raw.billingMonth || "August 2026",
       issueDate: raw.issueDate || raw.createdAt,
       dueDate: raw.dueDate || raw.createdAt,
       paidDate: raw.paidDate,
       items: Array.isArray(raw.items)
         ? raw.items.map((i: any) => ({
             id: i.id,
-            description: i.description || "Sewa Slot Penyimpanan Gudang",
+            description: i.description || "Warehouse Storage Space Rental",
             goodsName: i.goodsName || i.goodsItem?.name,
             volumeM3: Number(i.volumeM3 || 0),
             ratePerM3: Number(i.ratePerM3 || 0),
@@ -154,7 +154,7 @@ export class MockBillingService implements IBillingService {
   ): Promise<Invoice> {
     const list = await mockDb.getInvoices();
     const inv = list.find((i) => i.id === invoiceId);
-    if (!inv) throw new Error("Invoice tidak ditemukan");
+    if (!inv) throw new Error("Invoice not found");
     inv.status = action === "VERIFY" ? "PAID" : "OVERDUE";
     return inv;
   }

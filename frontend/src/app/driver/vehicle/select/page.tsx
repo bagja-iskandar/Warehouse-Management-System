@@ -34,36 +34,36 @@ interface SelectableVehicle {
 const VEHICLES_LIST: SelectableVehicle[] = [
   {
     id: "veh-01",
-    name: "Truk Reefer Isuzu Giga FVR",
+    name: "Isuzu Giga FVR Reefer Truck",
     plateNumber: "B 9821 TKN",
     type: "REEFER",
     capacityM3: 12,
     hasReefer: true,
     temp: "-18.2°C",
     status: "AVAILABLE",
-    hubLocation: "Gudang Utama Cakung (JKT-01)",
+    hubLocation: "Cakung Logistics Central Hub (JKT-01)",
   },
   {
     id: "veh-02",
-    name: "Box Truck Hino Dutro 130 HD",
+    name: "Hino Dutro 130 HD Box Truck",
     plateNumber: "B 1234 XYZ",
     type: "BOX",
     capacityM3: 16,
     hasReefer: false,
     temp: "Standard Dry",
     status: "AVAILABLE",
-    hubLocation: "Gudang Utama Cakung (JKT-01)",
+    hubLocation: "Cakung Logistics Central Hub (JKT-01)",
   },
   {
     id: "veh-03",
-    name: "Blind Van Daihatsu GranMax",
+    name: "Daihatsu GranMax Blind Van",
     plateNumber: "B 5678 KLM",
     type: "VAN",
     capacityM3: 4,
     hasReefer: false,
     temp: "Standard Dry",
     status: "AVAILABLE",
-    hubLocation: "Gudang Utama Cakung (JKT-01)",
+    hubLocation: "Cakung Logistics Central Hub (JKT-01)",
   },
 ];
 
@@ -90,7 +90,7 @@ export default function VehicleSelectionPage() {
           hasReefer: Boolean(v.hasRefrigeration),
           temp: v.hasRefrigeration ? "-18.2°C" : "Standard Dry",
           status: v.status === "AVAILABLE" ? "AVAILABLE" : "IN_USE",
-          hubLocation: v.locationCity || "Gudang Utama Cakung (JKT-01)",
+          hubLocation: v.locationCity || "Cakung Logistics Central Hub (JKT-01)",
         }))
       : VEHICLES_LIST;
 
@@ -104,7 +104,7 @@ export default function VehicleSelectionPage() {
         });
       }
       setIsConfirmed(true);
-      toast.success("Armada Berhasil Ditugaskan");
+      toast.success("Vehicle Assigned Successfully");
     } catch (err: any) {
       setIsConfirmed(true);
     }
@@ -117,14 +117,14 @@ export default function VehicleSelectionPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Pilih Armada Kendaraan Bertugas
+              Select Duty Fleet Vehicle
             </h1>
             <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
               Fleet Assignment
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Pilih truk pendingin (Reefer) atau box truck yang siap digunakan untuk rute pengiriman hari ini.
+            Select a refrigerated truck (Reefer) or dry box truck ready for today&apos;s delivery dispatch.
           </p>
         </div>
 
@@ -134,7 +134,7 @@ export default function VehicleSelectionPage() {
               variant="outline"
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
             >
-              Kembali ke Dashboard
+              Back to Dashboard
             </Button>
           </Link>
         </div>
@@ -146,15 +146,15 @@ export default function VehicleSelectionPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h2 className="text-lg font-bold text-slate-900">
-            Armada Berhasil Dipilih & Dikonfirmasi!
+            Fleet Vehicle Selected & Confirmed Successfully!
           </h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Anda kini terhubung dengan armada <span className="font-bold text-slate-900">Truk Reefer Isuzu (B 9821 TKN)</span>. Telemetri suhu box pendingin aktif tersinkronisasi.
+            You are now connected to vehicle <span className="font-bold text-slate-900">Isuzu Reefer Truck (B 9821 TKN)</span>. Reefer box temperature telemetry is actively synchronized.
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link href="/driver/dashboard">
               <Button className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs h-9">
-                Mulai Bertugas di Dashboard →
+                Start Duty on Dashboard →
               </Button>
             </Link>
           </div>
@@ -201,11 +201,11 @@ export default function VehicleSelectionPage() {
 
                 <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-[10.5px] text-slate-400 block">Kapasitas:</span>
+                    <span className="text-[10.5px] text-slate-400 block">Capacity:</span>
                     <span className="font-bold text-slate-800 font-mono">{vehicle.capacityM3} m³</span>
                   </div>
                   <div>
-                    <span className="text-[10.5px] text-slate-400 block">Suhu Mesin:</span>
+                    <span className="text-[10.5px] text-slate-400 block">Unit Temp:</span>
                     <span className="font-bold text-sky-700 font-mono">{vehicle.temp}</span>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export default function VehicleSelectionPage() {
                       : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                   }`}
                 >
-                  {isSelected ? "Gunakan Armada Ini" : "Pilih Kendaraan"}
+                  {isSelected ? "Use This Vehicle" : "Select Vehicle"}
                 </Button>
               </div>
             );

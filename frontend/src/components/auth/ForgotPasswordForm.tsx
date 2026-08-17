@@ -31,13 +31,13 @@ export function ForgotPasswordForm() {
 
     const emailTrimmed = email.trim();
     if (!emailTrimmed) {
-      setValidationError("Silakan masukkan email kerja atau username terdaftar.");
+      setValidationError("Please enter your registered work email or username.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailTrimmed)) {
-      setValidationError("Format email tidak valid (contoh: nama@perusahaan.com).");
+      setValidationError("Invalid email format (e.g. name@company.com).");
       return;
     }
 
@@ -47,8 +47,8 @@ export function ForgotPasswordForm() {
     setTimeout(() => {
       setIsPending(false);
       setIsSubmitted(true);
-      toast.success("Instruksi Terkirim", {
-        description: `Tautan pemulihan kata sandi telah dikirimkan ke ${emailTrimmed}.`,
+      toast.success("Instructions Sent", {
+        description: `Password recovery instructions have been sent to ${emailTrimmed}.`,
       });
     }, 800);
   };
@@ -70,10 +70,10 @@ export function ForgotPasswordForm() {
           </p>
           <div className="w-full h-px bg-slate-100 my-4" />
           <h2 className="text-sm font-semibold text-slate-800">
-            Pemulihan Kata Sandi Akun
+            Account Password Recovery
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-xs">
-            Masukkan email terdaftar Anda. Kami akan mengirimkan tautan dan kode instruksi pemulihan kata sandi.
+            Enter your registered email address. We will send password reset instructions.
           </p>
         </div>
 
@@ -97,27 +97,27 @@ export function ForgotPasswordForm() {
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                Instruksi Pemulihan Terkirim
+                Recovery Instructions Sent
               </h3>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Kami telah mengirimkan instruksi ke <span className="font-semibold font-mono text-slate-800">{email}</span>. Silakan periksa folder inbox atau spam email Anda.
+                We have sent reset instructions to <span className="font-semibold font-mono text-slate-800">{email}</span>. Please check your inbox or spam folder.
               </p>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-sm text-left text-xs space-y-1">
               <div className="font-semibold text-slate-700 flex items-center gap-1.5">
                 <HelpCircle className="h-3.5 w-3.5 text-indigo-600" />
-                <span>Simulasi Demo Token:</span>
+                <span>Demo Token Simulation:</span>
               </div>
               <p className="text-[11px] text-slate-500">
-                Kode token verifikasi sementara: <code className="font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">WMS-RESET-2026</code>
+                Temporary reset verification token: <code className="font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">WMS-RESET-2026</code>
               </p>
             </div>
 
             <div className="pt-2">
               <Link href="/login">
                 <Button className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-sm">
-                  Kembali ke Halaman Login
+                  Back to Sign In
                 </Button>
               </Link>
             </div>
@@ -130,7 +130,7 @@ export function ForgotPasswordForm() {
                 htmlFor="forgot-email"
                 className="text-xs font-semibold text-slate-700"
               >
-                Email Terdaftar / Username
+                Registered Email / Username
               </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -139,7 +139,7 @@ export function ForgotPasswordForm() {
                 <Input
                   id="forgot-email"
                   type="email"
-                  placeholder="nama@perusahaan.com"
+                  placeholder="name@company.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -161,11 +161,11 @@ export function ForgotPasswordForm() {
               {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Mengirimkan Instruksi...</span>
+                  <span>Sending Instructions...</span>
                 </>
               ) : (
                 <>
-                  <span>Kirim Instruksi Pemulihan</span>
+                  <span>Send Recovery Instructions</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -177,7 +177,7 @@ export function ForgotPasswordForm() {
         {!isSubmitted && (
           <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-sm">
             <p className="text-[11px] text-slate-500 leading-normal">
-              Kendala akses? Hubungi Super Admin pergudangan di{" "}
+              Need assistance? Contact Warehouse Operations Support at{" "}
               <a
                 href="mailto:admin@wms.id"
                 className="text-indigo-600 hover:underline font-medium"
@@ -195,7 +195,7 @@ export function ForgotPasswordForm() {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Kembali ke Halaman Login</span>
+            <span>Back to Sign In</span>
           </Link>
         </div>
       </div>
@@ -204,7 +204,7 @@ export function ForgotPasswordForm() {
       <div className="mt-6 text-center text-slate-400 flex items-center justify-center gap-1.5 text-[11px]">
         <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
         <span>
-          Enkripsi End-to-End 256-bit • Akses Terotentikasi WMS Multi-Role • v1.0.0
+          256-bit End-to-End Encryption • Multi-Role Authenticated WMS Access • v1.0.0
         </span>
       </div>
     </div>

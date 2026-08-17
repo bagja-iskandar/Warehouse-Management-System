@@ -161,7 +161,7 @@ export async function apiClient<T = any>(
             if (typeof window !== "undefined") {
               window.location.href = "/login?expired=true";
             }
-            throw new Error("Sesi Anda telah berakhir. Silakan masuk kembali.");
+            throw new Error("Your session has expired. Please sign in again.");
           }
         } catch (refreshErr) {
           clearStoredTokens();
@@ -187,7 +187,7 @@ export async function apiClient<T = any>(
       }
     } else {
       clearStoredTokens();
-      throw new Error("Autentikasi gagal: Sesi Anda tidak valid atau telah berakhir.");
+      throw new Error("Authentication failed: Your session is invalid or has expired.");
     }
   }
 
@@ -201,7 +201,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const errorMsg =
       data?.message ||
-      `HTTP Error ${res.status}: ${res.statusText || "Terjadi kesalahan pada server"}`;
+      `HTTP Error ${res.status}: ${res.statusText || "An error occurred on the server"}`;
     const error = new Error(errorMsg);
     (error as any).status = res.status;
     (error as any).data = data;

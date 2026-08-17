@@ -39,36 +39,36 @@ interface NavGroup {
 
 const DRIVER_NAV_GROUPS: NavGroup[] = [
   {
-    group: "OPERASIONAL DRIVER",
+    group: "DRIVER OPERATIONS",
     items: [
       {
-        title: "Tugas Pengiriman",
+        title: "Delivery Tasks",
         href: "/driver/dashboard",
         icon: ClipboardList,
-        badge: "1 Aktif",
+        badge: "1 Active",
       },
       {
-        title: "Rute & Live Transit",
+        title: "Route & Live Transit",
         href: "/driver/transit",
         icon: Navigation,
       },
       {
-        title: "Armada & Kendaraan",
+        title: "Fleet & Vehicles",
         href: "/driver/vehicle/select",
         icon: Car,
       },
     ],
   },
   {
-    group: "DOKUMEN & BUKTI",
+    group: "DOCUMENTS & PROOF",
     items: [
       {
-        title: "Upload Digital POD",
+        title: "Submit Digital POD",
         href: "/driver/pod",
         icon: FileCheck,
       },
       {
-        title: "Riwayat Pengantaran",
+        title: "Delivery History",
         href: "/driver/history",
         icon: History,
       },
@@ -117,7 +117,7 @@ export function DriverSidebar({ isOpen, onClose }: DriverSidebarProps) {
             <button
               onClick={onClose}
               className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-              aria-label="Tutup navigasi"
+              aria-label="Close navigation"
             >
               <X className="h-4 w-4" />
             </button>
@@ -133,7 +133,7 @@ export function DriverSidebar({ isOpen, onClose }: DriverSidebarProps) {
               </div>
               <div className="truncate">
                 <p className="text-[11px] font-bold text-slate-900 truncate leading-tight">
-                  Truk Reefer Isuzu
+                  Isuzu Reefer Truck
                 </p>
                 <p className="text-[9.5px] text-amber-600 font-mono font-medium leading-tight">
                   B 9821 TKN • -18.2°C
@@ -214,7 +214,7 @@ export function DriverSidebar({ isOpen, onClose }: DriverSidebarProps) {
                   {user?.name || "Ahmad Subarjo"}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium truncate leading-tight">
-                  Driver Armada Logistik
+                  Logistics Fleet Driver
                 </p>
               </div>
             </Link>
@@ -222,7 +222,7 @@ export function DriverSidebar({ isOpen, onClose }: DriverSidebarProps) {
             <button
               onClick={() => logout()}
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-              title="Keluar dari sesi"
+              title="Sign out of session"
               aria-label="Logout"
             >
               <LogOut className="h-3.5 w-3.5" />

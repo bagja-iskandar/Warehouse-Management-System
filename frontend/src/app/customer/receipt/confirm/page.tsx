@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function DeliveryReceiptConfirmationPage() {
   const [rating, setRating] = useState<number>(5);
-  const [recipientNote, setRecipientNote] = useState("Barang diterima dalam kondisi beku optimal, segel utuh.");
+  const [recipientNote, setRecipientNote] = useState("Goods received in optimal frozen condition, seals intact.");
   const [isConfirmed, setIsConfirmed] = useState(false);
 
   const handleConfirm = (e: React.FormEvent) => {
@@ -34,14 +34,14 @@ export default function DeliveryReceiptConfirmationPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Konfirmasi Penerimaan Barang (Delivery Confirmation)
+              Goods Receipt Confirmation (Delivery Confirmation)
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               Digital Proof of Delivery
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Konfirmasi serah terima pengiriman, verifikasi kondisi fisik barang, dan beri rating pelayanan driver.
+            Confirm delivery handover, verify physical goods condition, and provide driver service rating.
           </p>
         </div>
       </div>
@@ -52,15 +52,15 @@ export default function DeliveryReceiptConfirmationPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h2 className="text-lg font-bold text-slate-900">
-            Penerimaan Barang Berhasil Dikonfirmasi!
+            Goods Receipt Confirmed Successfully!
           </h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Terima kasih telah memvalidasi pengiriman <span className="font-mono font-bold text-indigo-600">DO-2026-001</span>. Digital POD telah tercatat di sistem pusat.
+            Thank you for validating shipment <span className="font-mono font-bold text-indigo-600">DO-2026-001</span>. Digital POD has been recorded in the central system.
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link href="/customer/dashboard">
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
-                Kembali ke Dashboard →
+                Back to Dashboard →
               </Button>
             </Link>
           </div>
@@ -74,32 +74,32 @@ export default function DeliveryReceiptConfirmationPage() {
                 <div className="flex items-center gap-2">
                   <Truck className="h-4.5 w-4.5 text-emerald-600" />
                   <h2 className="text-sm font-bold text-slate-900">
-                    Rincian Pengiriman (DO-2026-001)
+                    Shipment Details (DO-2026-001)
                   </h2>
                 </div>
-                <Badge variant="warning" className="text-[10px]">Tiba di Lokasi</Badge>
+                <Badge variant="warning" className="text-[10px]">Arrived on Site</Badge>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
-                  <span className="text-[11px] text-slate-400 block font-medium">Driver & Armada</span>
+                  <span className="text-[11px] text-slate-400 block font-medium">Driver & Fleet</span>
                   <p className="font-bold text-slate-900">Ahmad Subarjo</p>
-                  <p className="text-slate-500 font-mono">Truk Reefer Isuzu (B 9821 TKN)</p>
+                  <p className="text-slate-500 font-mono">Isuzu Reefer Truck (B 9821 TKN)</p>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
-                  <span className="text-[11px] text-slate-400 block font-medium">Suhu Muatan Box</span>
+                  <span className="text-[11px] text-slate-400 block font-medium">Cargo Box Temperature</span>
                   <p className="font-bold text-sky-700 font-mono text-sm">-18.2°C</p>
-                  <p className="text-emerald-600 font-medium">Cold Chain Terjaga Sempurna</p>
+                  <p className="text-emerald-600 font-medium">Cold Chain Perfectly Maintained</p>
                 </div>
               </div>
 
               <div className="pt-2">
                 <span className="text-xs font-semibold text-slate-700 block mb-1">
-                  Daftar Muatan yang Diterima:
+                  List of Received Cargo:
                 </span>
                 <p className="text-xs text-slate-800 font-medium p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  150 Koli Daging Sapi Wagyu A5 Import (BAR-FRESH-001) & Salmon (BAR-FRESH-002)
+                  150 Packages Import Wagyu Beef Ribeye A5 (BAR-FRESH-001) & Salmon (BAR-FRESH-002)
                 </p>
               </div>
             </div>
@@ -107,13 +107,13 @@ export default function DeliveryReceiptConfirmationPage() {
             {/* Verification Form */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                Validasi Kondisi Barang & Feedback Driver
+                Goods Condition Validation & Driver Feedback
               </h2>
 
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-2">
-                    Rating Pelayanan Driver Logistik
+                    Logistics Driver Service Rating
                   </label>
                   <div className="flex items-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -133,14 +133,14 @@ export default function DeliveryReceiptConfirmationPage() {
                       </button>
                     ))}
                     <span className="text-xs font-bold text-slate-800 ml-2 font-mono">
-                      {rating}.0 / 5.0 Bintang
+                      {rating}.0 / 5.0 Stars
                     </span>
                   </div>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Catatan Kondisi Penerimaan Barang
+                    Goods Receipt Condition Notes
                   </label>
                   <textarea
                     rows={3}
@@ -156,18 +156,18 @@ export default function DeliveryReceiptConfirmationPage() {
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                Konfirmasi Akhir
+                Final Confirmation
               </h2>
 
               <p className="text-xs text-slate-500 leading-relaxed">
-                Dengan menekan tombol di bawah, Anda mengonfirmasi bahwa seluruh barang telah diterima sesuai manifest Delivery Order.
+                By clicking the button below, you confirm that all goods have been received in accordance with the Delivery Order manifest.
               </p>
 
               <Button
                 type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-10 rounded-xl shadow-md shadow-emerald-600/20"
               >
-                Konfirmasi Tanda Terima (POD)
+                Confirm Proof of Delivery (POD)
               </Button>
             </div>
           </div>

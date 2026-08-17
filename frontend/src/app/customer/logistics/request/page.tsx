@@ -27,9 +27,9 @@ export default function LogisticsRequestPage() {
   const [requestType, setRequestType] = useState<"OUTBOUND" | "INBOUND">("OUTBOUND");
   const [recipientName, setRecipientName] = useState("FreshMarket Superstore BSD");
   const [recipientPhone, setRecipientPhone] = useState("0812-9988-7766");
-  const [recipientAddress, setRecipientAddress] = useState("Jl. Pahlawan Seribu No. 88, BSD City, Tangerang Selatan");
+  const [recipientAddress, setRecipientAddress] = useState("Jl. Pahlawan Seribu No. 88, BSD City, South Tangerang");
   const [vehicleType, setVehicleType] = useState<"REEFER" | "BOX">("REEFER");
-  const [selectedItems, setSelectedItems] = useState("BAR-FRESH-001 (Daging Wagyu 100 Koli)");
+  const [selectedItems, setSelectedItems] = useState("BAR-FRESH-001 (Wagyu Beef 100 Packages)");
   const [scheduledDate, setScheduledDate] = useState("2026-08-18");
   const [scheduledTime, setScheduledTime] = useState("08:30");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -43,16 +43,16 @@ export default function LogisticsRequestPage() {
         customerName: user?.name || "Customer",
         customerPhone: recipientPhone,
         goodsSummary: selectedItems,
-        originAddress: requestType === "OUTBOUND" ? "Gudang Utama Cakung Logistics Hub" : recipientAddress,
-        originCity: requestType === "OUTBOUND" ? "Jakarta Timur" : "Jakarta Selatan",
-        destinationAddress: requestType === "OUTBOUND" ? recipientAddress : "Gudang Utama Cakung Logistics Hub",
-        destinationCity: requestType === "OUTBOUND" ? "Tangerang Selatan" : "Jakarta Timur",
+        originAddress: requestType === "OUTBOUND" ? "Cakung Logistics Central Hub" : recipientAddress,
+        originCity: requestType === "OUTBOUND" ? "East Jakarta" : "South Jakarta",
+        destinationAddress: requestType === "OUTBOUND" ? recipientAddress : "Cakung Logistics Central Hub",
+        destinationCity: requestType === "OUTBOUND" ? "South Tangerang" : "East Jakarta",
         scheduledDate,
         scheduledTimeSlot: `${scheduledTime} WIB`,
         requiresReefer: vehicleType === "REEFER",
       });
       setIsSubmitted(true);
-      toast.success("Permintaan Pengiriman Berhasil Dibuat");
+      toast.success("Logistics Delivery Request Created Successfully");
     } catch (err: any) {
       setIsSubmitted(true);
     }
@@ -65,14 +65,14 @@ export default function LogisticsRequestPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Jadwalkan Permintaan Logistik & Pengiriman Armada
+              Schedule Logistics Request & Fleet Dispatch
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               Dispatch Request
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Request pengantaran barang keluar gudang (Outbound) atau penjemputan barang masuk (Inbound) dengan armada Reefer / Box.
+            Request warehouse outbound shipment or inbound goods pickup with Reefer / Box trucks.
           </p>
         </div>
       </div>
@@ -83,19 +83,19 @@ export default function LogisticsRequestPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h2 className="text-lg font-bold text-slate-900">
-            Permintaan Logistik Berhasil Didaftarkan!
+            Logistics Request Submitted Successfully!
           </h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Tiket pengiriman <span className="font-mono font-bold text-indigo-600">DO-2026-REQ-009</span> telah masuk ke antrean dispatch Admin. Armada <span className="font-semibold">{vehicleType === "REEFER" ? "Truk Reefer Dingin" : "Box Truck"}</span> akan dialokasikan sesuai jadwal.
+            Shipment ticket <span className="font-mono font-bold text-indigo-600">DO-2026-REQ-009</span> has entered the Admin dispatch queue. A <span className="font-semibold">{vehicleType === "REEFER" ? "Refrigerated Reefer Truck" : "Box Truck"}</span> will be allocated according to schedule.
           </p>
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-mono space-y-1">
-            <p>Tujuan: {recipientName}</p>
-            <p>Jadwal: {scheduledDate} pukul {scheduledTime} WIB</p>
+            <p>Destination: {recipientName}</p>
+            <p>Schedule: {scheduledDate} at {scheduledTime} WIB</p>
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link href="/customer/dashboard">
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
-                Kembali ke Dashboard →
+                Back to Dashboard →
               </Button>
             </Link>
             <Button
@@ -103,7 +103,7 @@ export default function LogisticsRequestPage() {
               onClick={() => setIsSubmitted(false)}
               className="text-xs h-9"
             >
-              Buat Permintaan Lain
+              Create Another Request
             </Button>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function LogisticsRequestPage() {
             {/* Step 1: Type */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900">
-                1. Tipe Layanan Logistik
+                1. Logistics Service Type
               </h2>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -125,9 +125,9 @@ export default function LogisticsRequestPage() {
                       : "border-slate-200 hover:border-slate-300 text-slate-600"
                   }`}
                 >
-                  <span className="text-xs block">Pengantaran Keluar (Outbound Delivery)</span>
+                  <span className="text-xs block">Outbound Delivery</span>
                   <span className="text-[10.5px] font-normal text-slate-500 block mt-0.5">
-                    Kirim barang dari gudang ke toko/klien Anda
+                    Ship goods from warehouse to your store or customer
                   </span>
                 </button>
 
@@ -140,9 +140,9 @@ export default function LogisticsRequestPage() {
                       : "border-slate-200 hover:border-slate-300 text-slate-600"
                   }`}
                 >
-                  <span className="text-xs block">Penjemputan Masuk (Inbound Pickup)</span>
+                  <span className="text-xs block">Inbound Pickup</span>
                   <span className="text-[10.5px] font-normal text-slate-500 block mt-0.5">
-                    Jemput barang dari supplier untuk disimpan di gudang
+                    Pick up goods from supplier to store in warehouse
                   </span>
                 </button>
               </div>
@@ -151,13 +151,13 @@ export default function LogisticsRequestPage() {
             {/* Step 2: Recipient Details */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900">
-                2. Rincian Penerima & Lokasi Pengantaran
+                2. Recipient Details & Delivery Location
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Nama Penerima / Perusahaan
+                    Recipient Name / Company
                   </label>
                   <input
                     type="text"
@@ -170,7 +170,7 @@ export default function LogisticsRequestPage() {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    No. Telepon Penerima
+                    Recipient Phone Number
                   </label>
                   <input
                     type="text"
@@ -184,7 +184,7 @@ export default function LogisticsRequestPage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Alamat Lengkap Tujuan
+                  Full Destination Address
                 </label>
                 <textarea
                   rows={2}
@@ -199,13 +199,13 @@ export default function LogisticsRequestPage() {
             {/* Step 3: Vehicle & Schedule */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900">
-                3. Pilihan Armada & Jadwal
+                3. Fleet Vehicle & Schedule
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-2">
-                    Tipe Truk Armada
+                    Fleet Truck Type
                   </label>
                   <div className="space-y-2">
                     <button
@@ -217,7 +217,7 @@ export default function LogisticsRequestPage() {
                           : "border-slate-200 text-slate-600"
                       }`}
                     >
-                      <span>Truk Reefer Pendingin (-18°C)</span>
+                      <span>Reefer Cold Truck (-18°C)</span>
                       <Badge className="bg-sky-100 text-sky-800 text-[9.5px]">Cold</Badge>
                     </button>
 
@@ -230,7 +230,7 @@ export default function LogisticsRequestPage() {
                           : "border-slate-200 text-slate-600"
                       }`}
                     >
-                      <span>Box Truck Standard Dry</span>
+                      <span>Standard Dry Box Truck</span>
                       <Badge className="bg-emerald-100 text-emerald-800 text-[9.5px]">Dry</Badge>
                     </button>
                   </div>
@@ -239,7 +239,7 @@ export default function LogisticsRequestPage() {
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Tanggal Pengiriman
+                      Delivery Date
                     </label>
                     <input
                       type="date"
@@ -252,7 +252,7 @@ export default function LogisticsRequestPage() {
 
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Jam Pengiriman (WIB)
+                      Delivery Time (WIB)
                     </label>
                     <input
                       type="time"
@@ -271,31 +271,31 @@ export default function LogisticsRequestPage() {
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                Ringkasan Request Logistik
+                Logistics Request Summary
               </h2>
 
               <div className="space-y-3 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Tipe Layanan:</span>
+                  <span className="text-slate-500">Service Type:</span>
                   <span className="font-bold text-slate-900">{requestType} Delivery</span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Tipe Armada:</span>
+                  <span className="text-slate-500">Fleet Type:</span>
                   <span className="font-bold text-slate-900">
-                    {vehicleType === "REEFER" ? "Truk Reefer (-18°C)" : "Box Truck Dry"}
+                    {vehicleType === "REEFER" ? "Reefer Truck (-18°C)" : "Box Truck Dry"}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Tujuan:</span>
+                  <span className="text-slate-500">Destination:</span>
                   <span className="font-bold text-slate-900 truncate max-w-[150px]">
                     {recipientName}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Jadwal:</span>
+                  <span className="text-slate-500">Schedule:</span>
                   <span className="font-mono text-slate-900 font-bold">
                     {scheduledDate}, {scheduledTime} WIB
                   </span>
@@ -306,7 +306,7 @@ export default function LogisticsRequestPage() {
                 type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-10 rounded-xl shadow-md shadow-emerald-600/20"
               >
-                Kirim Permintaan Dispatch
+                Submit Dispatch Request
               </Button>
             </div>
           </div>

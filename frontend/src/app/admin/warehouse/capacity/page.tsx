@@ -32,7 +32,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-a1",
     code: "A-01-01",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.4°C",
     humidity: "65% RH",
@@ -42,17 +42,17 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Fresh Foods Indonesia",
     tenantPic: "Hendra Prasetya",
     itemSku: "BAR-FRESH-001",
-    itemName: "Daging Sapi Wagyu A5 Import",
-    itemQuantity: "150 Koli",
+    itemName: "Import Wagyu Beef Ribeye A5",
+    itemQuantity: "150 Packages",
     batchNumber: "BATCH-WGY-2026-08",
     expiryDate: "12 Nov 2026",
-    lastInspected: "15 Agu 2026",
+    lastInspected: "15 Aug 2026",
   },
   {
     id: "slot-a2",
     code: "A-01-02",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.2°C",
     humidity: "64% RH",
@@ -62,17 +62,17 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Fresh Foods Indonesia",
     tenantPic: "Hendra Prasetya",
     itemSku: "BAR-FRESH-002",
-    itemName: "Salmon Fillet Premium Norwegia",
-    itemQuantity: "120 Koli",
+    itemName: "Premium Norwegian Salmon Fillet",
+    itemQuantity: "120 Packages",
     batchNumber: "BATCH-SLM-2026-08",
-    expiryDate: "28 Des 2026",
-    lastInspected: "16 Agu 2026",
+    expiryDate: "28 Dec 2026",
+    lastInspected: "16 Aug 2026",
   },
   {
     id: "slot-a3",
     code: "A-01-03",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.5°C",
     humidity: "66% RH",
@@ -82,17 +82,17 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Sumber Frozen Makmur",
     tenantPic: "Dewi Lestari",
     itemSku: "BAR-FRESH-003",
-    itemName: "Butter & Dairy Premium",
-    itemQuantity: "80 Koli",
+    itemName: "Premium Butter & Dairy",
+    itemQuantity: "80 Packages",
     batchNumber: "BATCH-BTR-2026-05",
     expiryDate: "10 Feb 2027",
-    lastInspected: "14 Agu 2026",
+    lastInspected: "14 Aug 2026",
   },
   {
     id: "slot-a4",
     code: "A-01-04",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.0°C",
     humidity: "65% RH",
@@ -104,7 +104,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-a5",
     code: "A-02-01",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.3°C",
     humidity: "65% RH",
@@ -114,17 +114,17 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Fresh Foods Indonesia",
     tenantPic: "Hendra Prasetya",
     itemSku: "BAR-FRESH-004",
-    itemName: "Frozen Seafood Assorted",
-    itemQuantity: "140 Koli",
+    itemName: "Assorted Frozen Seafood",
+    itemQuantity: "140 Packages",
     batchNumber: "BATCH-SEA-2026-07",
     expiryDate: "15 Jan 2027",
-    lastInspected: "15 Agu 2026",
+    lastInspected: "15 Aug 2026",
   },
   {
     id: "slot-a6",
     code: "A-02-02",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.1°C",
     humidity: "64% RH",
@@ -136,7 +136,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-a7",
     code: "A-02-03",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-17.9°C",
     humidity: "67% RH",
@@ -148,7 +148,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-a8",
     code: "A-02-04",
     zone: "A",
-    zoneName: "Zona A — Cold Storage",
+    zoneName: "Zone A — Cold Storage",
     zoneType: "COLD_STORAGE",
     temperature: "-18.4°C",
     humidity: "65% RH",
@@ -158,11 +158,11 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Sumber Frozen Makmur",
     tenantPic: "Dewi Lestari",
     itemSku: "BAR-FRESH-005",
-    itemName: "Keju Mozzarella Import",
-    itemQuantity: "110 Koli",
+    itemName: "Import Mozzarella Cheese",
+    itemQuantity: "110 Packages",
     batchNumber: "BATCH-MOZ-2026-06",
-    expiryDate: "20 Mei 2027",
-    lastInspected: "16 Agu 2026",
+    expiryDate: "20 May 2027",
+    lastInspected: "16 Aug 2026",
   },
 
   // ZONE B: STANDARD STORAGE
@@ -170,7 +170,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-b1",
     code: "B-01-01",
     zone: "B",
-    zoneName: "Zona B — Rak Standar & Kering",
+    zoneName: "Zone B — Standard & Dry Rack",
     zoneType: "STANDARD",
     temperature: "24.2°C",
     humidity: "50% RH",
@@ -180,16 +180,16 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "CV Furnitur Nusantara",
     tenantPic: "Bambang Wijaya",
     itemSku: "BAR-FURN-001",
-    itemName: "Sofa Minimalis 3-Seater Velvet",
-    itemQuantity: "20 Unit",
+    itemName: "3-Seater Velvet Sofa",
+    itemQuantity: "20 Units",
     batchNumber: "BATCH-SOF-2026-02",
-    lastInspected: "12 Agu 2026",
+    lastInspected: "12 Aug 2026",
   },
   {
     id: "slot-b2",
     code: "B-01-02",
     zone: "B",
-    zoneName: "Zona B — Rak Standar & Kering",
+    zoneName: "Zone B — Standard & Dry Rack",
     zoneType: "STANDARD",
     temperature: "24.0°C",
     humidity: "52% RH",
@@ -199,16 +199,16 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "CV Furnitur Nusantara",
     tenantPic: "Bambang Wijaya",
     itemSku: "BAR-FURN-002",
-    itemName: "Meja Makan Kayu Jati Solid",
-    itemQuantity: "15 Unit",
+    itemName: "Solid Teak Wood Dining Table",
+    itemQuantity: "15 Units",
     batchNumber: "BATCH-MEJ-2026-03",
-    lastInspected: "12 Agu 2026",
+    lastInspected: "12 Aug 2026",
   },
   {
     id: "slot-b3",
     code: "B-01-03",
     zone: "B",
-    zoneName: "Zona B — Rak Standar & Kering",
+    zoneName: "Zone B — Standard & Dry Rack",
     zoneType: "STANDARD",
     temperature: "24.1°C",
     humidity: "51% RH",
@@ -220,7 +220,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-b4",
     code: "B-01-04",
     zone: "B",
-    zoneName: "Zona B — Rak Standar & Kering",
+    zoneName: "Zone B — Standard & Dry Rack",
     zoneType: "STANDARD",
     temperature: "24.0°C",
     humidity: "50% RH",
@@ -230,10 +230,10 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Global Retailindo",
     tenantPic: "Rina Marlina",
     itemSku: "BAR-RETAIL-001",
-    itemName: "Karton Box Peralatan Elektronik",
-    itemQuantity: "60 Box",
+    itemName: "Electronic Equipment Master Cartons",
+    itemQuantity: "60 Boxes",
     batchNumber: "BATCH-ELK-2026-09",
-    lastInspected: "10 Agu 2026",
+    lastInspected: "10 Aug 2026",
   },
 
   // ZONE C: HEAVY DUTY
@@ -241,7 +241,7 @@ const INITIAL_SLOTS: SlotData[] = [
     id: "slot-c1",
     code: "C-01-01",
     zone: "C",
-    zoneName: "Zona C — Heavy Duty & Pallet",
+    zoneName: "Zone C — Heavy Duty & Pallet",
     zoneType: "HEAVY_DUTY",
     temperature: "25.0°C",
     humidity: "55% RH",
@@ -251,16 +251,16 @@ const INITIAL_SLOTS: SlotData[] = [
     tenantName: "PT Logistik Indo Perkasa",
     tenantPic: "Surya Dharma",
     itemSku: "BAR-HVY-001",
-    itemName: "Pallet Mesin Industri & Sparepart",
-    itemQuantity: "12 Pallet",
+    itemName: "Industrial Machinery Pallet & Spareparts",
+    itemQuantity: "12 Pallets",
     batchNumber: "BATCH-MSN-2026-01",
-    lastInspected: "08 Agu 2026",
+    lastInspected: "08 Aug 2026",
   },
   {
     id: "slot-c2",
     code: "C-01-02",
     zone: "C",
-    zoneName: "Zona C — Heavy Duty & Pallet",
+    zoneName: "Zone C — Heavy Duty & Pallet",
     zoneType: "HEAVY_DUTY",
     temperature: "25.2°C",
     humidity: "54% RH",
@@ -297,10 +297,10 @@ export default function WarehouseCapacityPage() {
             zone: zoneKey,
             zoneName:
               zoneKey === "A"
-                ? "Zona A — Cold Storage"
+                ? "Zone A — Cold Storage"
                 : zoneKey === "B"
-                ? "Zona B — Rak Standar"
-                : "Zona C — Heavy Duty",
+                ? "Zone B — Standard Rack"
+                : "Zone C — Heavy Duty",
             zoneType: s.zone,
             temperature: s.temperatureCelsius != null ? `${s.temperatureCelsius}°C` : "24.0°C",
             humidity: s.humidityPercent != null ? `${s.humidityPercent}% RH` : "55% RH",
@@ -310,9 +310,9 @@ export default function WarehouseCapacityPage() {
             tenantName: s.currentGoodsIds?.length > 0 ? "PT Fresh Foods Indonesia" : undefined,
             tenantPic: s.currentGoodsIds?.length > 0 ? "Hendra Prasetya" : undefined,
             itemSku: s.currentGoodsIds?.[0] ? `SKU-${s.currentGoodsIds[0].substring(0, 8).toUpperCase()}` : undefined,
-            itemName: s.zone === "COLD_STORAGE" ? "Komoditas Cold Chain Terdaftar" : "Barang Kargo Standar",
-            itemQuantity: s.currentGoodsIds?.length ? `${s.currentGoodsIds.length * 50} Koli` : undefined,
-            lastInspected: "16 Agu 2026",
+            itemName: s.zone === "COLD_STORAGE" ? "Registered Cold Chain Commodity" : "Standard Cargo Goods",
+            itemQuantity: s.currentGoodsIds?.length ? `${s.currentGoodsIds.length * 50} Packages` : undefined,
+            lastInspected: "16 Aug 2026",
           };
         })
       : null;
@@ -350,14 +350,14 @@ export default function WarehouseCapacityPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Visualisasi Kapasitas Gudang & Alokasi Slot Rak
+              Warehouse Capacity Visualization & Rack Slot Allocation
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Live 3D Grid
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Pantau status keterisian rak, telemetri suhu zona, dan detail penyewa di Gudang Cakung (JKT-01).
+            Monitor rack occupancy status, zone temperature telemetry, and tenant allocation at Cakung Hub (JKT-01).
           </p>
         </div>
 
@@ -367,7 +367,7 @@ export default function WarehouseCapacityPage() {
               variant="outline"
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
             >
-              Kembali ke Dashboard
+              Back to Dashboard
             </Button>
           </Link>
         </div>
@@ -388,17 +388,17 @@ export default function WarehouseCapacityPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <Snowflake className="h-4 w-4 text-sky-600" />
-              <span>ZONA A — COLD STORAGE</span>
+              <span>ZONE A — COLD STORAGE</span>
             </span>
             <Badge className="bg-sky-50 text-sky-700 border-sky-200 text-[10px]">
               -18.4°C
             </Badge>
           </div>
           <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-            Penyimpanan daging, seafood & dairy beku bersuhu sub-zero.
+            Sub-zero storage for frozen beef, seafood & dairy commodities.
           </p>
           <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">35 / 40 Slot Terisi</span>
+            <span className="text-slate-600">35 / 40 Slots Occupied</span>
             <span className="text-sky-600 font-mono">87.5%</span>
           </div>
         </button>
@@ -416,17 +416,17 @@ export default function WarehouseCapacityPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <Warehouse className="h-4 w-4 text-indigo-600" />
-              <span>ZONA B — RAK STANDAR</span>
+              <span>ZONE B — STANDARD RACK</span>
             </span>
             <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px]">
               24.0°C
             </Badge>
           </div>
           <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-            Penyimpanan mebel, furnitur, dan produk retail kering.
+            Storage for furniture, apparel, and dry retail products.
           </p>
           <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">42 / 60 Slot Terisi</span>
+            <span className="text-slate-600">42 / 60 Slots Occupied</span>
             <span className="text-indigo-600 font-mono">70.0%</span>
           </div>
         </button>
@@ -444,17 +444,17 @@ export default function WarehouseCapacityPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <Boxes className="h-4 w-4 text-emerald-600" />
-              <span>ZONA C — HEAVY DUTY</span>
+              <span>ZONE C — HEAVY DUTY</span>
             </span>
             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
               25.0°C
             </Badge>
           </div>
           <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-            Area pallet muatan berat & sparepart industri.
+            Heavy cargo pallet area & industrial spare parts.
           </p>
           <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">20 / 30 Slot Terisi</span>
+            <span className="text-slate-600">20 / 30 Slots Occupied</span>
             <span className="text-emerald-600 font-mono">66.7%</span>
           </div>
         </button>
@@ -478,12 +478,12 @@ export default function WarehouseCapacityPage() {
                   }`}
                 >
                   {status === "ALL"
-                    ? "Semua Slot"
+                    ? "All Slots"
                     : status === "OCCUPIED"
-                    ? "Terisi Penuh"
+                    ? "Fully Occupied"
                     : status === "PARTIAL"
-                    ? "Sebagian"
-                    : "Tersedia"}
+                    ? "Partial"
+                    : "Available"}
                 </button>
               ))}
             </div>
@@ -493,15 +493,15 @@ export default function WarehouseCapacityPage() {
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded bg-indigo-600" />
-              <span>Terisi Penuh (100%)</span>
+              <span>Fully Occupied (100%)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded bg-emerald-500" />
-              <span>Terisi Sebagian</span>
+              <span>Partially Occupied</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded bg-slate-100 border border-dashed border-slate-300" />
-              <span>Tersedia</span>
+              <span>Available</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded bg-amber-500" />
@@ -514,10 +514,10 @@ export default function WarehouseCapacityPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900">
-              Visualisasi Grid Rak & Bay — {selectedZone === "A" ? "Zona A (Cold)" : selectedZone === "B" ? "Zona B (Standard)" : "Zona C (Heavy Duty)"}
+              Rack & Bay Grid Visualization — {selectedZone === "A" ? "Zone A (Cold)" : selectedZone === "B" ? "Zone B (Standard)" : "Zone C (Heavy Duty)"}
             </h2>
             <span className="text-xs text-slate-400">
-              *Klik pada slot mana pun untuk memeriksa detail barang & penyewa
+              *Click on any slot to inspect goods & tenant details
             </span>
           </div>
 
@@ -537,16 +537,16 @@ export default function WarehouseCapacityPage() {
 
                 <div className="mt-3">
                   <p className="text-xs font-bold truncate">
-                    {slot.itemName || (slot.status === "AVAILABLE" ? "Slot Kosong" : "Dalam Pemeliharaan")}
+                    {slot.itemName || (slot.status === "AVAILABLE" ? "Vacant Slot" : "Under Maintenance")}
                   </p>
                   <p className="text-[10.5px] opacity-85 truncate mt-0.5">
-                    {slot.tenantName || (slot.status === "AVAILABLE" ? "Siap dialokasikan" : "Teknisi bertugas")}
+                    {slot.tenantName || (slot.status === "AVAILABLE" ? "Ready to allocate" : "Technician on duty")}
                   </p>
                 </div>
 
                 <div className="mt-3 pt-2 border-t border-white/20 flex items-center justify-between text-[11px] font-mono">
                   <span>{slot.usedM3} / {slot.capacityM3} m³</span>
-                  <span className="font-semibold underline">Detail →</span>
+                  <span className="font-semibold underline">Details →</span>
                 </div>
               </div>
             ))}

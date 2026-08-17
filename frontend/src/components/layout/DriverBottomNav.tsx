@@ -13,27 +13,27 @@ import {
 
 const DRIVER_NAV_ITEMS = [
   {
-    title: "Tugas",
+    title: "Tasks",
     href: "/driver/dashboard",
     icon: ClipboardList,
   },
   {
-    title: "Rute",
+    title: "Route",
     href: "/driver/transit",
     icon: Navigation,
   },
   {
-    title: "Armada",
+    title: "Fleet",
     href: "/driver/vehicle/select",
     icon: Car,
   },
   {
-    title: "Bukti POD",
+    title: "POD Proof",
     href: "/driver/pod",
     icon: FileCheck,
   },
   {
-    title: "Riwayat",
+    title: "History",
     href: "/driver/history",
     icon: History,
   },

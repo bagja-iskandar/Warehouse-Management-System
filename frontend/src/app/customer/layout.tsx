@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 
 export const metadata: Metadata = {
-  title: "Portal Customer — WMS Nusantara",
+  title: "Customer Portal — WMS Nusantara",
   description:
-    "Portal layanan mandiri sewa gudang standard & cold storage, registrasi barang inventaris, dan pengajuan logistik WMS Nusantara.",
+    "Self-service portal for standard & cold storage warehouse rentals, inventory goods registration, and logistics requests in WMS Nusantara.",
 };
 
 export default function CustomerLayout({

@@ -40,14 +40,14 @@ export default function StorageRentalBookingPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Sewa Ruang Gudang (Storage Booking)
+              Warehouse Space Rental & Booking
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               Self-Service Booking
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Pilih jenis ruang penyimpanan bersuhu dingin (Cold Storage) atau standar, tentukan volume m³, dan durasi sewa.
+            Select temperature-controlled (Cold Storage) or standard dry storage, specify volume in m³, and choose rental duration.
           </p>
         </div>
       </div>
@@ -58,19 +58,19 @@ export default function StorageRentalBookingPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h2 className="text-lg font-bold text-slate-900">
-            Booking Ruang Gudang Berhasil Didaftarkan!
+            Warehouse Space Booking Registered Successfully!
           </h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            Permintaan sewa ruang {volumeM3} m³ ({storageType === "COLD" ? "Cold Storage -18°C" : "Standard Storage"}) selama {durationMonths} bulan telah kami terima. Faktur tagihan telah diterbitkan.
+            Rental booking request for {volumeM3} m³ ({storageType === "COLD" ? "Cold Storage -18°C" : "Standard Storage"}) for {durationMonths} month(s) has been received. Your invoice has been generated.
           </p>
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-mono space-y-1">
-            <p>Total Tagihan: Rp {grandTotal.toLocaleString("id-ID")}</p>
-            <p>Lokasi: {selectedHub === "JKT-01" ? "Gudang Utama Cakung (JKT-01)" : "Hub Gedebage (BDG-01)"}</p>
+            <p>Total Bill: IDR {grandTotal.toLocaleString("en-US")}</p>
+            <p>Location: {selectedHub === "JKT-01" ? "Cakung Logistics Central Hub (JKT-01)" : "West Java Distribution Hub Gedebage (BDG-01)"}</p>
           </div>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link href="/customer/billing">
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
-                Lihat Faktur & Pembayaran →
+                View Invoices & Payment →
               </Button>
             </Link>
             <Button
@@ -78,7 +78,7 @@ export default function StorageRentalBookingPage() {
               onClick={() => setIsBooked(false)}
               className="text-xs h-9"
             >
-              Sewa Ruang Lain
+              Rent Another Space
             </Button>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function StorageRentalBookingPage() {
             {/* Step 1: Storage Type */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900">
-                1. Pilih Tipe Ruang Penyimpanan
+                1. Select Storage Space Type
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -107,13 +107,13 @@ export default function StorageRentalBookingPage() {
                       <Snowflake className="h-4 w-4 text-sky-600" />
                       <span>Cold Storage Sub-zero</span>
                     </span>
-                    <Badge className="bg-sky-100 text-sky-800 text-[10px]">-18°C s/d -25°C</Badge>
+                    <Badge className="bg-sky-100 text-sky-800 text-[10px]">-18°C to -25°C</Badge>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                    Khusus daging beku, seafood, dairy, dan produk beku berpendingin presisi.
+                    Specially designed for frozen beef, seafood, dairy, and precision sub-zero goods.
                   </p>
                   <p className="text-xs font-bold text-sky-700 mt-3 font-mono">
-                    Rp 150.000 / m³ / bulan
+                    IDR 150,000 / m³ / month
                   </p>
                 </div>
 
@@ -131,13 +131,13 @@ export default function StorageRentalBookingPage() {
                       <Warehouse className="h-4 w-4 text-emerald-600" />
                       <span>Standard Storage (Dry)</span>
                     </span>
-                    <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">20°C s/d 26°C</Badge>
+                    <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">20°C to 26°C</Badge>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                    Untuk barang umum, mebel & furnitur, elektronik, dan produk retail kering.
+                    For general merchandise, furniture & woodcraft, consumer electronics, and dry retail goods.
                   </p>
                   <p className="text-xs font-bold text-emerald-700 mt-3 font-mono">
-                    Rp 50.000 / m³ / bulan
+                    IDR 50,000 / m³ / month
                   </p>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default function StorageRentalBookingPage() {
             {/* Step 2: Hub Location */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h2 className="text-sm font-bold text-slate-900">
-                2. Pilih Fasilitas Gudang (Hub Base)
+                2. Select Warehouse Facility (Hub Base)
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -160,10 +160,10 @@ export default function StorageRentalBookingPage() {
                   }`}
                 >
                   <span className="text-xs font-bold text-slate-900 block">
-                    Gudang Utama Cakung (JKT-01)
+                    Cakung Logistics Central Hub (JKT-01)
                   </span>
                   <span className="text-[11px] text-slate-500 block mt-1">
-                    Kawasan Industri Pulo Gadung, Jakarta Timur
+                    Pulo Gadung Industrial Zone, East Jakarta
                   </span>
                 </button>
 
@@ -177,10 +177,10 @@ export default function StorageRentalBookingPage() {
                   }`}
                 >
                   <span className="text-xs font-bold text-slate-900 block">
-                    Hub Distribusi Gedebage (BDG-01)
+                    West Java Distribution Hub Gedebage (BDG-01)
                   </span>
                   <span className="text-[11px] text-slate-500 block mt-1">
-                    Kawasan Logistik Gedebage, Bandung
+                    Gedebage Logistics Corridor, Bandung
                   </span>
                 </button>
               </div>
@@ -189,12 +189,12 @@ export default function StorageRentalBookingPage() {
             {/* Step 3: Volume & Duration Slider */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
               <h2 className="text-sm font-bold text-slate-900">
-                3. Volume Ruang & Durasi Kontrak
+                3. Required Space Volume & Contract Duration
               </h2>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-slate-600">Volume Ruang yang Dibutuhkan (m³):</span>
+                  <span className="text-slate-600">Required Space Volume (m³):</span>
                   <span className="text-base font-extrabold text-indigo-600 font-mono">
                     {volumeM3} m³
                   </span>
@@ -217,9 +217,9 @@ export default function StorageRentalBookingPage() {
 
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-slate-600">Durasi Sewa:</span>
+                  <span className="text-slate-600">Rental Duration:</span>
                   <span className="text-base font-extrabold text-slate-900 font-mono">
-                    {durationMonths} Bulan
+                    {durationMonths} Month{durationMonths > 1 ? "s" : ""}
                   </span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -234,7 +234,7 @@ export default function StorageRentalBookingPage() {
                           : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                       }`}
                     >
-                      {m} Bulan
+                      {m} Month{m > 1 ? "s" : ""}
                     </button>
                   ))}
                 </div>
@@ -246,12 +246,12 @@ export default function StorageRentalBookingPage() {
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
               <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                Ringkasan Biaya Sewa
+                Rental Cost Breakdown
               </h2>
 
               <div className="space-y-3 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Tipe Ruang:</span>
+                  <span className="text-slate-500">Storage Type:</span>
                   <span className="font-bold text-slate-900">
                     {storageType === "COLD" ? "Cold Storage (-18°C)" : "Standard Storage"}
                   </span>
@@ -263,28 +263,28 @@ export default function StorageRentalBookingPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Tarif Satuan:</span>
+                  <span className="text-slate-500">Unit Rate:</span>
                   <span className="font-bold text-slate-900 font-mono">
-                    Rp {pricePerM3.toLocaleString("id-ID")} / m³
+                    IDR {pricePerM3.toLocaleString("en-US")} / m³
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Biaya per Bulan:</span>
+                  <span className="text-slate-500">Monthly Subtotal:</span>
                   <span className="font-bold text-slate-900 font-mono">
-                    Rp {monthlyTotal.toLocaleString("id-ID")}
+                    IDR {monthlyTotal.toLocaleString("en-US")}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Durasi:</span>
-                  <span className="font-bold text-slate-900">{durationMonths} Bulan</span>
+                  <span className="text-slate-500">Duration:</span>
+                  <span className="font-bold text-slate-900">{durationMonths} Month{durationMonths > 1 ? "s" : ""}</span>
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-                  <span className="font-bold text-slate-900 text-sm">Total Tagihan:</span>
+                  <span className="font-bold text-slate-900 text-sm">Total Bill:</span>
                   <span className="font-extrabold text-emerald-600 text-base font-mono">
-                    Rp {grandTotal.toLocaleString("id-ID")}
+                    IDR {grandTotal.toLocaleString("en-US")}
                   </span>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export default function StorageRentalBookingPage() {
                 type="submit"
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-10 rounded-xl shadow-md shadow-emerald-600/20"
               >
-                Konfirmasi & Booking Ruang
+                Confirm & Book Space
               </Button>
             </div>
           </div>

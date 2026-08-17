@@ -49,22 +49,22 @@ const INVOICES_DATA: InvoiceRecord[] = [
     baseAmountRp: 12500000,
     lateFeeRp: 0,
     totalAmountRp: 12500000,
-    issueDate: "01 Agu 2026",
-    dueDate: "10 Agu 2026",
-    paidDate: "08 Agu 2026",
+    issueDate: "Aug 01, 2026",
+    dueDate: "Aug 10, 2026",
+    paidDate: "Aug 08, 2026",
     status: "PAID",
   },
   {
     id: "inv-2",
     invoiceNumber: "INV-2026-002",
     customerName: "CV Furnitur Nusantara",
-    storagePlan: "Standard Storage (Dry Mebel)",
+    storagePlan: "Standard Storage (Dry Furniture)",
     rentedSpaceM3: 100,
     baseAmountRp: 3500000,
     lateFeeRp: 350000,
     totalAmountRp: 3850000,
-    issueDate: "01 Agu 2026",
-    dueDate: "10 Agu 2026",
+    issueDate: "Aug 01, 2026",
+    dueDate: "Aug 10, 2026",
     status: "OVERDUE",
     daysOverdue: 6,
   },
@@ -77,9 +77,9 @@ const INVOICES_DATA: InvoiceRecord[] = [
     baseAmountRp: 7500000,
     lateFeeRp: 0,
     totalAmountRp: 7500000,
-    issueDate: "01 Agu 2026",
-    dueDate: "10 Agu 2026",
-    paidDate: "05 Agu 2026",
+    issueDate: "Aug 01, 2026",
+    dueDate: "Aug 10, 2026",
+    paidDate: "Aug 05, 2026",
     status: "PAID",
   },
   {
@@ -91,8 +91,8 @@ const INVOICES_DATA: InvoiceRecord[] = [
     baseAmountRp: 10000000,
     lateFeeRp: 0,
     totalAmountRp: 10000000,
-    issueDate: "05 Agu 2026",
-    dueDate: "20 Agu 2026",
+    issueDate: "Aug 05, 2026",
+    dueDate: "Aug 20, 2026",
     status: "PENDING",
   },
 ];
@@ -110,15 +110,15 @@ export default function BillingManagementPage() {
           customerName: inv.customerName || "PT Fresh Foods Indonesia",
           storagePlan:
             inv.penaltyFee > 0
-              ? "Cold Storage Sub-zero (-18°C) + Denda Keterlambatan"
+              ? "Cold Storage Sub-zero (-18°C) + Late Fee Penalty"
               : "Cold Storage Sub-zero (-18°C)",
           rentedSpaceM3: Math.round(inv.subtotal / 50000) || 150,
           baseAmountRp: inv.subtotal,
           lateFeeRp: inv.penaltyFee,
           totalAmountRp: inv.totalAmount,
-          issueDate: "01 Agu 2026",
-          dueDate: "10 Agu 2026",
-          paidDate: inv.paidDate ? "08 Agu 2026" : undefined,
+          issueDate: "Aug 01, 2026",
+          dueDate: "Aug 10, 2026",
+          paidDate: inv.paidDate ? "Aug 08, 2026" : undefined,
           status:
             inv.status === "PAID"
               ? ("PAID" as const)
@@ -152,14 +152,14 @@ export default function BillingManagementPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Manajemen Faktur Sewa & Denda Keterlambatan
+              Rental Invoice Management & Late Fee Billing
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Billing Engine
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Penerbitan faktur sewa ruang gudang bulanan, kalkulasi otomatis denda 5%/minggu, dan status pelunasan.
+            Monthly warehouse space rental invoice issuance, 5%/week automated late fee calculations, and settlement tracking.
           </p>
         </div>
 
@@ -169,12 +169,12 @@ export default function BillingManagementPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Rekap Keuangan</span>
+            <span>Export Financial Summary</span>
           </Button>
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Generate Faktur Bulan Ini</span>
+            <span>Generate Invoices This Month</span>
           </Button>
         </div>
       </div>
@@ -182,37 +182,37 @@ export default function BillingManagementPage() {
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Faktur Diterbitkan</span>
-          <p className="text-2xl font-extrabold text-slate-900">{INVOICES_DATA.length} Faktur</p>
-          <p className="text-[11px] text-slate-400">Periode Agustus 2026</p>
+          <span className="text-xs font-semibold text-slate-500">Total Invoices Issued</span>
+          <p className="text-2xl font-extrabold text-slate-900">{INVOICES_DATA.length} Invoices</p>
+          <p className="text-[11px] text-slate-400">Period: August 2026</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Pendapatan Masuk (Lunas)</span>
+          <span className="text-xs font-semibold text-slate-500">Revenue Collected (Settled)</span>
           <p className="text-2xl font-extrabold text-emerald-600">
-            Rp {(totalPaidRevenue / 1000000).toFixed(1)} Jt
+            IDR {(totalPaidRevenue / 1000000).toFixed(1)} M
           </p>
           <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>2 Faktur Terverifikasi Bank</span>
+            <span>2 Invoices Bank-Verified</span>
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Menunggu Pembayaran</span>
+          <span className="text-xs font-semibold text-slate-500">Pending Payment</span>
           <p className="text-2xl font-extrabold text-indigo-600">
-            Rp {(totalPendingRevenue / 1000000).toFixed(1)} Jt
+            IDR {(totalPendingRevenue / 1000000).toFixed(1)} M
           </p>
-          <p className="text-[11px] text-slate-400">1 Menunggu • 1 Overdue</p>
+          <p className="text-[11px] text-slate-400">1 Pending • 1 Overdue</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Denda Berjalan</span>
+          <span className="text-xs font-semibold text-slate-500">Total Active Late Fees</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-rose-600">Rp 750.000</p>
-            <Badge variant="destructive" className="text-[10px]">+5% / mgg</Badge>
+            <p className="text-2xl font-extrabold text-rose-600">IDR 750,000</p>
+            <Badge variant="destructive" className="text-[10px]">+5% / wk</Badge>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">CV Furnitur Nusantara (6 hr)</p>
+          <p className="text-[11px] text-slate-400 font-mono">CV Furnitur Nusantara (6 days)</p>
         </div>
       </div>
 
@@ -229,7 +229,7 @@ export default function BillingManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Faktur ({INVOICES_DATA.length})
+              All Invoices ({INVOICES_DATA.length})
             </button>
             <button
               onClick={() => setStatusFilter("PAID")}
@@ -239,7 +239,7 @@ export default function BillingManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Lunas
+              Paid
             </button>
             <button
               onClick={() => setStatusFilter("OVERDUE")}
@@ -249,7 +249,7 @@ export default function BillingManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Jatuh Tempo (+Denda)
+              Overdue (+Late Fee)
             </button>
             <button
               onClick={() => setStatusFilter("PENDING")}
@@ -259,7 +259,7 @@ export default function BillingManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Menunggu Pembayaran
+              Pending Payment
             </button>
           </div>
 
@@ -267,7 +267,7 @@ export default function BillingManagementPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari no. faktur atau nama penyewa..."
+              placeholder="Search invoice number or tenant name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
@@ -280,14 +280,14 @@ export default function BillingManagementPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">No. Faktur & Penyewa</th>
-                <th className="py-3 px-3">Layanan & Volume</th>
-                <th className="py-3 px-3">Biaya Pokok</th>
-                <th className="py-3 px-3">Denda Keterlambatan</th>
-                <th className="py-3 px-3">Total Tagihan</th>
-                <th className="py-3 px-3">Jatuh Tempo</th>
+                <th className="py-3 px-3">Invoice No. & Tenant</th>
+                <th className="py-3 px-3">Service & Volume</th>
+                <th className="py-3 px-3">Base Amount</th>
+                <th className="py-3 px-3">Late Fee Penalty</th>
+                <th className="py-3 px-3">Total Bill</th>
+                <th className="py-3 px-3">Due Date</th>
                 <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -306,7 +306,7 @@ export default function BillingManagementPage() {
                   {/* Service & M3 */}
                   <td className="py-3.5 px-3">
                     <span className="font-semibold text-slate-800 block">
-                      {inv.rentedSpaceM3} m³ Ruang
+                      {inv.rentedSpaceM3} m³ Space
                     </span>
                     <span className="text-[10.5px] text-slate-500 block">
                       {inv.storagePlan}
@@ -316,7 +316,7 @@ export default function BillingManagementPage() {
                   {/* Base Amount */}
                   <td className="py-3.5 px-3">
                     <span className="font-mono font-medium text-slate-800">
-                      Rp {inv.baseAmountRp.toLocaleString("id-ID")}
+                      IDR {inv.baseAmountRp.toLocaleString("en-US")}
                     </span>
                   </td>
 
@@ -325,21 +325,21 @@ export default function BillingManagementPage() {
                     {inv.lateFeeRp > 0 ? (
                       <div>
                         <span className="font-mono font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded text-[11px]">
-                          +Rp {inv.lateFeeRp.toLocaleString("id-ID")}
+                          +IDR {inv.lateFeeRp.toLocaleString("en-US")}
                         </span>
                         <span className="text-[10px] text-rose-700 block mt-0.5 font-semibold">
-                          Terlambat {inv.daysOverdue} Hari
+                          {inv.daysOverdue} Days Overdue
                         </span>
                       </div>
                     ) : (
-                      <span className="text-slate-400 font-mono">Rp 0</span>
+                      <span className="text-slate-400 font-mono">IDR 0</span>
                     )}
                   </td>
 
                   {/* Total Amount */}
                   <td className="py-3.5 px-3">
                     <span className="font-mono font-extrabold text-slate-900 block text-xs">
-                      Rp {inv.totalAmountRp.toLocaleString("id-ID")}
+                      IDR {inv.totalAmountRp.toLocaleString("en-US")}
                     </span>
                   </td>
 
@@ -350,7 +350,7 @@ export default function BillingManagementPage() {
                     </span>
                     {inv.paidDate && (
                       <span className="text-[10px] text-emerald-600 font-semibold block">
-                        Lunas: {inv.paidDate}
+                        Paid: {inv.paidDate}
                       </span>
                     )}
                   </td>
@@ -359,15 +359,15 @@ export default function BillingManagementPage() {
                   <td className="py-3.5 px-3">
                     {inv.status === "PAID" ? (
                       <Badge variant="success" className="text-[10.5px]">
-                        Lunas
+                        Paid
                       </Badge>
                     ) : inv.status === "OVERDUE" ? (
                       <Badge variant="destructive" className="text-[10.5px]">
-                        Jatuh Tempo
+                        Overdue
                       </Badge>
                     ) : (
                       <Badge variant="warning" className="text-[10.5px]">
-                        Menunggu
+                        Pending
                       </Badge>
                     )}
                   </td>
@@ -379,7 +379,7 @@ export default function BillingManagementPage() {
                       variant="ghost"
                       className="h-8 px-2.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
                     >
-                      Kirim Faktur →
+                      Send Invoice →
                     </Button>
                   </td>
                 </tr>

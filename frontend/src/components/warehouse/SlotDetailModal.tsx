@@ -50,13 +50,13 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
   const getStatusBadge = () => {
     switch (slot.status) {
       case "OCCUPIED":
-        return <Badge className="bg-indigo-600 text-white">Terisi Penuh (100%)</Badge>;
+        return <Badge className="bg-indigo-600 text-white">Fully Occupied (100%)</Badge>;
       case "PARTIAL":
-        return <Badge className="bg-emerald-600 text-white">Terisi Sebagian ({Math.round((slot.usedM3 / slot.capacityM3) * 100)}%)</Badge>;
+        return <Badge className="bg-emerald-600 text-white">Partially Occupied ({Math.round((slot.usedM3 / slot.capacityM3) * 100)}%)</Badge>;
       case "AVAILABLE":
-        return <Badge className="bg-slate-100 text-slate-700 border border-slate-300">Tersedia (Kosong)</Badge>;
+        return <Badge className="bg-slate-100 text-slate-700 border border-slate-300">Available (Vacant)</Badge>;
       case "MAINTENANCE":
-        return <Badge className="bg-amber-500 text-slate-950">Pemeliharaan Rak</Badge>;
+        return <Badge className="bg-amber-500 text-slate-950">Rack Maintenance</Badge>;
     }
   };
 
@@ -72,12 +72,12 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold text-slate-900">
-                  Slot Rak {slot.code}
+                  Rack Slot {slot.code}
                 </h2>
                 {getStatusBadge()}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                {slot.zoneName} • Gudang Cakung (JKT-01)
+                {slot.zoneName} • Cakung Hub (JKT-01)
               </p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
-            aria-label="Tutup"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
@@ -97,7 +97,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-600">
-                Kondisi Sensor Real-time
+                Real-time Sensor Telemetry
               </span>
               <span className="text-[10.5px] text-emerald-600 font-bold flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -107,7 +107,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
 
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-sm">
-                <span className="text-[11px] text-slate-400 block">Suhu Slot</span>
+                <span className="text-[11px] text-slate-400 block">Slot Temperature</span>
                 <div className="flex items-center gap-1.5 mt-1">
                   <Thermometer className="h-4 w-4 text-sky-600" />
                   <span className="text-base font-bold text-slate-900 font-mono">
@@ -117,7 +117,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
               </div>
 
               <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-sm">
-                <span className="text-[11px] text-slate-400 block">Kapasitas Terisi</span>
+                <span className="text-[11px] text-slate-400 block">Occupied Capacity</span>
                 <div className="flex items-center gap-1.5 mt-1">
                   <Boxes className="h-4 w-4 text-indigo-600" />
                   <span className="text-base font-bold text-slate-900 font-mono">
@@ -134,7 +134,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
               {/* Tenant Profile */}
               <div>
                 <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block mb-2">
-                  INFORMASI PENYEWA & KONTRAK
+                  TENANT & CONTRACT INFORMATION
                 </span>
                 <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100">
                   <div className="flex items-center gap-2.5">
@@ -151,7 +151,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
                     </div>
                   </div>
                   <Badge variant="success" className="text-[10px]">
-                    Sewa Aktif
+                    Active Rental
                   </Badge>
                 </div>
               </div>
@@ -159,12 +159,12 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
               {/* Stored Goods Details */}
               <div>
                 <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block mb-2">
-                  BARANG / SKU TERSIMPAN
+                  STORED GOODS / SKU
                 </span>
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">
-                      {slot.itemName || "Daging Sapi Wagyu A5 Import"}
+                      {slot.itemName || "Import Wagyu Beef Ribeye A5"}
                     </span>
                     <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
                       {slot.itemSku || "BAR-FRESH-001"}
@@ -173,13 +173,13 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
 
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 pt-1 border-t border-slate-200/60">
                     <div>
-                      <span className="text-[11px] text-slate-400 block">Jumlah Koli:</span>
+                      <span className="text-[11px] text-slate-400 block">Package Quantity:</span>
                       <span className="font-semibold text-slate-800">
-                        {slot.itemQuantity || "150 Koli"}
+                        {slot.itemQuantity || "150 Packages"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[11px] text-slate-400 block">Kadaluarsa:</span>
+                      <span className="text-[11px] text-slate-400 block">Expiry Date:</span>
                       <span className="font-semibold text-slate-800">
                         {slot.expiryDate || "12 Nov 2026"}
                       </span>
@@ -191,9 +191,9 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
           ) : (
             <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300">
               <Boxes className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-xs font-bold text-slate-700">Slot Ini Siap Digunakan</p>
+              <p className="text-xs font-bold text-slate-700">This Slot is Ready for Use</p>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Kapasitas {slot.capacityM3} m³ tersedia untuk alokasi penerimaan barang baru.
+                Capacity of {slot.capacityM3} m³ available for new inbound inventory allocation.
               </p>
             </div>
           )}
@@ -206,7 +206,7 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
             onClick={onClose}
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
           >
-            Tutup
+            Close
           </Button>
 
           <div className="flex items-center gap-2">
@@ -215,12 +215,12 @@ export function SlotDetailModal({ slot, isOpen, onClose }: SlotDetailModalProps)
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>Cetak QR Slot</span>
+              <span>Print Slot QR</span>
             </Button>
 
             <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-9 flex items-center gap-1.5">
               <ArrowRightLeft className="h-3.5 w-3.5" />
-              <span>Mutasi Rak</span>
+              <span>Rack Transfer</span>
             </Button>
           </div>
         </div>

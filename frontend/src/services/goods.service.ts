@@ -114,7 +114,7 @@ export class HttpGoodsService implements IGoodsService {
       warehouseName:
         raw.warehouseName ||
         raw.warehouse?.name ||
-        "Gudang Utama Cakung Logistics Hub",
+        "Cakung Logistics Central Hub",
       slotId: raw.slotId || raw.slot?.id,
       slotCode: raw.slotCode || raw.slot?.code,
       name: raw.name,
@@ -128,7 +128,7 @@ export class HttpGoodsService implements IGoodsService {
         weightKg: raw.dimensions?.weightKg || 0,
       },
       quantity: raw.quantity,
-      unit: raw.unit || "Koli",
+      unit: raw.unit || "Package",
       requiresColdStorage: Boolean(raw.requiresColdStorage),
       targetTemperatureMin: raw.targetTempMin,
       targetTemperatureMax: raw.targetTempMax,
@@ -191,7 +191,7 @@ export class MockGoodsService implements IGoodsService {
       customerId,
       customerName,
       warehouseId: input.warehouseId,
-      warehouseName: "Gudang Utama Cakung Logistics Hub",
+      warehouseName: "Cakung Logistics Central Hub",
       name: input.name,
       category: input.category,
       description: input.description,
@@ -216,8 +216,8 @@ export class MockGoodsService implements IGoodsService {
           id: `hist-${Date.now()}`,
           goodsId: `brg-${Date.now()}`,
           status: input.pickupRequired ? "PENDING_PICKUP" : "STORED",
-          title: "Registrasi Barang Berhasil",
-          description: `Barang didaftarkan oleh ${customerName}`,
+          title: "Goods Registration Successful",
+          description: `Goods registered by ${customerName}`,
           actorName: customerName,
           actorRole: "Customer",
           timestamp: new Date().toISOString(),
