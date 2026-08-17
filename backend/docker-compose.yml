@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wms_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wms_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-wms_nusantara}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wms_user} -d ${POSTGRES_DB:-wms_nusantara}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wms_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: wms_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - '${MINIO_PORT:-9000}:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - wms_network
+
+  createbuckets:
+    image: minio/mc:latest
+    container_name: wms_minio_createbuckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set localminio http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin};
+      /usr/bin/mc mb --ignore-existing localminio/${MINIO_BUCKET_NAME:-wms-storage};
+      /usr/bin/mc anonymous set download localminio/${MINIO_BUCKET_NAME:-wms-storage};
+      exit 0;
+      "
+    networks:
+      - wms_network
+
+volumes:
+  postgres_data:
+    name: wms_postgres_data
+    driver: local
+  minio_data:
+    name: wms_minio_data
+    driver: local
+
+networks:
+  wms_network:
+    name: wms_network
+    driver: bridge

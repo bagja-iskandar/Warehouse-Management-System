@@ -1,0 +1,143 @@
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import compression from 'compression';
+import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
+import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Attach Structured Pino Logger
+  const pinoLogger = app.get(Logger);
+  app.useLogger(pinoLogger);
+
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('app.port') || 5000;
+  const apiPrefix = configService.get<string>('app.apiPrefix') || 'api/v1';
+  const corsOrigin = configService.get<string>('app.corsOrigin') || 'http://localhost:3000';
+  const nodeEnv = configService.get<string>('app.nodeEnv') || 'development';
+
+  // Security HTTP Headers with Helmet
+  app.use(
+    helmet({
+      contentSecurityPolicy: nodeEnv === 'production',
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
+  // Gzip / Brotli Payload Compression
+  app.use(compression());
+
+  // CORS Configuration
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        nodeEnv === 'development' ||
+        corsOrigin.includes('*') ||
+        corsOrigin.split(',').map((o) => o.trim()).includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Accept,Authorization,X-Requested-With,X-Idempotency-Key',
+    credentials: true,
+  });
+
+  // Global API Route Prefix (e.g. /api/v1)
+  app.setGlobalPrefix(apiPrefix, {
+    exclude: ['health/(.*)', 'health'],
+  });
+
+  // Global Validation Pipe (Strict Boundary)
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: false,
+      },
+    }),
+  );
+
+  // Global Interceptors
+  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformResponseInterceptor());
+
+  // Global Error Exception Filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Graceful Shutdown Hooks for Containers
+  app.enableShutdownHooks();
+
+  // OpenAPI / Swagger Documentation Setup
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('WMS Nusantara — Warehouse Management System REST API')
+    .setDescription(
+      'Spesifikasi resmi RESTful API Backend WMS Nusantara untuk Web Next.js dan Mobile Android Kotlin.',
+    )
+    .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Masukkan JWT Bearer token: Bearer <token>',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addTag('Health & Monitoring', 'Liveness & Readiness probe endpoints')
+    .addTag('Authentication', 'Login, Register, Refresh Token & User Profiles (Phase 10)')
+    .addTag('Warehouses & 3D Slots', 'Gudang, zona simpan, dan visualisasi rak 3D (Phase 11)')
+    .addTag('Goods & Inventory', 'Master SKU, dimensi kubikasi m3, dan barcode QR (Phase 11)')
+    .addTag('Logistics & Fleet', 'Armada truk Reefer/Box, DO Dispatch, dan Digital POD (Phase 11)')
+    .addTag('Billing & Invoicing', 'Faktur sewa bulanan, VA, dan denda 5%/minggu (Phase 11)')
+    .addTag('IoT Telemetry', 'Ingestion sensor suhu Cold Storage & anomali deteksi (Phase 11)')
+    .build();
+
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+
+  // Mount Swagger UI at /api/docs
+  SwaggerModule.setup('api/docs', app, swaggerDocument, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'list',
+      filter: true,
+      showRequestDuration: true,
+    },
+    customSiteTitle: 'WMS Nusantara API Documentation',
+  });
+
+  // Export Swagger JSON spec endpoint at /api/docs-json
+  app.getHttpAdapter().get('/api/docs-json', (req, res) => {
+    res.json(swaggerDocument);
+  });
+
+  await app.listen(port);
+
+  pinoLogger.log(`=======================================================`);
+  pinoLogger.log(`🚀 WMS Nusantara Backend Service is running!`);
+  pinoLogger.log(`📡 Environment : ${nodeEnv}`);
+  pinoLogger.log(`🌐 Server URL   : http://localhost:${port}/${apiPrefix}`);
+  pinoLogger.log(`📖 Swagger Docs : http://localhost:${port}/api/docs`);
+  pinoLogger.log(`📄 Swagger JSON : http://localhost:${port}/api/docs-json`);
+  pinoLogger.log(`💚 Liveness     : http://localhost:${port}/health/liveness`);
+  pinoLogger.log(`🔍 Readiness    : http://localhost:${port}/health/readiness`);
+  pinoLogger.log(`=======================================================`);
+}
+
+bootstrap();
