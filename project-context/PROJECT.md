@@ -1,328 +1,58 @@
-# Warehouse Management System — Project Context
+# WMS Nusantara — Project Context & Master Specification
 
 ## 1. Project Overview
 
-**Project Name:** Warehouse Management System
-
-**Project Type:** Web-based Warehouse Management & Logistics System
-
-**Development Approach:** Rework and modernization of an existing warehouse management project.
-
-**Current Priority:** Frontend development first.
-
-This project is a rework of an existing **Sistem Penyimpanan Barang/Gudang**.
-
-The existing SRS document is the primary functional reference for this project.
-
-The purpose of this rework is to transform the existing system into a more structured, maintainable, professional, scalable, and user-friendly web application.
-
-The system is intended to support warehouse storage operations, goods management, monitoring, pickup and delivery, scheduling, payment, notification, and reporting.
+**Project Name:** Warehouse Management System (WMS Nusantara)  
+**Project Type:** Modern Web-based & Mobile-ready Warehouse Management and Cold Chain Logistics Platform  
+**Architecture:** Monorepo (`/frontend` Web Client, `/backend` API Gateway, `/docs` System Specs)  
+**Current Status:** **Frontend Phase 1–7 100% COMPLETE & STABLE** | **Backend Phase 8: READY FOR IMPLEMENTATION**
 
 ---
 
-# 2. Business Objective
+## 2. Business Objectives & Core Capabilities
 
-The main objective of the system is to improve:
+WMS Nusantara adalah modernisasi sistem pergudangan terintegrasi yang melayani penyimpanan umum (*General Dry Storage*) dan rantai dingin (*Cold Storage Sub-zero*):
 
-- Efficiency
-- Accuracy
-- Control
-- Visibility
-- Warehouse capacity management
-- Goods management
-- Delivery management
-- Monitoring of stored goods
-
-The system should provide accurate and, where applicable, real-time information regarding warehouse conditions and goods.
-
-The system should support the operational lifecycle of stored goods, starting from storage requests and goods input through warehouse operations, pickup, delivery, monitoring, payment, and reporting.
+1. **Self-Service Storage Rental:** Customer dapat menghitung estimasi volume ($m^3$) dan menyewa ruang gudang secara mandiri.
+2. **Cold Chain Integrity:** Pemantauan telemetri suhu real-time (ambang batas $-18.0^\circ\text{C}$ s/d $-25.0^\circ\text{C}$) pada ruang simpan dan armada truk reefer.
+3. **Fleet & Logistics Dispatch:** Pengelolaan armada truk (*Reefer & Box*), penugasan driver, alokasi loading dock, dan pelacakan rute GPS.
+4. **Digital Proof of Delivery (POD):** Validasi serah terima kargo menggunakan dokumentasi foto dan tanda tangan digital (*E-Signature*).
+5. **Automated Billing & Penalty:** Penerbitan faktur sewa bulanan dan perhitungan otomatis denda keterlambatan pembayaran sebesar $5\%$ per minggu.
 
 ---
 
-# 3. Primary Users
-
-The system has three primary user roles.
-
-## 3.1 Admin
-
-Admin manages warehouse and operational activities.
-
-Expected responsibilities include:
-
-- Managing warehouse information
-- Managing warehouse capacity
-- Managing goods
-- Monitoring stored goods
-- Managing customers
-- Managing drivers
-- Managing delivery activities
-- Managing payments
-- Creating reports
-- Managing user accounts
-- Monitoring warehouse operations
-
----
-
-## 3.2 Customer
-
-Customer uses the system to manage their warehouse storage activities.
-
-Expected responsibilities include:
-
-- Viewing warehouse information
-- Requesting storage
-- Inputting goods
-- Viewing stored goods
-- Monitoring goods
-- Viewing delivery information
-- Scheduling pickup
-- Making payments
-- Viewing payment history
-- Viewing goods history
-- Receiving notifications
-- Confirming received goods
-
----
-
-## 3.3 Driver
-
-Driver is responsible for pickup and delivery operations.
-
-Expected responsibilities include:
-
-- Viewing assigned pickup/delivery tasks
-- Selecting available vehicles
-- Viewing schedules
-- Performing pickup
-- Performing delivery
-- Confirming goods
-- Updating delivery status
-- Viewing route/location information
-- Viewing delivery history
-
----
-
-# 4. Core Functional Areas
-
-The application should eventually support the following functional areas.
-
-## 4.1 Authentication & Account
-
-- Create account
-- Login
-- Email verification
-- Edit profile
-- Role-based access
-- Account management
-- Delete account where authorized
-
----
-
-## 4.2 Warehouse Management
-
-- Warehouse information
-- Storage capacity
-- Storage availability
-- Storage status
-- Warehouse monitoring
-
-The system should provide information about available warehouse capacity so users can understand storage availability.
-
----
-
-## 4.3 Goods / Inventory Management
-
-- Input goods
-- Goods categories
-- Goods details
-- Quantity
-- Size/dimensions
-- Storage status
-- Goods history
-- Goods confirmation
-- Goods monitoring
-
-The original system requirements describe goods input containing information such as:
-
-- Goods type
-- Goods name
-- Description
-- Size
-- Quantity
-
-The system should validate goods data before storage.
-
----
-
-## 4.4 Pickup & Delivery
-
-- Pickup request
-- Delivery request
-- Scheduling
-- Driver assignment
-- Vehicle selection
-- Pickup confirmation
-- Delivery confirmation
-- Delivery status
-- Route information
-- Tracking
-
-The system should support information about the driver handling a delivery and allow users to monitor the movement of goods.
-
----
-
-## 4.5 Scheduling
-
-The system should support scheduling for:
-
-- Goods pickup
-- Goods delivery
-
-Scheduling may involve:
-
-- Customer
-- Driver
-- Admin
-
-The system should also support dynamic scheduling and delivery delay management where required by the product design.
-
----
-
-## 4.6 Payment
-
-The system should support:
-
-- Monthly/subscription payment
-- Payment status
-- Payment notification
-- Payment history
-- Payment proof
-- Late-payment penalty
-
-The original SRS describes monthly/subscription payment and notification regarding payment deadlines.
-
----
-
-## 4.7 Notification
-
-Notifications may be related to:
-
-- Payment
-- Goods arrival
-- Pickup
-- Delivery
-- Schedule
-- Goods status
-- Goods confirmation
-
-The system should notify relevant users based on the event.
-
----
-
-## 4.8 Monitoring
-
-Monitoring should provide visibility into:
-
-- Goods status
-- Goods condition
-- Goods location
-- Warehouse status
-- Delivery status
-
-Admin should be able to monitor goods stored in the warehouse.
-
----
-
-## 4.9 Reports
-
-Admin should eventually be able to create reports related to:
-
-- Warehouse activities
-- Goods
-- Storage
-- Delivery
-- Payment
-- Monitoring
-
----
-
-## 4.10 History
-
-Users should be able to view relevant historical information.
-
-Examples:
-
-- Goods history
-- Storage history
-- Pickup history
-- Delivery history
-- Payment history
-
----
-
-# 5. Frontend-First Development Strategy
-
-The initial development priority is the **frontend**.
-
-The frontend should be developed as a complete, coherent, and professional application interface before deep backend integration begins.
-
-However, the frontend architecture must be designed for future backend integration.
-
-Do not build the frontend around hardcoded values that will be difficult to replace later.
-
-When backend APIs are not available, use:
-
-- Mock data
-- Mock services
-- TypeScript interfaces
-- Service abstraction
-
-Mock implementations should be replaceable with real API calls without requiring a major rewrite of the UI.
-
----
-
-# 6. Target Frontend Technology
-
-The planned frontend stack is:
-
-- **Next.js**
-- **React**
-- **TypeScript**
-- **Tailwind CSS**
-- **shadcn/ui**
-- **Lucide React**
-- **TanStack Query**
-- **React Hook Form**
-- **Zod**
-- **Recharts**
-
-### Optional
-
-**Zustand** may be introduced only when client-side global state is actually required.
-
-Do not introduce additional libraries without a clear technical reason.
-
-Avoid unnecessary dependencies and overengineering.
-
----
-
-# 7. Frontend Architecture
-
-The frontend should follow a clear separation of concerns.
-
-Conceptually:
+## 3. Multi-Role Personas
 
 ```text
-UI
- ↓
-Components
- ↓
-Hooks
- ↓
-State / Query
- ↓
-Service Layer
- ↓
-API
- ↓
-Backend
+┌───────────────────────────┐   ┌───────────────────────────┐   ┌───────────────────────────┐
+│       ADMIN PORTAL        │   │      CUSTOMER PORTAL      │   │       DRIVER FLEET        │
+│   (Pusat Operasional)     │   │      (Tenant Mandiri)     │   │    (Eksekusi Lapangan)    │
+├───────────────────────────┤   ├───────────────────────────┤   ├───────────────────────────┤
+│ • Alokasi Slot Rak 3D     │   │ • Sewa Ruang Gudang (m³)  │   │ • Antrean Task DO Aktif   │
+│ • Approval Dispatch DO    │   │ • Registrasi Master SKU   │   │ • Pemilihan Armada Truk   │
+│ • Manajemen Driver & Truk │   │ • Monitor Suhu Cold Room  │   │ • Checklist Loading Dock  │
+│ • Telemetri Sensor IoT    │   │ • Request Penjemputan DO  │   │ • Navigasi Rute Live GPS  │
+│ • Verifikasi Faktur Sewa  │   │ • Pembayaran Virtual Acc  │   │ • Upload Digital POD & TTD│
+│ • Laporan Eksekutif (PDF) │   │ • Validasi Penerimaan DO  │   │ • Riwayat & Rating Trip   │
+└───────────────────────────┘   └───────────────────────────┘   └───────────────────────────┘
+```
+
+---
+
+## 4. Repositori & Monorepo Architecture
+
+```text
+Warehouse/
+├── frontend/             # Next.js 15 App Router Web Client (Port 3000)
+├── backend/              # Standalone API Server & PostgreSQL Gateway (Target Port 5000/8080)
+├── docs/                 # SRS docx, API contracts, dan arsitektur database
+└── Project-Context/      # Master Context, Roadmap, API Contract, dan Domain Models
+```
+
+---
+
+## 5. Constraint & Aturan Arsitektur Backend
+
+1. **Zero Direct DB Access from Clients:** Web Frontend (Next.js) dan Mobile Client (Kotlin Android) **tidak boleh mengakses PostgreSQL secara langsung**. Seluruh komunikasi wajib melalui REST API.
+2. **Frozen Frontend UI:** UI/UX frontend telah 100% selesai dan diaudit. Backend developer wajib menyesuaikan response data dengan kontrak `FRONTEND_API_CONTRACT.md`.
+3. **Stateless JWT Authentication:** Backend bertanggung jawab memvalidasi JWT Bearer token dan menegakkan Role-Based Access Control (RBAC).

@@ -1,0 +1,796 @@
+ANALISA & PERANCANGAN PERANGKAT LUNAK
+LAPORAN
+SISTEM PENYIMPANAN BARANG
+DISUSUN OLEH:
+2250081075 - Tegar Putu Satria
+2250081076 - Pandu Setia Anugrah
+2250081099 - Ahmad Haidar
+2250081103 - Bagja Iskandar Jamil
+Kelas-C
+PROGRAM STUDI INFORMATIKA
+FAKULTAS SAINS DAN INFORMATIKA
+UNIVERSITAS JENDERAL ACHMAD YANI
+2024
+DAFTAR ISI
+DAFTAR ISIi
+DAFTAR GAMBARiv
+BAB IPENDAHULUAN1
+I.1Latar Belakang1
+I.2Tujuan1
+I.3Lingkup1
+I.4Definisi1
+BAB IIDESKRIPSI UMUM3
+II.1Perspektif Produk3
+II.2Kegunaan3
+II.3Batasan-batasan4
+BAB IIIPERSYARATAN SPESIFIK5
+III.1Kebutuhan Fungsional5
+III.2Kebutuhan Non-Fungsional6
+III.2.1 Keamanan6
+III.2.2 Kinerja6
+III.2.3 Reliabilitas6
+III.2.4 Kemudahan Penggunaan6
+III.2.5 Interoperabilitas6
+BAB IVPERANCANGAN7
+IV.1Use case Diagram7
+IV.2Traceability Matrix7
+IV.3Use Case Description8
+IV.4Activity Diagram18
+IV.5Class Diagram19
+IV.6Sequence Diagram20
+IV.6.1Login20
+IV.6.2Create Akun20
+IV.6.3Melihat Riwayat21
+IV.6.4Input Data21
+IV.6.5 Hapus Akun22
+IV.6.6Laporan22
+IV.6.7Pemilihan Kendaraan22
+IV.6.8Pengiriman23
+IV.6.9Konfirmasi Barang23
+IV.6.10 Fitur Aplikasi23
+IV.6.11 Penjadwalan24
+IV.6.12 Edit Profile24
+IV.6.13 Monitoring25
+IV.6.14 Info Data Barang25
+IV.6.15 Pembayaran26
+II.7State Diagram27
+II.7.1Create Akun27
+II.7.2Login27
+II.7.3Penyewaan28
+II.8Deployment Diagram29
+II.9ERD30
+BAB VUSER INTERFACE31
+V.1Antarmuka Login31
+V.2Antarmuka Create Akun31
+V.3Antarmuka Profile32
+V.4Antarmuka Perangkat Lunak Admin32
+V.4.1Dashboard32
+V.4.2Gudang33
+V.4.3Pembayaran33
+V.4.4Laporan34
+V.4.5History34
+V.4.6Input Barang35
+V.4.7Monitoring35
+V.5Antarmuka Perangkat Lunak Costumer36
+V.5.1Dashboard36
+V.5.2Input Barang36
+V.5.3Pengiriman37
+V.5.4History37
+V.5.5Pembayaran38
+V.5.6Monitoring38
+DAFTAR GAMBAR
+Gambar 1 Use case Diagram7
+Gambar 2 Traceability Matrix7
+Gambar 3 Class Diagram 118
+Gambar 4 Class Diagram 119
+Gambar 5 Class Diagram19
+Gambar 6 Create Akun20
+Gambar 7 Melihat Riwayat21
+Gambar 8 Input Data21
+Gambar 9 Sequence Diagram : Hapus Akun22
+Gambar 10 Sequence Diagram : Laporan22
+Gambar 11 Sequence Diagram : Pemilihan Kendaraan22
+Gambar 12 Pengiriman23
+Gambar 13 Konfirmasi Barang23
+Gambar 14 Fitur Aplikasi23
+Gambar 15 Edit Profile24
+Gambar 16 Monitoring25
+Gambar 17 Info Data Barang25
+Gambar 18 Pembayaran26
+Gambar 19 State Diagram : Create Akun27
+Gambar 20 State Diagram : Create Akun27
+Gambar 21 State Diagram : Create Akun28
+Gambar 22 Deployment Diagram29
+Gambar 23 ERD30
+Gambar 24 Antarmuka Login31
+Gambar 25 Antarmuka Create Akun31
+Gambar 26 Antarmuka Profile32
+Gambar 27 Antarmuka Perangkat Lunak Admin : Dashboard32
+Gambar 28 Antarmuka Perangkat Lunak Admin : Gudang33
+Gambar 29 Antarmuka Perangkat Lunak Admin : Pembayaran33
+Gambar 30 Antarmuka Perangkat Lunak Admin : Laporan34
+Gambar 31 Antarmuka Perangkat Lunak Admin : History34
+Gambar 32 Antarmuka Perangkat Lunak Admin : Input Banrang35
+Gambar 33 Antarmuka Perangkat Lunak Admin : Monitoring35
+Gambar 34 Antarmuka Perangkat Lunak Costumer : Dashboard36
+Gambar 35 Antarmuka Perangkat Lunak Costumer : Input Barang36
+Gambar 36 Antarmuka Perangkat Lunak Costumer : Pengiriman37
+Gambar 37 Antarmuka Perangkat Lunak Costumer :History37
+Gambar 38 Antarmuka Perangkat Lunak Costumer :Pembayaran38
+Gambar 39 Antarmuka Perangkat Lunak Costumer : Monitoring38
+BAB IPENDAHULUAN
+I.1Latar Belakang
+Dalam era bisnis yang berkembang dan kompetitif, manajemen stok dan penyimpanan barang menjadi aspek yang sangat penting bagi keberhasilan operasional perusahaan. Sistem penyimpanan gudang dapat memainkan peran dalam memastikan kelancaran proses ini. Dalam konteks bisnis modern ini, efisiensi dalam penyimpanan dan pengelolaan stok merupakan faktor yang sangat dibutuhkan dalam keberhasilan sistem penyimpanan gudang. Sehingga, dengan meningkatnya kompleksitas operasional dan kebutuhan akan efisiensi, diperlukan sistem yang dapat mengelola dan mengoptimalkan proses penyimpanan barang dalam gudang secara efektif.
+I.2Tujuan
+Tujuan utama dari pengembangan sistem penyimpanan gudang adalah untuk meningkatkan efisiensi, ketelitian dan kontrol dalam pengelolaan stok barang. Dengan adanya sistem yang terintegrasi, perusahaan dapat mengelola persediaan dengan lebih efektif. Selain itu, sistem ini juga diharapkan dapat menyediakan informasi yang akurat dan real time mengenai keadaan gudang.
+I.3Lingkup
+Sistem penyimpanan gudang ini akan mencakup sejumlah fungsi utama, mulai dari penerimaan barang hingga distribusi. Ini mencakup penerimaan dan penyimpanan barang, pengelompokan barang berdasarkan jenis dan kategori, serta penyediaan alat untuk optimasi pengiriman dan penjadwalan pengiriman. 
+I.4Definisi
+Dalam konteks sistem penyimpanan gudang, beberapa istilah penting perlu didefinisikan dengan jelas.
+User adalah seluruh orang yang terlibat langsung dengan perangkat lunak yang dibuat. Dimana, user tersebut termasuk orang dari Perusahaan, admin dan pengantar jemput barang atau driver.
+Barang merujuk pada setiap item atau produk yang mencakupi disimpan dalam gudang. 
+Gudang adalah tempat penyimpanan yang digunakan untuk menyimpan barang dan dilengkapi dengan infrastruktur seperti rak. 
+Transaksi merujuk pada peristiwa atau aktivitas yang terkait dengan perpindahan barang masuk atau keluar dari gudang. Pengiriman adalah proses mengirimkan barang dari gudang ke tujuan yang ditentukan. 
+Penjadwalan adalah proses penentuan jadwal untuk pengiriman barang.
+BA B IIDESKRIPSI UMUM
+II.1Perspektif Produk
+Sistem perangkat lunak ini dirancang untuk membantu manajemen penyimpanan barang bagi perusahaan atau entitas yang membutuhkan layanan penyimpanan yang aman dan efisien. Sistem ini memungkinkan perusahaan untuk menyimpan berbagai jenis barang, termasuk makanan dingin, di dalam gudang yang terkelola dengan baik. Pengguna utama sistem ini adalah staf perusahaan yang ingin menyimpan barang di gudang serta driver yang bertugas untuk penjemputan dan pengantaran barang. Sistem ini juga menyediakan fitur monitoring barang secara daring, memastikan keamanan dan integritas barang selama penyimpanan.
+II.2Kegunaan
+Sistem ini memiliki berbagai kegunaan yang dirancang untuk meningkatkan efisiensi dan efektivitas manajemen penyimpanan barang, antara lain:
+Manajemen Barang: Pengguna dapat melakukan input data barang yang akan disimpan di gudang, memantau status barang, dan mengelola data barang secara keseluruhan.
+Pengelolaan Kapasitas Gudang: Sistem menyediakan informasi mengenai ketersediaan kapasitas gudang sehingga pengguna dapat merencanakan penyimpanan barang dengan lebih baik.
+Keamanan dan Verifikasi: Sistem mendukung verifikasi pengguna melalui email dan menyediakan QR code untuk akses ke gudang, memastikan bahwa hanya pengguna terverifikasi yang dapat mengakses barang.
+Monitoring dan Pelacakan: Pengguna dapat melakukan monitoring barang secara daring dan melacak pergerakan barang selama proses penjemputan dan pengantaran melalui fitur pelacakan maps.
+Pembayaran dan Notifikasi: Sistem mendukung berbagai metode pembayaran dan mengirimkan notifikasi pembayaran serta pemberitahuan terkait status barang kepada pengguna.
+II.3Batasan-batasan
+Sistem ini juga memiliki beberapa batasan yang perlu diperhatikan:
+Batasan Kapasitas: Kapasitas penyimpanan gudang terbatas dan harus dikelola sesuai dengan kapasitas fisik yang tersedia.
+Jenis Barang: Hanya barang-barang yang memenuhi syarat dan ketentuan yang dapat disimpan di gudang. Barang yang tidak sesuai dengan ketentuan tidak akan diterima oleh sistem.
+Akses dan Keamanan: Akses ke gudang dibatasi oleh verifikasi pengguna dan penggunaan QR code untuk memastikan keamanan barang.
+Koneksi Internet: Beberapa fitur sistem, seperti monitoring daring dan pelacakan maps, memerlukan koneksi internet yang stabil untuk berfungsi dengan baik.
+Pemeliharaan Sistem: Sistem mungkin memerlukan waktu pemeliharaan berkala yang dapat menyebabkan gangguan sementara pada layanan.
+Dengan memahami perspektif produk, kegunaan, dan batasan-batasan ini, diharapkan pengguna dapat memanfaatkan sistem dengan optimal serta mengantisipasi batasan yang ada dalam penggunaannya.
+BAB IIIPERSYARATAN SPESIFIK
+III.1Kebutuhan Fungsional 
+Kebutuhan Fungsional adalah serangkaian persyaratan yang mendefinisikan fungsi-fungsi sistem yang harus dipenuhi untuk mencapai tujuan pengguna. Dalam konteks aplikasi sistem penyimpanan gudang, kebutuhan fungsionalnya adalah sebagai berikut:
+Sistem harus memungkinkan pengguna untuk membuat akun dengan menyediakan fitur pendaftaran yang meminta informasi yang diperlukan.
+Setelah mendaftar, sistem harus memungkinkan pengguna untuk melakukan verifikasi akun melalui email untuk memastikan keamanan dan validitas akun.
+Pengguna harus dapat login ke aplikasi dengan menggunakan kredensial yang sudah terdaftar.
+Sistem harus memfasilitasi pengguna untuk mengedit profil atau data diri mereka sesuai kebutuhan.
+Pengguna harus dapat mengakses semua fitur aplikasi setelah berhasil login.
+Sistem harus menyediakan informasi tentang ketersediaan kapasitas gudang agar pengguna dapat memantau ketersediaan ruang penyimpanan.
+Pengguna harus dapat melakukan monitoring barang secara daring untuk memastikan keamanan dan integritas barang yang disimpan di gudang.
+Sistem harus memungkinkan pengguna untuk melakukan input data barang dengan menyediakan formulir yang sesuai.
+Sebelum menginputkan data barang, pengguna harus dapat melihat syarat dan ketentuan barang yang akan disimpan di gudang.
+Sistem harus menyediakan informasi tentang kurir yang sedang mengirim barang kepada pengguna, termasuk rincian profil drivernya.
+Pengguna harus dapat melakukan pembayaran menggunakan berbagai metode pembayaran yang tersedia, seperti m-banking, debit, atau kredit.
+Pengguna harus menerima QR code dari sistem untuk dapat mengakses gudang secara langsung jika diperlukan.
+Pengguna harus menerima notifikasi dari sistem untuk melakukan pembayaran secara berkala setiap bulannya.
+Pengguna harus menerima notifikasi dari admin melalui sistem saat barang sudah sampai di gudang.
+Sistem harus memungkinkan pengguna untuk membuat jadwal pengambilan barang dari gudang.
+Pengguna harus dapat melihat pergerakan barang yang sedang diantar melalui maps.
+Pengguna harus dapat melihat riwayat data barang yang sudah disimpan di gudang.
+Pengguna harus melakukan konfirmasi barang yang telah diterima setelah ditempat.
+III.2Kebutuhan Non-Fungsional
+III.2.1 Keamanan
+Sistem harus menggunakan autentikasi dan otorisasi untuk memastikan hanya pengguna yang terverifikasi yang dapat mengakses fitur.
+Data sensitif harus dienkripsi untuk melindungi dari akses tidak sah.
+III.2.2 Kinerja
+Sistem harus memberikan waktu respon yang cepat untuk operasi utama.
+Sistem harus memiliki ketersediaan minimal 99.5% dan dapat menangani peningkatan jumlah pengguna.
+III.2.3 Reliabilitas
+Sistem harus memastikan konsistensi data dan memiliki mekanisme backup serta pemulihan bencana.
+III.2.4 Kemudahan Penggunaan
+Sistem harus memiliki antarmuka yang intuitif dan mudah digunakan.
+Sistem harus menyediakan dokumentasi dan bantuan pengguna.
+III.2.5 Interoperabilitas
+Sistem harus dapat berintegrasi dengan sistem pembayaran dan aplikasi pihak ketiga lainnya.
+Sistem harus mendukung protokol dan format data standar.
+BAB IVPERANCANGAN
+IV.1Use case Diagram
+Gambar 1 Use case Diagram
+IV.2Traceability Matrix
+Gambar 2 Traceability Matrix
+Keterangan Traceability Matrix :
+UC1: melihat riwayat
+UC2: input barang
+UC3: pemilihan kendaraan
+UC4: konfirmasi barang
+UC5: fitur aplikasi
+UC6: penjadwal
+UC7: edit profile
+UC8: pengiriman
+UC9: monitoring
+UC10: kirim info data barang
+UC11: notifikasi
+UC12: pembayaran
+UC13: membuat laporan
+UC14: hapus akun
+UC15: create akun
+UC16: Login
+IV.3Use Case Description
+Use case name: 
+Login 
+Scenario:
+Admin Gudang, Driver dan Costumer akan melakukan login ke aplikasi
+Triggering event:
+Costumer ingin menyewa gudang, admin gudang ingin melakukan pengelolaan gudang
+Brief description:
+Melakukan login, jadi setiap akun memiliki database nya sendiri, dan dengan login maka dapat menggunakan fitur fitur yang sudah ada secara maksimal 
+Actors:
+Admin, Driver, Costumer
+Related use cases:
+Input Data Barang : Sebelum melakukan ini costumer perlu melakukan login terlebih dahulu (Include).
+Melakukan Pembayaran Bulanan : akan ada notifikasi di mana setiap akun akan berbeda beda waktunya (Include).
+Kelola Barang : sebelum Admin melakukan kelola perlu login terlebih dahulu (Include).
+Pengelompokkan Barang: Admin perlu login untuk melakukan pengelompokkan barang. (Include)
+Stakeholders:
+Manager
+Preconditions:
+User (Admin, Driver & Costumer) memiliki akun di sistem.
+User (Admin, Driver & Costumer) mengetahui username dan passwordnya.
+Costumer ingin melakukan input atau pembayaran.
+Admin ingin melakukan kelola atau pengelompokkan barang.
+Postconditions:
+User (Admin, Driver & Costumer)  berhasil login ke sistem.
+Sistem menampilkan halaman dashboard sesuai dengan hak akses user.
+Flow of activities:
+Actors
+System
+Membuka aplikasi.
+Memasukkan username dan password.
+Mengklik tombol "Login".
+Memverifikasi username dan password.
+Jika verifikasi berhasil, sistem memberikan akses ke halaman dashboard.
+Jika verifikasi gagal, sistem menampilkan pesan error.
+Exception conditions:
+Username atau password tidak valid.
+Sistem mengalami error.
+Use case name: 
+Melihat Riwayat
+Scenario:
+User ingin melihat riwayat barang yang telah disimpan atau diproses dalam sistem penyimpanan gudang.
+Triggering event:
+User memilih opsi "Melihat Riwayat" dari menu utama aplikasi.
+Brief description:
+Use case ini menggambarkan bagaimana user (Costumer) dapat melihat daftar riwayat barang yang telah disimpan, diambil, atau diproses di gudang.
+Actors:
+Costumer
+Related use cases:
+Login, Input Barang, Pengambilan Barang
+Stakeholders:
+Costumer, Admin
+Preconditions:
+Pengguna harus sudah memiliki akun dan login ke dalam sistem.
+Data riwayat barang telah tersedia dalam sistem.
+Postconditions:
+Pengguna dapat melihat riwayat barang secara lengkap.
+Sistem menampilkan informasi riwayat barang dengan benar.
+Flow of activities:
+Actors
+System
+Costumer membuka aplikasi.
+Costumer login ke dalam sistem.
+Costumer memilih opsi "Melihat Riwayat" dari menu utama.
+Menampilkan halaman login.
+Memverifikasi kredensial user.
+Menampilkan menu utama setelah login berhasil.
+Menampilkan daftar riwayat barang yang terkait dengan akun pengguna.
+Exception conditions:
+Tidak ada riwayat.
+Use case name: 
+Input Barang 
+Scenario:
+Melakukan input data barang yang ingin disewa
+Triggering event:
+Jika ada yang ingin melakukan penyewaan gudang
+Brief description:
+Costumer gudang dapat melakukan penyewaan tempat penyimpanan, di mana sebelum itu akan adanya pemilihan terlebih dahulu ingin menyewa untuk furniture atau makanan.
+Actors:
+Costumer
+Related use cases:
+Sebelum melakukan input perlu memilih terlebih dahulu ingin furniture atau makanan melalui use case pilih jenis barang, includeMelakukan Login (Include)
+Stakeholders:
+Admin
+Preconditions:
+Costumer ingin tempat penyimpanan 
+Sudah memiliki akun
+Postconditions:
+Data barang yang disimpan pada sistem.
+Sistem menampilkan informasi detail mengenai data barang seperti jenis barang, ukuran, dan harga sewa.
+Flow of activities:
+Actors
+System
+Memilih jenis barang (furniture atau makanan).
+Memasukkan informasi detail tentang barang yang akan disimpan, seperti nama barang, deskripsi, ukuran, dan jumlah.
+Mengkonfirmasi input data barang.
+Menyimpan data barang yang ingin disimpan pada sistem.
+Menampilkan informasi detail tentang barang yang ingin diberada di tempat penyimpanan.
+Exception conditions:
+Data barang tidak lengkap.
+Jenis barang tidak valid.
+Ukuran barang melebihi batas maksimum.
+Jumlah barang melebihi batas stok.
+Use case name: 
+Pemilihan Kendaraan 
+Scenario:
+Driver memilih kendaraan untuk pengiriman barang.
+Triggering event:
+Driver memilih opsi "Pemilihan Kendaraan" dari menu pengiriman.
+Brief description:
+Driver memilih kendaraan yang sesuai dengan kapasitas dan kebutuhan pengiriman barang.
+Actors:
+Driver
+Related use cases:
+Login, Pengiriman Barang
+Stakeholders:
+Kurir, Perusahaan Logistik
+Preconditions:
+Kurir sudah login ke sistem, dan data kendaraan tersedia.
+Postconditions:
+Kendaraan berhasil dipilih dan siap digunakan untuk pengiriman.
+Flow of activities:
+Actors
+System
+Driver membuka aplikasi dan login.
+Driver memilih "Pemilihan Kendaraan" dari menu.
+Driver memilih kendaraan yang diinginkan dari daftar.
+Menampilkan halaman login.
+Memverifikasi kredensial driver.
+Menampilkan daftar kendaraan.
+Menyimpan pilihan kendaraan driver.
+Exception conditions:
+Kendaraan tidak tersedia.
+Use case name: 
+Konfirmasi Barang
+Scenario:
+Admin, driver, dan costumer melakukan konfirmasi barang.
+Triggering event:
+Barang diterima di gudang atau oleh customer.
+Brief description:
+Proses konfirmasi barang oleh admin, driver, dan customer setelah penerimaan barang.
+Actors:
+Admin, Driver & Costumer
+Related use cases:
+Pengiriman Barang, Penerimaan Barang.
+Stakeholders:
+Perusahaan Logistik, Customer
+Preconditions:
+Barang sudah diterima di gudang atau oleh customer.
+Postconditions:
+Barang berhasil dikonfirmasi diterima.
+Flow of activities:
+Actors
+System
+Admin memverifikasi barang yang diterima.
+Driver mengkonfirmasi barang yang diterima.
+Costumer mengkonfirmasi barang yang diterima.
+Menampilkan daftar barang yang diterima.
+Menyimpan status konfirmasi barang.
+Mengirim notifikasi konfirmasi ke semua pihak.
+Exception conditions:
+Barang tidak sesuai.Barang rusak.
+Use case name: 
+Fitur Aplikasi
+Scenario:
+Admin, driver, dan costumer menggunakan berbagai fitur aplikasi.
+Triggering event:
+Pengguna mengakses aplikasi.
+Brief description:
+Pengguna dapat mengakses dan menggunakan berbagai fitur yang tersedia dalam aplikasi.
+Actors:
+Admin, Driver & Costumer
+Related use cases:
+Login, Melihat Riwayat, Pemilihan Kendaraan.
+Stakeholders:
+Perusahaan Logistik, Customer.
+Preconditions:
+Pengguna sudah login ke sistem.
+Postconditions:
+Pengguna dapat menggunakan fitur aplikasi sesuai kebutuhan.
+Flow of activities:
+Actors
+System
+Pengguna login ke aplikasi.
+Pengguna memilih fitur yang diinginkan.
+Menampilkan halaman login.
+Menyajikan menu fitur aplikasi.
+Menjalankan fitur yang dipilih oleh pengguna.
+Exception conditions:
+Fitur mengalami bug.
+Use case name: 
+Jadwal
+Scenario:
+Admin, driver, dan costumer mengatur jadwal pengiriman atau penjemputan barang.
+Triggering event:
+Pengguna memilih opsi penjadwalan.
+Brief description:
+Pengguna dapat mengatur jadwal pengiriman atau penjemputan barang.
+Actors:
+Admin, Driver & Costumer
+Related use cases:
+Pemilihan Kendaraan, Pengiriman Barang, Penerimaan Barang.
+Stakeholders:
+Perusahaan Logistik, Customer.
+Preconditions:
+Pengguna sudah login ke sistem.
+Postconditions:
+Jadwal pengiriman atau penjemputan barang berhasil diatur.
+Flow of activities:
+Actors
+System
+Pengguna login ke aplikasi.
+Pengguna memilih opsi penjadwalan.
+Pengguna mengatur jadwal pengiriman atau penjemputan.
+Menampilkan halaman login.
+Menampilkan opsi penjadwalan.
+Menyimpan jadwal yang diatur oleh pengguna.
+Mengirim notifikasi jadwal ke pengguna terkait.
+Exception conditions:
+Kesalahan Penjadwalan.
+Use case name: 
+Edit Profile
+Scenario:
+Admin, driver, dan costumer mengedit profil pengguna.
+Triggering event:
+Pengguna memilih opsi "Edit Profile" dari menu utama.
+Brief description:
+Pengguna dapat mengedit informasi profil mereka sesuai kebutuhan.
+Actors:
+Admin, Driver & Costumer
+Related use cases:
+Login
+Stakeholders:
+Perusahaan Logistik, Customer
+Preconditions:
+Pengguna sudah login ke sistem.
+Postconditions:
+Informasi profil pengguna berhasil diupdate.
+Flow of activities:
+Actors
+System
+Pengguna login ke aplikasi.
+Pengguna memilih opsi "Edit Profile".
+Pengguna mengedit informasi profil dan menyimpan perubahan.
+Menampilkan halaman login.
+Menampilkan halaman edit profil.
+Menyimpan perubahan profil yang dilakukan pengguna.
+Exception conditions:
+Tidak memiliki akses internet.
+Use case name: 
+Pengiriman 
+Scenario:
+Driver akan mengambil barang dan membawanya ke Gudang, adanya penjadwalan dinamis, manajemen penundaan, dan optimasi rute pengiriman agar info yang didapat dikirim ke costumer.
+Triggering event:
+Costumer sudah melakukan request penyimpanan di mana sudah melakukan input data.
+Brief description:
+Akan dilakukan pengambilan barang dan pengiriman barang. Driver disediakan oleh pihak gudang, dan informasi mengenai pengiriman akan diberikan kepada costumer.
+Actors:
+Driver
+Related use cases:
+Penjadwalan Dinamis: Sistem secara otomatis menjadwalkan waktu pengambilan dan pengiriman barang berdasarkan lokasi, waktu request, dan ketersediaan kurir. (Generalisasi)
+Manajemen Penundaan: Sistem memungkinkan penundaan pengambilan dan pengiriman barang jika terjadi situasi yang tidak terduga. (Extend ke Penjadwalan Dinamis)
+Optimasi Rute Pengiriman: Sistem menghitung rute pengiriman yang paling optimal untuk meminimalisir waktu dan biaya. (Include dari Penjadwalan dinamis)
+Stakeholders:
+Costumer
+Preconditions:
+Request penyimpanan telah disetujui.
+Barang siap untuk diambil.
+Driver tersedia.
+Postconditions:
+Barang telah diambil dari lokasi costumer.
+Barang telah diantar ke gudang.
+Costumer menerima informasi mengenai pengambilan dan pengiriman barang.
+Flow of activities:
+Actors
+Flow of activities:
+Menerima notifikasi pengambilan barang.
+Mengambil barang dari lokasi costumer.
+Mengantar barang ke gudang.
+Mengkonfirmasi pengambilan dan pengiriman barang.
+Menjadwalkan waktu pengambilan dan pengiriman barang.
+Menghitung rute pengiriman yang optimal.
+Mengirimkan informasi mengenai pengambilan dan pengiriman barang kepada costumer.
+Exception conditions:
+Barang tidak tersedia di lokasi costumer.
+Driver tidak tersedia.
+Alamat costumer tidak valid.
+Terjadi keterlambatan dalam pengambilan atau pengiriman barang.
+Use case name: 
+Monitoring 
+Scenario:
+Admin memantau status dan kondisi barang di gudang.
+Triggering event:
+Admin memilih opsi "Monitoring" dari menu aplikasi.
+Brief description:
+Admin dapat memantau status, kondisi, dan lokasi barang yang disimpan di gudang.
+Actors:
+Admin
+Related use cases:
+Pengiriman Barang, Penerimaan Barang
+Stakeholders:
+Perusahaan Logistik
+Preconditions:
+Admin sudah login ke sistem.
+Postconditions:
+Informasi status dan kondisi barang berhasil dipantau.
+Flow of activities:
+Actors
+System
+Admin login ke aplikasi.
+Admin memilih opsi "Monitoring".
+Admin melihat status dan kondisi barang.
+Menampilkan halaman login.
+Menampilkan opsi "Monitoring".
+Menyajikan informasi status dan kondisi barang.
+Exception conditions:
+Data tidak tersedia.
+Use case name: 
+Kirim Info Data Barang
+Scenario:
+Admin dan costumer mengirim informasi terkait data barang.
+Triggering event:
+Admin atau costumer memilih opsi "Kirim Info Data Barang" dari menu aplikasi.
+Brief description:
+Admin dan costumer dapat mengirim dan menerima informasi terkait data barang yang disimpan atau akan dikirim.
+Actors:
+Admin & Costumer
+Related use cases:
+Pengiriman Barang, Penerimaan Barang, Monitoring
+Stakeholders:
+Costumer
+Preconditions:
+Admin dan costumer sudah login ke sistem.
+Postconditions:
+Informasi data barang berhasil dikirim dan diterima.
+Flow of activities:
+Actors
+System
+Admin dan costumer login ke aplikasi.
+Admin atau costumer memilih opsi "Kirim Info Data Barang".
+Admin atau costumer mengirim informasi data barang.
+Menampilkan halaman login.
+Menampilkan opsi "Kirim Info Data Barang".
+Menyimpan dan mengirim informasi data barang.
+Exception conditions:
+Data tidak valid.
+Use case name: 
+Notifikasi 
+Scenario:
+Admin, driver, dan costumer menerima notifikasi dari sistem.
+Triggering event:
+Sistem mengirimkan notifikasi terkait status atau kondisi tertentu.
+Brief description:
+Sistem mengirimkan notifikasi kepada admin, driver, dan costumer tentang status atau kondisi barang, jadwal pengiriman, atau pembayaran.
+Actors:
+Admin, Driver & Costumer
+Related use cases:
+engiriman Barang, Penerimaan Barang, Monitoring, Jadwal, Pembayaran
+Stakeholders:
+Perusahaan Logistik, Customer
+Preconditions:
+Admin, driver, dan costumer sudah login ke sistem.
+Postconditions:
+Notifikasi berhasil diterima oleh pengguna terkait.
+Flow of activities:
+Actors
+System
+Admin, driver, dan costumer login ke aplikasi.
+Admin, driver, dan costumer menerima notifikasi dari sistem.
+Menampilkan halaman login.
+Mengirim notifikasi kepada pengguna terkait.
+Menyimpan status pengiriman notifikasi.
+Exception conditions:
+Tidak ada akses internet.
+Use case name: 
+Pembayaran
+Scenario:
+Costumer melakukan pembayaran secara subscription atau bulanan.
+Triggering event:
+Adanya notifikasi pembayaran bulanan untuk memberitahukan.
+Brief description:
+Melakukan pembayaran setiap bulannya, minimal pembayaran yang dilakukan adalah satu bulan, untuk bisa bayar perlu adanya notifikasi terlebih dahulu.
+Actors:
+Admin & Costumer
+Related use cases:
+Mendapatkan Notifikasi Pembayaran: Sistem mengirimkan notifikasi kepada costumer mengenai jumlah tagihan dan tanggal jatuh tempo pembayaran. (Include)
+Catat Penalti Telat Bayar: Jika costumer terlambat melakukan pembayaran, sistem akan mencatat penalti. (Extend)
+Melakukan Login: Costumer harus login ke sistem sebelum melakukan pembayaran. (Include)
+Stakeholders:
+Costumer
+Preconditions:
+Costumer memiliki akun di sistem.
+Costumer sudah bersedia untuk melakukan pembayaran. Costumer sudah mendapatkan notifikasi.
+Postconditions:
+Pembayaran telah dilakukan.
+Sistem mencatat status pembayaran sebagai "Lunas".
+Costumer menerima bukti pembayaran.Jika adanya keterlambatan maka akan ada denda atau penalti pada sistem.
+Flow of activities:
+Actors
+System
+Menerima notifikasi pembayaran bulanan.
+Login ke sistem.
+Memilih metode pembayaran.
+Memasukkan informasi pembayaran.
+Mengkonfirmasi pembayaran.
+Mengirimkan notifikasi pembayaran bulanan kepada costumer.
+Memproses pembayaran.
+Mencatat status pembayaran sebagai "Lunas".
+Mengirimkan bukti pembayaran kepada costumer.
+Exception conditions:
+Costumer belum siap untuk melakukan pembayaran.
+Terjadi kesalahan dalam proses pembayaran.
+Sistem mengalami error.
+Use case name: 
+Membuat Laporan 
+Scenario:
+Admin membuat laporan mengenai aktivitas dan status barang di gudang.
+Triggering event:
+Admin memilih opsi "Membuat Laporan" dari menu aplikasi.
+Brief description:
+Admin dapat membuat laporan yang berisi informasi tentang aktivitas penyimpanan, pengiriman, dan status barang di gudang.
+Actors:
+Admin
+Related use cases:
+Monitoring, Pengiriman Barang
+Stakeholders:
+Perusahaan Logistik
+Preconditions:
+Admin sudah login ke sistem.
+Postconditions:
+Laporan berhasil dibuat dan disimpan dalam sistem.
+Flow of activities:
+Actors
+System
+Admin login ke aplikasi.
+Admin memilih opsi "Membuat Laporan".
+Admin memasukkan data yang diperlukan untuk laporan.
+Admin mengonfirmasi pembuatan laporan.
+Menampilkan halaman login.
+Menampilkan opsi "Membuat Laporan".
+Menyimpan data laporan yang dimasukkan oleh admin.
+Menyimpan laporan dalam sistem.
+Exception conditions:
+Penyimpanan Gagal.
+Use case name: 
+Hapus Akun
+Scenario:
+Admin menghapus akun pengguna dari sistem.
+Triggering event:
+Admin memilih opsi "Hapus Akun" dari menu aplikasi.
+Brief description:
+Admin dapat menghapus akun pengguna dari sistem jika diperlukan.
+Actors:
+Admin
+Related use cases:
+Create Akun
+Stakeholders:
+Perusahaan Logistik
+Preconditions:
+Admin sudah login ke sistem dan memiliki hak akses untuk menghapus akun.
+Postconditions:
+Akun pengguna berhasil dihapus dari sistem.
+Flow of activities:
+Actors
+System
+Admin login ke aplikasi.
+Admin memilih opsi "Hapus Akun".
+Admin memilih akun yang akan dihapus.
+Admin mengonfirmasi penghapusan akun.
+Menampilkan halaman login.
+Menampilkan opsi "Hapus Akun".
+Menampilkan daftar akun yang bisa dihapus.
+Menghapus akun yang dipilih dan memperbarui database.
+Exception conditions:
+Penghapusan gagal.
+Use case name: 
+Create Akun
+Scenario:
+Admin membuat akun baru untuk pengguna.
+Triggering event:
+Admin memilih opsi "Create Akun" dari menu aplikasi.
+Brief description:
+Admin dapat membuat akun baru untuk pengguna dengan memasukkan informasi yang diperlukan.
+Actors:
+Admin
+Related use cases:
+Hapus Akun.
+Stakeholders:
+Perusahaan Logistik
+Preconditions:
+Admin sudah login ke sistem dan memiliki hak akses untuk membuat akun.
+Postconditions:
+Akun baru berhasil dibuat dan disimpan dalam sistem.
+Flow of activities:
+Actors
+System
+Admin login ke aplikasi.
+Admin memilih opsi "Create Akun".
+Admin memasukkan informasi pengguna yang diperlukan.
+Admin mengonfirmasi pembuatan akun.
+Menampilkan halaman login.
+Menampilkan opsi "Create Akun".
+Menyimpan informasi pengguna baru ke dalam database.
+Mengonfirmasi bahwa akun baru telah berhasil dibuat.
+Exception conditions:
+Salah input data.
+IV.4Activity Diagram
+Gambar 3 Class Diagram 1
+Gambar 4 Class Diagram 1
+IV.5Class Diagram
+Gambar 5 Class Diagram
+IV.6Sequence Diagram
+IV.6.1Login
+IV.6.2Create Akun
+Gambar 6 Create Akun
+IV.6.3Melihat Riwayat
+Gambar 7 Melihat Riwayat
+IV.6.4Input Data
+Gambar 8 Input Data
+IV.6.5 Hapus Akun
+Gambar 9 Sequence Diagram : Hapus Akun
+IV.6.6Laporan
+Gambar 10 Sequence Diagram : Laporan
+IV.6.7Pemilihan Kendaraan
+Gambar 11 Sequence Diagram : Pemilihan Kendaraan
+IV.6.8Pengiriman
+Gambar 12 Pengiriman
+IV.6.9Konfirmasi Barang
+Gambar 13 Konfirmasi Barang
+IV.6.10 Fitur Aplikasi
+Gambar 14 Fitur Aplikasi
+IV.6.11 Penjadwalan
+IV.6.12 Edit Profile
+Gambar 15 Edit Profile
+IV.6.13 Monitoring
+Gambar 16 Monitoring
+IV.6.14 Info Data Barang
+Gambar 17 Info Data Barang
+IV.6.15 Pembayaran
+Gambar 18 Pembayaran
+II.7State Diagram
+II.7.1Create Akun
+Gambar 19 State Diagram : Create Akun
+II.7.2Login
+Gambar 20 State Diagram : Create Akun
+II.7.3Penyewaan
+Gambar 21 State Diagram : Create Akun
+II.8Deployment Diagram
+Gambar 22 Deployment Diagram
+II.9ERD
+Gambar 23 ERD
+BAB VUSER INTERFACE
+V.1Antarmuka Login
+Gambar 24 Antarmuka Login
+V.2Antarmuka Create Akun
+Gambar 25 Antarmuka Create Akun
+V.3Antarmuka Profile
+Gambar 26 Antarmuka Profile
+V.4Antarmuka Perangkat Lunak Admin
+V.4.1Dashboard
+Gambar 27 Antarmuka Perangkat Lunak Admin : Dashboard
+V.4.2Gudang 
+Gambar 28 Antarmuka Perangkat Lunak Admin : Gudang
+V.4.3Pembayaran 
+Gambar 29 Antarmuka Perangkat Lunak Admin : Pembayaran
+V.4.4Laporan
+Gambar 30 Antarmuka Perangkat Lunak Admin : Laporan
+V.4.5History 
+Gambar 31 Antarmuka Perangkat Lunak Admin : History
+V.4.6Input Barang
+Gambar 32 Antarmuka Perangkat Lunak Admin : Input Banrang
+V.4.7Monitoring  
+Gambar 33 Antarmuka Perangkat Lunak Admin : Monitoring
+V.5Antarmuka Perangkat Lunak Costumer
+V.5.1Dashboard 
+Gambar 34 Antarmuka Perangkat Lunak Costumer : Dashboard
+V.5.2Input Barang
+Gambar 35 Antarmuka Perangkat Lunak Costumer : Input Barang
+V.5.3Pengiriman
+Gambar 36 Antarmuka Perangkat Lunak Costumer : Pengiriman
+V.5.4History
+Gambar 37 Antarmuka Perangkat Lunak Costumer :History
+V.5.5Pembayaran
+Gambar 38 Antarmuka Perangkat Lunak Costumer :Pembayaran
+V.5.6Monitoring
+Gambar 39 Antarmuka Perangkat Lunak Costumer : Monitoring
