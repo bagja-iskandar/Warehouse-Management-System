@@ -2,7 +2,7 @@ export type InvoiceStatus = "UNPAID" | "PENDING_VERIFICATION" | "PAID" | "OVERDU
 
 export interface InvoiceItem {
   id: string;
-  description: string; // e.g. "Sewa Slot Cold Storage (2.5 m3) - Bulan Agustus 2026"
+  description: string; // e.g. "Cold Storage Space Rental (2.5 m3) - Month of August 2026"
   goodsName?: string;
   volumeM3: number;
   ratePerM3: number;
@@ -15,14 +15,14 @@ export interface Invoice {
   customerId: string;
   customerName: string;
   customerEmail: string;
-  billingMonth: string; // e.g. "Agustus 2026"
+  billingMonth: string; // e.g. "August 2026"
   issueDate: string;
   dueDate: string;
   paidDate?: string;
 
   items: InvoiceItem[];
   subtotal: number;
-  penaltyFee: number; // Denda jika lewat jatuh tempo
+  penaltyFee: number; // Late fee penalty if overdue
   totalAmount: number;
 
   status: InvoiceStatus;

@@ -2,12 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserProfile, UserRole } from "@/types";
 import { SEED_USERS } from "@/mock/seed/users.seed";
+import { getStoredAccessToken, clearStoredTokens } from "@/lib/api-client";
 
 interface AuthStoreState {
   user: UserProfile | null;
   isAuthenticated: boolean;
   token: string | null;
-  setUser: (user: UserProfile | null) => void;
+  setUser: (user: UserProfile | null, token?: string) => void;
   setRole: (role: UserRole) => void;
   logout: () => void;
 }
@@ -15,16 +16,25 @@ interface AuthStoreState {
 export const useAuthStore = create<AuthStoreState>()(
   persist(
     (set) => ({
-      // Default to Admin during foundation testing, easily switchable via Header Role Switcher
-      user: SEED_USERS[0],
-      isAuthenticated: true,
-      token: "mock-jwt-token-wms-v1",
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      user: null,
+      isAuthenticated: false,
+      token: null,
+      setUser: (user, token) =>
+        set({
+          user,
+          isAuthenticated: !!user,
+          token:
+            token ??
+            (typeof window !== "undefined" ? getStoredAccessToken() : null),
+        }),
       setRole: (role) => {
         const found = SEED_USERS.find((u) => u.role === role) || null;
         set({ user: found, isAuthenticated: !!found });
       },
-      logout: () => set({ user: null, isAuthenticated: false, token: null }),
+      logout: () => {
+        clearStoredTokens();
+        set({ user: null, isAuthenticated: false, token: null });
+      },
     }),
     {
       name: "wms-auth-storage",

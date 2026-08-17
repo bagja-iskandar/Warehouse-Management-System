@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { ProfileView } from "@/components/profile/ProfileView";
 
 export const metadata: Metadata = {
-  title: "Ubah Kata Sandi — WMS Nusantara",
+  title: "Change Password — WMS Nusantara",
   description:
-    "Pembaruan kata sandi akun operasional Warehouse Management System WMS Nusantara.",
+    "Update account operational password for WMS Nusantara Warehouse Management System.",
 };
 
 export default function ChangePasswordPage() {

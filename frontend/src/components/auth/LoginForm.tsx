@@ -39,18 +39,18 @@ export function LoginForm() {
 
     // Client-side basic validation
     if (!email.trim()) {
-      setValidationError("Silakan masukkan email kerja atau username Anda.");
+      setValidationError("Please enter your work email or username.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setValidationError("Format email tidak valid (contoh: nama@perusahaan.com).");
+      setValidationError("Invalid email format (e.g. name@company.com).");
       return;
     }
 
     if (!password) {
-      setValidationError("Silakan masukkan kata sandi Anda.");
+      setValidationError("Please enter your password.");
       return;
     }
 
@@ -64,7 +64,7 @@ export function LoginForm() {
       const error = err as Error;
       setValidationError(
         error.message ||
-          "Kredensial atau peran yang dipilih tidak cocok. Silakan periksa kembali email & kata sandi Anda."
+          "Invalid credentials or role selected. Please verify your email and password."
       );
     }
   };
@@ -86,10 +86,10 @@ export function LoginForm() {
           </p>
           <div className="w-full h-px bg-slate-100 my-4" />
           <h2 className="text-sm font-semibold text-slate-800">
-            Masuk ke Portal Operasional Gudang & Logistik
+            Sign In to Operations Portal
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Pilih konteks peran operasional Anda untuk melanjutkan:
+            Select your operational role context to continue:
           </p>
         </div>
 
@@ -128,7 +128,7 @@ export function LoginForm() {
               {demoCredentials[selectedRole].roleName}
             </span>
             <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-              Demo Autofill Aktif
+              Demo Autofill Active
             </span>
           </div>
         </div>
@@ -153,7 +153,7 @@ export function LoginForm() {
               htmlFor="email"
               className="text-xs font-semibold text-slate-700"
             >
-              Email Kerja / Username
+              Work Email / Username
             </Label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -162,7 +162,7 @@ export function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="nama@perusahaan.com"
+                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -182,13 +182,13 @@ export function LoginForm() {
                 htmlFor="password"
                 className="text-xs font-semibold text-slate-700"
               >
-                Kata Sandi
+                Password
               </Label>
               <Link
                 href="/forgot-password"
                 className="text-[11px] font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
               >
-                Lupa Kata Sandi?
+                Forgot Password?
               </Link>
             </div>
             <div className="relative">
@@ -213,7 +213,7 @@ export function LoginForm() {
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
-                aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -235,7 +235,7 @@ export function LoginForm() {
               htmlFor="remember"
               className="text-xs text-slate-600 select-none cursor-pointer font-normal"
             >
-              Ingat sesi di perangkat ini
+              Remember session on this device
             </label>
           </div>
 
@@ -248,11 +248,11 @@ export function LoginForm() {
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Memverifikasi Kredensial...</span>
+                <span>Verifying Credentials...</span>
               </>
             ) : (
               <>
-                <span>Masuk ke Sistem Operasional</span>
+                <span>Sign In to Operations</span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -262,12 +262,12 @@ export function LoginForm() {
         {/* Register Customer Link */}
         <div className="mt-4 pt-3 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
-            Belum memiliki akun?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
             >
-              Daftar sebagai Customer
+              Register as Customer
             </Link>
           </p>
         </div>
@@ -275,7 +275,7 @@ export function LoginForm() {
         {/* Demo Credentials Quick Switcher Footer */}
         <div className="mt-3 pt-2 text-center">
           <p className="text-[11px] text-slate-400 leading-normal">
-            Akun Percobaan: <span className="text-slate-600 font-mono">{email}</span> (PW: password123)
+            Demo Account: <span className="text-slate-600 font-mono">{email}</span> (PW: Password123!)
           </p>
         </div>
       </div>
@@ -284,7 +284,7 @@ export function LoginForm() {
       <div className="mt-6 text-center text-slate-400 flex items-center justify-center gap-1.5 text-[11px]">
         <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
         <span>
-          Enkripsi End-to-End 256-bit • Akses Terotentikasi WMS Multi-Role • v1.0.0
+          256-bit End-to-End Encryption • Multi-Role Authenticated WMS Access • v1.0.0
         </span>
       </div>
     </div>

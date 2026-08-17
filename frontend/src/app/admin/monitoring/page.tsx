@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTelemetryMonitoring } from "@/hooks/use-telemetry";
 
 interface SensorNode {
   id: string;
@@ -37,57 +38,98 @@ const SENSORS_DATA: SensorNode[] = [
   {
     id: "sn-1",
     nodeCode: "SN-CKG-001",
-    locationName: "Gudang Cakung — Zona A (Cold Storage 1)",
+    locationName: "Cakung Hub — Zone A (Cold Storage 1)",
     zoneType: "COLD_STORAGE",
     currentTemp: -18.4,
-    targetTemp: "-18.0°C s/d -25.0°C",
+    targetTemp: "-18.0°C to -25.0°C",
     humidity: "65% RH",
     status: "OPTIMAL",
     batteryLevel: "98% (AC Powered)",
-    lastUpdated: "5 detik lalu",
+    lastUpdated: "5 sec ago",
   },
   {
     id: "sn-2",
     nodeCode: "SN-CKG-002",
-    locationName: "Gudang Cakung — Zona B (Rak Standar & Mebel)",
+    locationName: "Cakung Hub — Zone B (Standard Rack & Furniture)",
     zoneType: "STANDARD",
     currentTemp: 24.0,
-    targetTemp: "20.0°C s/d 26.0°C",
+    targetTemp: "20.0°C to 26.0°C",
     humidity: "52% RH",
     status: "OPTIMAL",
     batteryLevel: "100%",
-    lastUpdated: "12 detik lalu",
+    lastUpdated: "12 sec ago",
   },
   {
     id: "sn-3",
     nodeCode: "SN-BDG-001",
-    locationName: "Hub Bandung — Zona A (Cold Storage)",
+    locationName: "Bandung Hub — Zone A (Cold Storage)",
     zoneType: "COLD_STORAGE",
     currentTemp: -20.1,
-    targetTemp: "-18.0°C s/d -25.0°C",
+    targetTemp: "-18.0°C to -25.0°C",
     humidity: "60% RH",
     status: "OPTIMAL",
     batteryLevel: "96%",
-    lastUpdated: "8 detik lalu",
+    lastUpdated: "8 sec ago",
   },
   {
     id: "sn-4",
     nodeCode: "SN-TRK-9821",
-    locationName: "Truk Reefer B 9821 TKN (In-Transit Tol BSD)",
+    locationName: "Reefer Truck B 9821 TKN (In-Transit BSD Toll)",
     zoneType: "REEFER_FLEET",
     currentTemp: -18.2,
-    targetTemp: "-18.0°C s/d -20.0°C",
+    targetTemp: "-18.0°C to -20.0°C",
     humidity: "68% RH",
     status: "OPTIMAL",
     batteryLevel: "Alternator Online",
-    lastUpdated: "2 detik lalu",
+    lastUpdated: "2 sec ago",
   },
 ];
 
 export default function SensorMonitoringPage() {
+  const { data: liveMonitoring } = useTelemetryMonitoring();
   const [filterType, setFilterType] = useState("ALL");
 
-  const filteredSensors = SENSORS_DATA.filter((s) => {
+  const activeSensors: SensorNode[] =
+    liveMonitoring && (liveMonitoring.slots.length > 0 || liveMonitoring.vehicles.length > 0)
+      ? [
+          ...liveMonitoring.slots.map((s) => ({
+            id: s.slotId,
+            nodeCode: `SN-SLOT-${s.slotCode}`,
+            locationName: `${s.warehouseName} — Slot ${s.slotCode}`,
+            zoneType: "COLD_STORAGE" as const,
+            currentTemp: s.currentTempCelsius,
+            targetTemp: "-18.0°C to -25.0°C",
+            humidity: `${s.humidityPercent || 80}% RH`,
+            status:
+              s.condition === "SAFE"
+                ? ("OPTIMAL" as const)
+                : s.condition === "WARNING"
+                ? ("WARNING" as const)
+                : ("CRITICAL" as const),
+            batteryLevel: "98% (AC Powered)",
+            lastUpdated: "Live",
+          })),
+          ...liveMonitoring.vehicles.map((v) => ({
+            id: v.vehicleId,
+            nodeCode: `SN-VEH-${v.plateNumber.replace(/\s+/g, "")}`,
+            locationName: `${v.name} (${v.plateNumber})`,
+            zoneType: "REEFER_FLEET" as const,
+            currentTemp: v.currentTempCelsius,
+            targetTemp: "-18.0°C to -25.0°C",
+            humidity: "75% RH",
+            status:
+              v.condition === "SAFE"
+                ? ("OPTIMAL" as const)
+                : v.condition === "WARNING"
+                ? ("WARNING" as const)
+                : ("CRITICAL" as const),
+            batteryLevel: "Alternator Online",
+            lastUpdated: "Live",
+          })),
+        ]
+      : SENSORS_DATA;
+
+  const filteredSensors = activeSensors.filter((s) => {
     return filterType === "ALL" || s.zoneType === filterType;
   });
 
@@ -98,7 +140,7 @@ export default function SensorMonitoringPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Pusat Monitoring Sensor Telemetri Suhu Real-time
+              Real-Time Temperature & Telemetry Sensor Monitoring
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px] flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
@@ -106,7 +148,7 @@ export default function SensorMonitoringPage() {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Sensor suhu & kelembaban IoT pada ruang Cold Storage, rak gudang standar, dan armada truk pendingin (Reefer).
+            IoT temperature & humidity sensors across Cold Storage rooms, standard warehouse racks, and refrigerated trucks (Reefer).
           </p>
         </div>
 
@@ -116,12 +158,12 @@ export default function SensorMonitoringPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Log Suhu</span>
+            <span>Export Temp Logs</span>
           </Button>
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Sliders className="h-4 w-4" />
-            <span>Atur Ambang Batas Alert</span>
+            <span>Configure Alert Thresholds</span>
           </Button>
         </div>
       </div>
@@ -129,38 +171,38 @@ export default function SensorMonitoringPage() {
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Node Sensor Aktif</span>
-          <p className="text-2xl font-extrabold text-slate-900">{SENSORS_DATA.length} Node IoT</p>
+          <span className="text-xs font-semibold text-slate-500">Total Active Sensor Nodes</span>
+          <p className="text-2xl font-extrabold text-slate-900">{SENSORS_DATA.length} IoT Nodes</p>
           <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>100% Sensor Online</span>
+            <span>100% Sensors Online</span>
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Rata-rata Suhu Cold Storage</span>
+          <span className="text-xs font-semibold text-slate-500">Average Cold Storage Temp</span>
           <div className="flex items-center gap-2">
             <p className="text-2xl font-extrabold text-sky-600">-19.2°C</p>
             <Badge variant="success" className="text-[10px]">Optimal</Badge>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">Target: -18°C s/d -25°C</p>
+          <p className="text-[11px] text-slate-400 font-mono">Target: -18°C to -25°C</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Sensor Armada Logistik</span>
-          <p className="text-2xl font-extrabold text-amber-600">1 Truk Aktif</p>
+          <span className="text-xs font-semibold text-slate-500">Logistics Fleet Sensors</span>
+          <p className="text-2xl font-extrabold text-amber-600">1 Active Truck</p>
           <p className="text-[11px] text-slate-400 font-mono">B 9821 TKN: -18.2°C</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Peringatan Anomali Suhu</span>
+          <span className="text-xs font-semibold text-slate-500">Temperature Anomaly Warnings</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-emerald-600">0 Alert</p>
+            <p className="text-2xl font-extrabold text-emerald-600">0 Alerts</p>
             <span className="text-xs text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold">
-              Kondisi Normal
+              Normal Condition
             </span>
           </div>
-          <p className="text-[11px] text-slate-400">Tidak ada deviasi suhu</p>
+          <p className="text-[11px] text-slate-400">No temperature deviations</p>
         </div>
       </div>
 
@@ -170,7 +212,7 @@ export default function SensorMonitoringPage() {
           <div className="flex items-center gap-2">
             <Radio className="h-4.5 w-4.5 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-900">
-              Daftar Node Sensor Telemetri Aktif
+              Active Telemetry Sensor Nodes
             </h2>
           </div>
 
@@ -183,7 +225,7 @@ export default function SensorMonitoringPage() {
                   : "bg-white text-slate-600 border border-slate-200"
               }`}
             >
-              Semua Sensor
+              All Sensors
             </button>
             <button
               onClick={() => setFilterType("COLD_STORAGE")}
@@ -203,7 +245,7 @@ export default function SensorMonitoringPage() {
                   : "bg-white text-slate-600 border border-slate-200"
               }`}
             >
-              Truk Reefer
+              Reefer Trucks
             </button>
           </div>
         </div>
@@ -252,7 +294,7 @@ export default function SensorMonitoringPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
                   <span className="text-[10.5px] text-slate-400 block font-medium">
-                    Suhu Sensor
+                    Sensor Temperature
                   </span>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Thermometer className="h-4 w-4 text-sky-600" />
@@ -267,7 +309,7 @@ export default function SensorMonitoringPage() {
 
                 <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
                   <span className="text-[10.5px] text-slate-400 block font-medium">
-                    Kelembaban Udara
+                    Air Humidity
                   </span>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Activity className="h-4 w-4 text-indigo-600" />

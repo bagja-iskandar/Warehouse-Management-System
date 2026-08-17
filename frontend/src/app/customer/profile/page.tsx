@@ -23,7 +23,7 @@ export default function CustomerCompanyProfilePage() {
   const [picName, setPicName] = useState("Hendra Prasetya");
   const [email, setEmail] = useState("customer@freshfoods.id");
   const [phone, setPhone] = useState("0812-9988-7766");
-  const [address, setAddress] = useState("Jl. Industri Raya No. 45, Jakarta Barat, DKI Jakarta");
+  const [address, setAddress] = useState("Jl. Industri Raya No. 45, West Jakarta, DKI Jakarta");
   const [isSaved, setIsSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -39,14 +39,14 @@ export default function CustomerCompanyProfilePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Profil Perusahaan & Informasi Legalitas
+              Company Profile & Legal Information
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               Verified Tenant
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Informasi entitas bisnis, nomor NPWP faktur pajak, kontak penanggung jawab (PIC), dan alamat resmi.
+            Business entity details, tax invoice NPWP number, person in charge (PIC) contact, and official address.
           </p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function CustomerCompanyProfilePage() {
       {isSaved && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-          <span>Profil perusahaan berhasil diperbarui!</span>
+          <span>Company profile updated successfully!</span>
         </div>
       )}
 
@@ -62,13 +62,13 @@ export default function CustomerCompanyProfilePage() {
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
             <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Data Legalitas Perusahaan
+              Company Legal Information
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Nama Perusahaan
+                  Company Name
                 </label>
                 <input
                   type="text"
@@ -81,7 +81,7 @@ export default function CustomerCompanyProfilePage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Nomor Pokok Wajib Pajak (NPWP)
+                  Tax Identification Number (NPWP)
                 </label>
                 <input
                   type="text"
@@ -96,7 +96,7 @@ export default function CustomerCompanyProfilePage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Nama PIC / Penanggung Jawab
+                  PIC / Contact Person Name
                 </label>
                 <input
                   type="text"
@@ -109,7 +109,7 @@ export default function CustomerCompanyProfilePage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Email Operasional
+                  Operational Email
                 </label>
                 <input
                   type="email"
@@ -122,7 +122,7 @@ export default function CustomerCompanyProfilePage() {
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  No. Telepon / WhatsApp
+                  Phone / WhatsApp Number
                 </label>
                 <input
                   type="text"
@@ -136,7 +136,7 @@ export default function CustomerCompanyProfilePage() {
 
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Alamat Kantor Pusat
+                Headquarters Address
               </label>
               <textarea
                 rows={2}
@@ -152,22 +152,22 @@ export default function CustomerCompanyProfilePage() {
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Status Akun & Keanggotaan
+              Account Status & Membership
             </h2>
 
             <div className="space-y-3 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Tier Customer:</span>
+                <span className="text-slate-500">Customer Tier:</span>
                 <span className="font-bold text-emerald-600">Enterprise Tenant</span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-slate-500">Masa Kontrak Aktif:</span>
-                <span className="font-mono text-slate-900 font-bold">s/d 31 Des 2026</span>
+                <span className="text-slate-500">Active Contract Period:</span>
+                <span className="font-mono text-slate-900 font-bold">Until Dec 31, 2026</span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-slate-500">Total Ruang Sewa:</span>
+                <span className="text-slate-500">Total Rented Space:</span>
                 <span className="font-mono text-slate-900 font-bold">250 m³ (Cold)</span>
               </div>
             </div>
@@ -177,7 +177,7 @@ export default function CustomerCompanyProfilePage() {
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-10 rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5"
             >
               <Save className="h-4 w-4" />
-              <span>Simpan Perubahan</span>
+              <span>Save Changes</span>
             </Button>
           </div>
         </div>

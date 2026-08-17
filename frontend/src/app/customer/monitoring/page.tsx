@@ -15,8 +15,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTelemetryMonitoring } from "@/hooks/use-telemetry";
 
 export default function CustomerTemperatureMonitoringPage() {
+  const { data: liveMonitoring } = useTelemetryMonitoring();
+  const primarySlot = liveMonitoring?.slots?.[0];
+  const currentTemp = primarySlot?.currentTempCelsius ?? -18.4;
+  const humidity = primarySlot?.humidityPercent ?? 65;
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -24,7 +30,7 @@ export default function CustomerTemperatureMonitoringPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Monitoring Suhu Cold Storage Saya
+              My Cold Storage Temperature Monitoring
             </h1>
             <Badge className="bg-sky-600 text-white text-[10px] flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
@@ -32,7 +38,7 @@ export default function CustomerTemperatureMonitoringPage() {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Pantau kestabilan temperatur ruang sewa Cold Storage Anda (Zona A Hub Cakung) secara real-time.
+            Monitor real-time temperature stability of your rented Cold Storage space (Zone A Cakung Hub).
           </p>
         </div>
 
@@ -42,7 +48,7 @@ export default function CustomerTemperatureMonitoringPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Unduh Sertifikat Suhu</span>
+            <span>Download Temperature Certificate</span>
           </Button>
         </div>
       </div>
@@ -50,27 +56,29 @@ export default function CustomerTemperatureMonitoringPage() {
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Suhu Terkini (Real-time)</span>
+          <span className="text-xs font-semibold text-slate-500">Current Temperature (Real-time)</span>
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-extrabold text-sky-600 font-mono">-18.4°C</p>
+            <p className="text-3xl font-extrabold text-sky-600 font-mono">
+              {currentTemp > 0 ? `+${currentTemp}` : currentTemp}°C
+            </p>
             <Badge variant="success" className="text-[10px]">Optimal</Badge>
           </div>
-          <p className="text-[11px] text-slate-400">Target Range: -18.0°C s/d -25.0°C</p>
+          <p className="text-[11px] text-slate-400">Target Range: -18.0°C to -25.0°C</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Kelembaban Udara (Humidity)</span>
-          <p className="text-3xl font-extrabold text-slate-900 font-mono">65% RH</p>
-          <p className="text-[11px] text-emerald-600 font-semibold">Kelembaban Stabil Terkendali</p>
+          <span className="text-xs font-semibold text-slate-500">Air Humidity (RH)</span>
+          <p className="text-3xl font-extrabold text-slate-900 font-mono">{humidity}% RH</p>
+          <p className="text-[11px] text-emerald-600 font-semibold">Humidity Stable & Controlled</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Status Node Sensor</span>
+          <span className="text-xs font-semibold text-slate-500">Sensor Node Status</span>
           <div className="flex items-center gap-1.5 text-emerald-600 font-semibold mt-1">
             <CheckCircle2 className="h-4 w-4" />
-            <span className="text-sm">Online (SN-CKG-001)</span>
+            <span className="text-sm">Online ({primarySlot?.slotCode ? `SN-${primarySlot.slotCode}` : "SN-CKG-001"})</span>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">Sinkronisasi: Tiap 5 Detik</p>
+          <p className="text-[11px] text-slate-400 font-mono">Sync: Every 5 Seconds</p>
         </div>
       </div>
 
@@ -80,11 +88,11 @@ export default function CustomerTemperatureMonitoringPage() {
           <div className="flex items-center gap-2">
             <Activity className="h-4.5 w-4.5 text-sky-600" />
             <h2 className="text-sm font-bold text-slate-900">
-              Grafik Kestabilan Suhu 24 Jam Terakhir
+              24-Hour Temperature Stability Graph
             </h2>
           </div>
           <span className="text-xs text-slate-500 font-mono">
-            Rata-rata: -18.35°C • Deviasi: ±0.3°C
+            Average: -18.35°C • Deviation: ±0.3°C
           </span>
         </div>
 
@@ -109,7 +117,7 @@ export default function CustomerTemperatureMonitoringPage() {
             ))}
           </div>
           <p className="text-center text-[10.5px] text-slate-400 font-mono pt-2 border-t border-slate-200">
-            Kondisi suhu ruang konsisten di bawah ambang batas maksimal (-18.0°C) tanpa anomali.
+            Room temperature condition remains consistently below maximum threshold (-18.0°C) with zero anomalies.
           </p>
         </div>
       </div>

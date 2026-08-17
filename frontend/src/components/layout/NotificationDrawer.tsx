@@ -63,11 +63,11 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
           <div className="flex items-center gap-2.5">
             <Bell className="h-5 w-5 text-indigo-600" />
             <h2 className="text-sm font-bold text-slate-900">
-              Pusat Notifikasi Operasional
+              Operations Notification Center
             </h2>
             {unreadCount > 0 && (
               <Badge className="bg-rose-600 text-white text-[10px] px-1.5 py-0">
-                {unreadCount} Baru
+                {unreadCount} New
               </Badge>
             )}
           </div>
@@ -75,7 +75,7 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
           <button
             onClick={onClose}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-            aria-label="Tutup notifikasi"
+            aria-label="Close notifications"
           >
             <X className="h-5 w-5" />
           </button>
@@ -84,14 +84,14 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
         {/* Quick Actions Bar */}
         <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs">
           <span className="text-slate-500 font-medium">
-            Aktivitas terkini hub pergudangan
+            Recent warehouse hub activities
           </span>
           <button
             onClick={handleMarkAllAsRead}
             className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
           >
             <CheckCheck className="h-3.5 w-3.5" />
-            <span>Tandai Semua Dibaca</span>
+            <span>Mark All as Read</span>
           </button>
         </div>
 
@@ -140,7 +140,7 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
             onClick={onClose}
             className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs h-9"
           >
-            Tutup Panel Notifikasi
+            Close Notifications Panel
           </Button>
         </div>
       </div>

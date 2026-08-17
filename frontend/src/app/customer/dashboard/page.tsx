@@ -32,14 +32,14 @@ export default function CustomerDashboardPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Portal Layanan Pergudangan & Logistik
+              Warehouse Services & Logistics Portal
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               PT Fresh Foods Indonesia
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Kelola ruang sewa gudang, inventaris barang bersuhu dingin, dan jadwalkan logistik armada.
+            Manage warehouse rental spaces, temperature-controlled inventory goods, and schedule fleet logistics.
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function CustomerDashboardPage() {
           <Link href="/customer/rental">
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
               <Plus className="h-4 w-4" />
-              <span>Sewa Ruang Baru</span>
+              <span>Rent New Space</span>
             </Button>
           </Link>
 
@@ -57,7 +57,7 @@ export default function CustomerDashboardPage() {
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>Registrasi Barang</span>
+              <span>Register Goods</span>
             </Button>
           </Link>
         </div>
@@ -68,18 +68,18 @@ export default function CustomerDashboardPage() {
         {/* KPI 1: Ruang Sewa Aktif */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Ruang Sewa Aktif</span>
+            <span className="text-xs font-semibold text-slate-500">Active Rented Space</span>
             <div className="h-8.5 w-8.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Warehouse className="h-4.5 w-4.5" />
             </div>
           </div>
           <div>
             <span className="text-2xl font-extrabold text-slate-900">250 m³</span>
-            <span className="text-xs text-slate-400 ml-1.5 font-mono">Disewa</span>
+            <span className="text-xs text-slate-400 ml-1.5 font-mono">Rented</span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">185 m³ Terpakai (74%)</span>
-            <span className="font-bold text-emerald-600">Sisa 65 m³</span>
+            <span className="text-slate-500">185 m³ Used (74%)</span>
+            <span className="font-bold text-emerald-600">Remaining 65 m³</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div className="bg-emerald-600 h-2 rounded-full w-[74%]" />
@@ -89,50 +89,50 @@ export default function CustomerDashboardPage() {
         {/* KPI 2: Total Barang Disimpan */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Barang Disimpan</span>
+            <span className="text-xs font-semibold text-slate-500">Total Stored Goods</span>
             <div className="h-8.5 w-8.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Boxes className="h-4.5 w-4.5" />
             </div>
           </div>
           <div>
-            <span className="text-2xl font-extrabold text-slate-900">450 Koli</span>
+            <span className="text-2xl font-extrabold text-slate-900">450 Packages</span>
           </div>
           <p className="text-[11px] text-slate-400">
-            3 SKU Aktif (Daging Wagyu, Salmon, Dairy)
+            3 Active SKUs (Wagyu Beef, Salmon, Dairy)
           </p>
         </div>
 
         {/* KPI 3: Telemetri Suhu Cold Storage */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Suhu Ruang Sewa Anda</span>
+            <span className="text-xs font-semibold text-slate-500">Your Storage Space Temp</span>
             <div className="h-8.5 w-8.5 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
               <Thermometer className="h-4.5 w-4.5" />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-extrabold text-slate-900 font-mono">-18.4°C</span>
-            <Badge variant="success" className="text-[10px]">Stabil</Badge>
+            <Badge variant="success" className="text-[10px]">Stable</Badge>
           </div>
           <p className="text-[11px] text-sky-700 font-medium">
-            Zona A Cold Storage • Hub Cakung
+            Zone A Cold Storage • Cakung Hub
           </p>
         </div>
 
         {/* KPI 4: Status Faktur Tagihan */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Faktur Sewa Bulan Ini</span>
+            <span className="text-xs font-semibold text-slate-500">This Month&apos;s Rental Invoice</span>
             <div className="h-8.5 w-8.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <CreditCard className="h-4.5 w-4.5" />
             </div>
           </div>
           <div>
-            <span className="text-2xl font-extrabold text-slate-900">Rp 12.5 Jt</span>
+            <span className="text-2xl font-extrabold text-slate-900">IDR 12.5 M</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>Lunas (INV-2026-001)</span>
+            <span>Paid (INV-2026-001)</span>
           </div>
         </div>
       </div>
@@ -146,14 +146,14 @@ export default function CustomerDashboardPage() {
               <div className="flex items-center gap-2">
                 <Boxes className="h-4.5 w-4.5 text-emerald-600" />
                 <h2 className="text-sm font-bold text-slate-900">
-                  Ringkasan Barang Tersimpan di Gudang
+                  Summary of Goods Stored in Warehouse
                 </h2>
               </div>
               <Link
                 href="/customer/goods"
                 className="text-xs font-semibold text-emerald-600 hover:underline flex items-center gap-1"
               >
-                <span>Lihat Semua SKU</span>
+                <span>View All SKUs</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -168,20 +168,20 @@ export default function CustomerDashboardPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900">
-                        Daging Sapi Wagyu A5 Import
+                        Import Wagyu Beef Ribeye A5
                       </span>
                       <span className="text-[10px] font-mono text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded font-bold">
                         BAR-FRESH-001
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Lokasi: Slot A-01-01 (Zona A Cold Storage) • Kadaluarsa: 12 Nov 2026
+                      Location: Slot A-01-01 (Zone A Cold Storage) • Expiry: Nov 12, 2026
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-bold text-slate-900 font-mono block">
-                    150 Koli (75 m³)
+                    150 Packages (75 m³)
                   </span>
                   <span className="text-[10.5px] text-sky-600 font-mono">-18.4°C</span>
                 </div>
@@ -196,20 +196,20 @@ export default function CustomerDashboardPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900">
-                        Salmon Fillet Premium Norwegia
+                        Premium Norwegian Salmon Fillet
                       </span>
                       <span className="text-[10px] font-mono text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded font-bold">
                         BAR-FRESH-002
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Lokasi: Slot A-01-02 (Zona A Cold Storage) • Kadaluarsa: 28 Des 2026
+                      Location: Slot A-01-02 (Zone A Cold Storage) • Expiry: Dec 28, 2026
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-bold text-slate-900 font-mono block">
-                    120 Koli (60 m³)
+                    120 Packages (60 m³)
                   </span>
                   <span className="text-[10.5px] text-sky-600 font-mono">-18.2°C</span>
                 </div>
@@ -225,7 +225,7 @@ export default function CustomerDashboardPage() {
               <div className="flex items-center gap-2">
                 <Truck className="h-4.5 w-4.5 text-amber-600" />
                 <h2 className="text-sm font-bold text-slate-900">
-                  Status Pengiriman Aktif
+                  Active Delivery Status
                 </h2>
               </div>
               <Badge variant="warning" className="text-[10px]">
@@ -239,16 +239,16 @@ export default function CustomerDashboardPage() {
                   DO-2026-001
                 </span>
                 <span className="text-[10.5px] text-amber-700 font-mono font-semibold">
-                  Est: 35 Menit
+                  Est: 35 Minutes
                 </span>
               </div>
 
               <div className="space-y-1 text-xs text-slate-600">
                 <p className="font-semibold text-slate-800">
-                  Tujuan: FreshMarket Superstore BSD
+                  Destination: FreshMarket Superstore BSD
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Armada: Truk Reefer Isuzu (B 9821 TKN)
+                  Fleet: Isuzu Reefer Truck (B 9821 TKN)
                 </p>
                 <p className="text-[11px] text-slate-500">
                   Driver: Ahmad Subarjo (0812-3456-7890)
@@ -257,7 +257,7 @@ export default function CustomerDashboardPage() {
 
               <Link href="/customer/logistics/request" className="block pt-1">
                 <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-8.5 rounded-lg">
-                  Lacak Pengiriman →
+                  Track Delivery →
                 </Button>
               </Link>
             </div>

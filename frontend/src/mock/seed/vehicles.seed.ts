@@ -13,7 +13,7 @@ export const SEED_VEHICLES: Vehicle[] = [
     status: "AVAILABLE",
     currentDriverId: "usr-driver-1",
     currentDriverName: "Agus Pratama",
-    locationCity: "Jakarta Timur (Cakung Pool)",
+    locationCity: "East Jakarta (Cakung Pool)",
   },
   {
     id: "veh-02",
@@ -24,7 +24,7 @@ export const SEED_VEHICLES: Vehicle[] = [
     maxVolumeM3: 14,
     hasRefrigeration: false,
     status: "AVAILABLE",
-    locationCity: "Jakarta Timur (Cakung Pool)",
+    locationCity: "East Jakarta (Cakung Pool)",
   },
   {
     id: "veh-03",
@@ -35,7 +35,7 @@ export const SEED_VEHICLES: Vehicle[] = [
     maxVolumeM3: 6,
     hasRefrigeration: false,
     status: "IN_SERVICE",
-    locationCity: "Jakarta Selatan (In-Transit)",
+    locationCity: "South Jakarta (In-Transit)",
   },
   {
     id: "veh-04",
@@ -46,6 +46,6 @@ export const SEED_VEHICLES: Vehicle[] = [
     maxVolumeM3: 45,
     hasRefrigeration: false,
     status: "MAINTENANCE",
-    locationCity: "Bengkel Mitra Cakung",
+    locationCity: "Cakung Maintenance Workshop",
   },
 ];

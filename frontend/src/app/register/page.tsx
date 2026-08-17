@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export const metadata: Metadata = {
-  title: "Pendaftaran Akun Customer — WMS Nusantara",
+  title: "Customer Account Registration — WMS Nusantara",
   description:
-    "Formulir registrasi akun perusahaan customer untuk menyewa kapasitas ruang gudang standard dan cold storage WMS Nusantara.",
+    "Corporate registration form for tenants to lease standard dry and cold storage warehouse capacity in WMS Nusantara.",
 };
 
 export default function RegisterPage() {

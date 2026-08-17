@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useWarehouses } from "@/hooks/use-warehouses";
 
 interface HubFacility {
   id: string;
@@ -50,8 +51,8 @@ const HUBS_DATA: HubFacility[] = [
   {
     id: "hub-ckg",
     code: "WH-CKG-01",
-    name: "Gudang Utama Cakung Logistics Hub",
-    location: "Kawasan Industri Pulo Gadung, Jakarta Timur",
+    name: "Cakung Logistics Central Hub",
+    location: "Pulo Gadung Industrial Estate, East Jakarta",
     picName: "Hendra Wijaya (0812-3344-5566)",
     status: "NORMAL",
     totalCapacityM3: 5000,
@@ -69,8 +70,8 @@ const HUBS_DATA: HubFacility[] = [
   {
     id: "hub-bdg",
     code: "WH-BDG-01",
-    name: "Hub Distribusi Jawa Barat Gedebage",
-    location: "Kawasan Logistik Terpadu Gedebage, Bandung",
+    name: "West Java Distribution Hub Gedebage",
+    location: "Gedebage Integrated Logistics Area, Bandung",
     picName: "Asep Sunandar (0813-7788-9900)",
     status: "NORMAL",
     totalCapacityM3: 3000,
@@ -88,10 +89,40 @@ const HUBS_DATA: HubFacility[] = [
 ];
 
 export default function WarehouseOverviewPage() {
+  const { data: liveWarehouses } = useWarehouses();
   const [selectedTab, setSelectedTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const filteredHubs = HUBS_DATA.filter((hub) => {
+  const activeHubs: HubFacility[] =
+    liveWarehouses && liveWarehouses.length > 0
+      ? liveWarehouses.map((w) => ({
+          id: w.id,
+          code: w.code,
+          name: w.name,
+          location: `${w.address}, ${w.city}`,
+          picName: `${w.managerName} (${w.contactPhone})`,
+          status: "NORMAL" as const,
+          totalCapacityM3: w.totalCapacityM3,
+          usedCapacityM3: w.usedCapacityM3,
+          coldCapacityM3: w.zones?.coldStorageCapacityM3 || 0,
+          coldUsedM3: Math.round(
+            (w.zones?.coldStorageCapacityM3 || 0) *
+              (w.usedCapacityM3 / (w.totalCapacityM3 || 1))
+          ),
+          coldTemp: "-18.4°C",
+          standardCapacityM3: w.zones?.standardCapacityM3 || 0,
+          standardUsedM3: Math.round(
+            (w.zones?.standardCapacityM3 || 0) *
+              (w.usedCapacityM3 / (w.totalCapacityM3 || 1))
+          ),
+          standardTemp: "24.0°C",
+          totalSlots: w.slotsCount || 0,
+          occupiedSlots: w.occupiedSlotsCount || 0,
+          activeTenantsCount: 4,
+        }))
+      : HUBS_DATA;
+
+  const filteredHubs = activeHubs.filter((hub) => {
     const matchTab =
       selectedTab === "ALL" ||
       (selectedTab === "CKG" && hub.code === "WH-CKG-01") ||
@@ -103,10 +134,10 @@ export default function WarehouseOverviewPage() {
     return matchTab && matchSearch;
   });
 
-  const totalCapacitySum = HUBS_DATA.reduce((acc, h) => acc + h.totalCapacityM3, 0);
-  const totalUsedSum = HUBS_DATA.reduce((acc, h) => acc + h.usedCapacityM3, 0);
-  const totalSlotsSum = HUBS_DATA.reduce((acc, h) => acc + h.totalSlots, 0);
-  const totalOccupiedSlotsSum = HUBS_DATA.reduce((acc, h) => acc + h.occupiedSlots, 0);
+  const totalCapacitySum = activeHubs.reduce((acc, h) => acc + h.totalCapacityM3, 0);
+  const totalUsedSum = activeHubs.reduce((acc, h) => acc + h.usedCapacityM3, 0);
+  const totalSlotsSum = activeHubs.reduce((acc, h) => acc + h.totalSlots, 0);
+  const totalOccupiedSlotsSum = activeHubs.reduce((acc, h) => acc + h.occupiedSlots, 0);
 
   return (
     <div className="space-y-6">
@@ -115,14 +146,14 @@ export default function WarehouseOverviewPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Overview Fasilitas & Jaringan Pergudangan
+              Facility Overview & Warehouse Network
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Multi-Hub Network
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Monitoring utilisasi kapasitas fisik, alokasi zona cold & standard storage, serta status operasional seluruh hub.
+            Monitor physical capacity utilization, cold & standard storage zone allocations, and multi-hub operational health.
           </p>
         </div>
 
@@ -132,12 +163,12 @@ export default function WarehouseOverviewPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Laporan Kapasitas</span>
+            <span>Export Capacity Report</span>
           </Button>
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Tambah Fasilitas Gudang</span>
+            <span>Add Warehouse Facility</span>
           </Button>
         </div>
       </div>
@@ -153,7 +184,7 @@ export default function WarehouseOverviewPage() {
                 : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
             }`}
           >
-            Semua Fasilitas (2 Hub)
+            All Facilities (2 Hubs)
           </button>
           <button
             onClick={() => setSelectedTab("CKG")}
@@ -163,7 +194,7 @@ export default function WarehouseOverviewPage() {
                 : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
             }`}
           >
-            Gudang Utama Cakung (WH-CKG-01)
+            Cakung Central Hub (WH-CKG-01)
           </button>
           <button
             onClick={() => setSelectedTab("BDG")}
@@ -173,7 +204,7 @@ export default function WarehouseOverviewPage() {
                 : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
             }`}
           >
-            Gudang Gedebage Bandung (WH-BDG-01)
+            Gedebage Bandung Hub (WH-BDG-01)
           </button>
         </div>
 
@@ -181,7 +212,7 @@ export default function WarehouseOverviewPage() {
           <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Cari hub gudang atau lokasi..."
+            placeholder="Search warehouse hub or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-8.5 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600"
@@ -191,11 +222,11 @@ export default function WarehouseOverviewPage() {
 
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Total Kapasitas Fisik */}
+        {/* KPI 1: Total Physical Capacity */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
-              Total Kapasitas Jaringan
+              Total Network Capacity
             </span>
             <div className="h-8.5 w-8.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Boxes className="h-4.5 w-4.5" />
@@ -203,13 +234,13 @@ export default function WarehouseOverviewPage() {
           </div>
           <div>
             <span className="text-2xl font-extrabold text-slate-900">
-              {totalCapacitySum.toLocaleString("id-ID")} m³
+              {totalCapacitySum.toLocaleString("en-US")} m³
             </span>
             <span className="text-xs text-slate-400 ml-1.5 font-mono">Total</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-500">
-              {totalUsedSum.toLocaleString("id-ID")} m³ Terpakai
+              {totalUsedSum.toLocaleString("en-US")} m³ Occupied
             </span>
             <span className="font-bold text-indigo-600 font-mono">
               {((totalUsedSum / totalCapacitySum) * 100).toFixed(1)}%
@@ -223,11 +254,11 @@ export default function WarehouseOverviewPage() {
           </div>
         </div>
 
-        {/* KPI 2: Ruang Tersedia */}
+        {/* KPI 2: Available Space */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
-              Ruang Masih Tersedia
+              Available Space
             </span>
             <div className="h-8.5 w-8.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Warehouse className="h-4.5 w-4.5" />
@@ -235,10 +266,10 @@ export default function WarehouseOverviewPage() {
           </div>
           <div>
             <span className="text-2xl font-extrabold text-slate-900">
-              {(totalCapacitySum - totalUsedSum).toLocaleString("id-ID")} m³
+              {(totalCapacitySum - totalUsedSum).toLocaleString("en-US")} m³
             </span>
             <span className="text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold ml-1.5">
-              Kosong
+              Vacant
             </span>
           </div>
           <div className="space-y-1 text-[11px] text-slate-500 pt-1">
@@ -247,7 +278,7 @@ export default function WarehouseOverviewPage() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Standard Storage:
               </span>
-              <span className="font-bold text-slate-700">2.750 m³</span>
+              <span className="font-bold text-slate-700">2,750 m³</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5">
@@ -259,11 +290,11 @@ export default function WarehouseOverviewPage() {
           </div>
         </div>
 
-        {/* KPI 3: Total Slot Rak */}
+        {/* KPI 3: Total Rack Slots */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
-              Total Slot Rak Fisik
+              Total Physical Rack Slots
             </span>
             <div className="h-8.5 w-8.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Grid3X3 className="h-4.5 w-4.5" />
@@ -271,44 +302,44 @@ export default function WarehouseOverviewPage() {
           </div>
           <div>
             <span className="text-2xl font-extrabold text-slate-900">
-              {totalSlotsSum} Slot
+              {totalSlotsSum} Slots
             </span>
           </div>
           <div className="text-xs text-slate-600 flex items-center gap-2 font-medium">
-            <span className="text-indigo-600 font-bold">{totalOccupiedSlotsSum} Terisi</span>
+            <span className="text-indigo-600 font-bold">{totalOccupiedSlotsSum} Occupied</span>
             <span>•</span>
             <span className="text-emerald-600 font-bold">
-              {totalSlotsSum - totalOccupiedSlotsSum - 1} Tersedia
+              {totalSlotsSum - totalOccupiedSlotsSum - 1} Available
             </span>
             <span>•</span>
             <span className="text-amber-600 font-bold">1 Maint</span>
           </div>
         </div>
 
-        {/* KPI 4: Status Operasional Hub */}
+        {/* KPI 4: Hub Operational Status */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">
-              Status Operasional Hub
+              Hub Operational Health
             </span>
             <div className="h-8.5 w-8.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Activity className="h-4.5 w-4.5" />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-extrabold text-emerald-600">2 Hub</span>
+            <span className="text-2xl font-extrabold text-emerald-600">2 Hubs</span>
             <Badge variant="success" className="text-[10px]">
-              Aktif Normal
+              Normal Active
             </Badge>
           </div>
           <div className="space-y-1 text-[11px] text-slate-500 pt-1">
             <div className="flex items-center gap-1.5 text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>0 Peringatan Suhu Sensor</span>
+              <span>0 Sensor Temp Alerts</span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-600 font-medium">
               <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
-              <span>99.8% Uptime Jaringan Hub</span>
+              <span>99.8% Hub Network Uptime</span>
             </div>
           </div>
         </div>
@@ -319,7 +350,7 @@ export default function WarehouseOverviewPage() {
         {/* Left: Hub Facility Cards (8 Columns) */}
         <div className="lg:col-span-8 space-y-4">
           <h2 className="text-sm font-bold text-slate-900">
-            Daftar Fasilitas Gudang & Utilisasi Zona
+            Warehouse Facilities & Zone Utilization
           </h2>
 
           <div className="space-y-4">
@@ -345,7 +376,7 @@ export default function WarehouseOverviewPage() {
                         </span>
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Operasional Normal
+                          Normal Operations
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
@@ -361,7 +392,7 @@ export default function WarehouseOverviewPage() {
                       <Link href="/admin/warehouse/capacity">
                         <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm h-8.5 px-3 flex items-center gap-1.5">
                           <Grid3X3 className="h-3.5 w-3.5" />
-                          <span>Visualisasi Rak</span>
+                          <span>Rack Visualizer</span>
                         </Button>
                       </Link>
                     </div>
@@ -372,9 +403,9 @@ export default function WarehouseOverviewPage() {
                     {/* Total Capacity Progress */}
                     <div className="p-4 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-slate-600">Total Kapasitas Fisik</span>
+                        <span className="font-semibold text-slate-600">Total Physical Capacity</span>
                         <span className="font-bold text-slate-900">
-                          {hub.usedCapacityM3.toLocaleString("id-ID")} / {hub.totalCapacityM3.toLocaleString("id-ID")} m³ ({usedPercentage}%)
+                          {hub.usedCapacityM3.toLocaleString("en-US")} / {hub.totalCapacityM3.toLocaleString("en-US")} m³ ({usedPercentage}%)
                         </span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
@@ -384,8 +415,8 @@ export default function WarehouseOverviewPage() {
                         />
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                        <span>Penyewa Aktif: {hub.activeTenantsCount} Perusahaan</span>
-                        <span>Slot: {hub.occupiedSlots} / {hub.totalSlots} Terisi</span>
+                        <span>Active Tenants: {hub.activeTenantsCount} Companies</span>
+                        <span>Slots: {hub.occupiedSlots} / {hub.totalSlots} Occupied</span>
                       </div>
                     </div>
 
@@ -406,7 +437,7 @@ export default function WarehouseOverviewPage() {
                           {hub.coldUsedM3} / {hub.coldCapacityM3} m³
                         </p>
                         <p className="text-[10.5px] text-sky-700 font-medium">
-                          {coldPercentage}% Terisi
+                          {coldPercentage}% Occupied
                         </p>
                       </div>
 
@@ -425,7 +456,7 @@ export default function WarehouseOverviewPage() {
                           {hub.standardUsedM3} / {hub.standardCapacityM3} m³
                         </p>
                         <p className="text-[10.5px] text-emerald-700 font-medium">
-                          {stdPercentage}% Terisi
+                          {stdPercentage}% Occupied
                         </p>
                       </div>
                     </div>
@@ -442,7 +473,7 @@ export default function WarehouseOverviewPage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h2 className="text-sm font-bold text-slate-900">
-                Monitoring Sensor Jaringan
+                Network Sensor Monitoring
               </h2>
               <span className="text-[10.5px] text-emerald-600 font-bold flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -453,21 +484,21 @@ export default function WarehouseOverviewPage() {
             <div className="space-y-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                 <div className="flex items-center justify-between font-bold text-slate-900">
-                  <span>Hub Cakung (JKT-01)</span>
+                  <span>Cakung Hub (JKT-01)</span>
                   <span className="text-sky-600 font-mono">-18.4°C</span>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Node Sensor: SN-CKG-001 (Cold A) & SN-CKG-002 (Std B)
+                  Sensor Nodes: SN-CKG-001 (Cold A) & SN-CKG-002 (Std B)
                 </p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
                 <div className="flex items-center justify-between font-bold text-slate-900">
-                  <span>Hub Gedebage (BDG-01)</span>
+                  <span>Gedebage Hub (BDG-01)</span>
                   <span className="text-sky-600 font-mono">-20.1°C</span>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Node Sensor: SN-BDG-001 (Cold A) & SN-BDG-002 (Std B)
+                  Sensor Nodes: SN-BDG-001 (Cold A) & SN-BDG-002 (Std B)
                 </p>
               </div>
             </div>
@@ -477,7 +508,7 @@ export default function WarehouseOverviewPage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h2 className="text-sm font-bold text-slate-900">
-                Jadwal Audit & Pemeliharaan
+                Audit & Maintenance Schedule
               </h2>
               <Badge variant="outline" className="text-[10px]">
                 Q3 2026
@@ -490,8 +521,8 @@ export default function WarehouseOverviewPage() {
                   <ShieldCheck className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Kalibrasi Sensor Suhu Cold Storage</p>
-                  <p className="text-[11px] text-slate-500">Hub Cakung • Jadwal: 20 Agu 2026</p>
+                  <p className="font-bold text-slate-800">Cold Storage Temperature Sensor Calibration</p>
+                  <p className="text-[11px] text-slate-500">Cakung Hub • Scheduled: Aug 20, 2026</p>
                 </div>
               </div>
 
@@ -500,8 +531,8 @@ export default function WarehouseOverviewPage() {
                   <AlertTriangle className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800">Inspeksi Struktur Rak Slot A-02-03</p>
-                  <p className="text-[11px] text-slate-500">Dalam Perbaikan • Teknisi PT ColdTech</p>
+                  <p className="font-bold text-slate-800">Rack Structure Inspection Slot A-02-03</p>
+                  <p className="text-[11px] text-slate-500">Under Maintenance • PT ColdTech Technicians</p>
                 </div>
               </div>
             </div>

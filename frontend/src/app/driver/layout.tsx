@@ -4,7 +4,7 @@ import { DriverShell } from "@/components/layout/DriverShell";
 export const metadata: Metadata = {
   title: "Driver Fleet — WMS Nusantara",
   description:
-    "Antarmuka operasional driver logistik, penugasan rute pengiriman, pemilihan truk reefer, dan digital POD WMS Nusantara.",
+    "Logistics driver operational interface, dispatch route assignment, reefer truck selection, and WMS Nusantara digital POD.",
 };
 
 export default function DriverLayout({

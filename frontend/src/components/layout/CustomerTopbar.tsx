@@ -31,15 +31,15 @@ export function CustomerTopbar({
   const { user } = useAuth();
 
   const getPageTitle = () => {
-    if (pathname.includes("/customer/rental")) return "Sewa Ruang Gudang";
-    if (pathname.includes("/customer/goods")) return "Barang & Inventaris";
-    if (pathname.includes("/customer/logistics/request")) return "Request Pengiriman";
-    if (pathname.includes("/customer/logistics/tracking")) return "Lacak Pengiriman";
-    if (pathname.includes("/customer/billing")) return "Tagihan & Faktur";
-    if (pathname.includes("/customer/history")) return "Riwayat Transaksi";
-    if (pathname.includes("/customer/dashboard")) return "Dashboard Customer";
-    if (pathname.includes("/profile")) return "Pengaturan Profil";
-    return "Portal Layanan";
+    if (pathname.includes("/customer/rental")) return "Warehouse Space Rental";
+    if (pathname.includes("/customer/goods")) return "Goods & Inventory";
+    if (pathname.includes("/customer/logistics/request")) return "Request Delivery";
+    if (pathname.includes("/customer/logistics/tracking")) return "Track Deliveries";
+    if (pathname.includes("/customer/billing")) return "Billing & Invoices";
+    if (pathname.includes("/customer/history")) return "Transaction History";
+    if (pathname.includes("/customer/dashboard")) return "Customer Dashboard";
+    if (pathname.includes("/profile")) return "Profile Settings";
+    return "Customer Portal";
   };
 
   return (
@@ -50,13 +50,13 @@ export function CustomerTopbar({
           type="button"
           onClick={onOpenMobileMenu}
           className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          aria-label="Buka menu navigasi"
+          aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
         </button>
 
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
-          <span className="font-semibold text-slate-700">Portal Customer</span>
+          <span className="font-semibold text-slate-700">Customer Portal</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
           <span className="font-bold text-slate-900">{getPageTitle()}</span>
         </div>
@@ -71,7 +71,7 @@ export function CustomerTopbar({
         >
           <div className="flex items-center gap-2">
             <Search className="h-3.5 w-3.5 text-slate-400" />
-            <span>Cari SKU barang, slot ruang sewa, atau no. resi logistik...</span>
+            <span>Search goods SKU, rental slots, or delivery tracking #...</span>
           </div>
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded-md text-slate-500 shadow-sm">
             ⌘ K
@@ -95,7 +95,7 @@ export function CustomerTopbar({
         <Link href="/customer/rental" className="hidden sm:block">
           <Button className="h-8.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 px-3">
             <Plus className="h-3.5 w-3.5" />
-            <span>Sewa Ruang</span>
+            <span>Rent Space</span>
           </Button>
         </Link>
 
@@ -104,7 +104,7 @@ export function CustomerTopbar({
           type="button"
           onClick={onOpenNotifications}
           className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          aria-label="Lihat Notifikasi"
+          aria-label="View Notifications"
         >
           <Bell className="h-4 w-4" />
           {unreadNotificationsCount > 0 && (
@@ -124,7 +124,7 @@ export function CustomerTopbar({
           </div>
           <div className="hidden lg:block text-left">
             <p className="text-xs font-bold text-slate-900 leading-tight truncate max-w-[130px]">
-              {user?.companyName || user?.name || "Customer WMS"}
+              {user?.companyName || user?.name || "WMS Customer"}
             </p>
             <p className="text-[10px] text-slate-400 font-mono leading-tight truncate max-w-[130px]">
               {user?.email || "customer@freshfoods.id"}

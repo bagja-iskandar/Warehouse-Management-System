@@ -31,14 +31,14 @@ export default function DriverTaskDetailPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Instruksi Pengiriman & Manifest Tugas
+              Delivery Instruction & Task Manifest
             </h1>
             <Badge variant="warning" className="text-[10px]">
               DO-2026-001
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Manifest muatan dingin, panduan serah terima, kontak PIC penerima, dan checklist Digital POD.
+            Reefer cold cargo manifest, handover guide, recipient PIC contact, and Digital POD checklist.
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export default function DriverTaskDetailPage() {
               variant="outline"
               className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
             >
-              Kembali
+              Back
             </Button>
           </Link>
         </div>
@@ -59,7 +59,7 @@ export default function DriverTaskDetailPage() {
           {/* Recipient Details */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Informasi Penerima & Titik Drop-off
+              Recipient Information & Drop-off Point
             </h2>
 
             <div className="space-y-3 text-xs">
@@ -68,10 +68,10 @@ export default function DriverTaskDetailPage() {
                   <MapPin className="h-4 w-4" />
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 block font-medium">Tujuan Drop-off</span>
+                  <span className="text-[11px] text-slate-400 block font-medium">Drop-off Destination</span>
                   <p className="font-bold text-slate-900 text-sm">FreshMarket Superstore BSD</p>
                   <p className="text-slate-500 mt-0.5">
-                    Jl. Pahlawan Seribu No. 88, BSD City, Tangerang Selatan (Area Loading Dock Belakang)
+                    Jl. Pahlawan Seribu No. 88, BSD City, South Tangerang (Rear Loading Dock Area)
                   </p>
                 </div>
               </div>
@@ -80,7 +80,7 @@ export default function DriverTaskDetailPage() {
                 <div className="flex items-center gap-2.5">
                   <User className="h-4 w-4 text-slate-500" />
                   <div>
-                    <p className="font-bold text-slate-800">Pak Hendra (Supervisor Receiving)</p>
+                    <p className="font-bold text-slate-800">Mr. Hendra (Receiving Supervisor)</p>
                     <p className="text-[11px] text-slate-500 font-mono">0812-9988-7766</p>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export default function DriverTaskDetailPage() {
                 <a href="tel:081299887766">
                   <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 flex items-center gap-1">
                     <Phone className="h-3.5 w-3.5" />
-                    <span>Hubungi PIC</span>
+                    <span>Contact PIC</span>
                   </Button>
                 </a>
               </div>
@@ -98,24 +98,24 @@ export default function DriverTaskDetailPage() {
           {/* Manifest Items */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Manifest Barang yang Dimuat (Cold Storage Reefer)
+              Loaded Cargo Manifest (Reefer Cold Storage)
             </h2>
 
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-slate-900 block">Daging Sapi Wagyu A5 Import</span>
+                  <span className="font-bold text-slate-900 block">Import Wagyu Beef Ribeye A5</span>
                   <span className="text-[11px] text-slate-500 font-mono">BAR-FRESH-001 • Batch: BATCH-WGY-2026-08</span>
                 </div>
-                <span className="font-mono font-bold text-indigo-600 text-sm">100 Koli</span>
+                <span className="font-mono font-bold text-indigo-600 text-sm">100 Packages</span>
               </div>
 
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-slate-900 block">Salmon Fillet Premium Norwegia</span>
+                  <span className="font-bold text-slate-900 block">Premium Norwegian Salmon Fillet</span>
                   <span className="text-[11px] text-slate-500 font-mono">BAR-FRESH-002 • Batch: BATCH-SLM-2026-08</span>
                 </div>
-                <span className="font-mono font-bold text-indigo-600 text-sm">50 Koli</span>
+                <span className="font-mono font-bold text-indigo-600 text-sm">50 Packages</span>
               </div>
             </div>
           </div>
@@ -125,20 +125,20 @@ export default function DriverTaskDetailPage() {
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Aksi Pengemudi
+              Driver Actions
             </h2>
 
             <Link href="/driver/transit" className="block">
               <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20">
                 <Navigation className="h-4 w-4" />
-                <span>Buka GPS Rute Pengiriman</span>
+                <span>Open GPS Delivery Route</span>
               </Button>
             </Link>
 
             <Link href="/driver/pod" className="block">
               <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-10 rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
                 <FileCheck className="h-4 w-4" />
-                <span>Upload Bukti POD & TTD</span>
+                <span>Upload Proof of Delivery & Signature</span>
               </Button>
             </Link>
           </div>

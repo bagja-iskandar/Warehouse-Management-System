@@ -33,42 +33,42 @@ interface ReportTemplate {
 const REPORT_TEMPLATES: ReportTemplate[] = [
   {
     id: "rep-1",
-    title: "Laporan Utilisasi Kapasitas Gudang & Slot Rak",
+    title: "Warehouse Capacity & Rack Slot Utilization Report",
     category: "CAPACITY",
-    description: "Analisis okupansi fisik volume m³ per zona Cold Storage vs Standard di seluruh hub.",
-    period: "Bulanan (Agustus 2026)",
+    description: "Physical volume m³ occupancy analysis per zone for Cold Storage vs Standard across all hubs.",
+    period: "Monthly (August 2026)",
     format: "PDF & XLSX",
-    lastGenerated: "16 Agu 2026, 07:00 WIB",
+    lastGenerated: "Aug 16, 2026, 07:00 WIB",
     fileSize: "1.8 MB",
   },
   {
     id: "rep-2",
-    title: "Laporan Mutasi Keluar/Masuk Barang (Inbound/Outbound)",
+    title: "Inventory Movement & Inbound/Outbound Flow Report",
     category: "INVENTORY",
-    description: "Rekap SKU terdaftar, pergerakan stock turnover, kadaluarsa batch, dan verifikasi QR.",
-    period: "Mingguan (09 - 16 Agu 2026)",
+    description: "Registered SKU summary, stock turnover velocity, batch expiration tracking, and QR code verifications.",
+    period: "Weekly (Aug 09 - 16, 2026)",
     format: "XLSX & CSV",
-    lastGenerated: "16 Agu 2026, 06:30 WIB",
+    lastGenerated: "Aug 16, 2026, 06:30 WIB",
     fileSize: "2.4 MB",
   },
   {
     id: "rep-3",
-    title: "Laporan Performa On-Time Delivery & Armada Logistik",
+    title: "Logistics Fleet On-Time Delivery & Performance Report",
     category: "LOGISTICS",
-    description: "Evaluasi ketepatan rute transit driver, monitoring telemetri suhu reefer, dan Digital POD.",
-    period: "Bulanan (Agustus 2026)",
+    description: "Driver transit routing accuracy evaluations, reefer temperature telemetry logs, and Digital POD completion.",
+    period: "Monthly (August 2026)",
     format: "PDF & CSV",
-    lastGenerated: "15 Agu 2026, 23:59 WIB",
+    lastGenerated: "Aug 15, 2026, 23:59 WIB",
     fileSize: "1.2 MB",
   },
   {
     id: "rep-4",
-    title: "Laporan Pendapatan Sewa Gudang, Tagihan & Rekap Denda",
+    title: "Warehouse Space Rental, Invoices & Late Fee Penalty Report",
     category: "FINANCE",
-    description: "Rekapitulasi omzet faktur sewa m³, denda keterlambatan 5%/minggu, dan piutang jatuh tempo.",
-    period: "Bulanan (Agustus 2026)",
+    description: "Rental turnover revenue breakdown per m³, automated 5%/week overdue fees, and aging receivables.",
+    period: "Monthly (August 2026)",
     format: "PDF & XLSX",
-    lastGenerated: "16 Agu 2026, 08:00 WIB",
+    lastGenerated: "Aug 16, 2026, 08:00 WIB",
     fileSize: "3.1 MB",
   },
 ];
@@ -77,7 +77,7 @@ export default function OperationalReportsPage() {
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
 
   const handleExport = (title: string) => {
-    setDownloadSuccess(`Mengunduh file: ${title}...`);
+    setDownloadSuccess(`Downloading file: ${title}...`);
     setTimeout(() => {
       setDownloadSuccess(null);
     }, 3000);
@@ -90,14 +90,14 @@ export default function OperationalReportsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Laporan Operasional & Export Data Sistem
+              Operational Reports & System Data Exports
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Analytics & Reporting
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Unduh laporan eksekutif pergudangan, logistik armada, rekapitulasi mutasi inventaris, dan keuangan sewa.
+            Download executive warehouse analytics, logistics fleet logs, inventory movement recaps, and rental billing summaries.
           </p>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function OperationalReportsPage() {
       {downloadSuccess && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-          <span>{downloadSuccess} Berhasil diekspor!</span>
+          <span>{downloadSuccess} Successfully exported!</span>
         </div>
       )}
 
@@ -148,13 +148,13 @@ export default function OperationalReportsPage() {
 
             <div className="pt-4 border-t border-slate-100 space-y-3">
               <div className="flex items-center justify-between text-[11px] text-slate-500">
-                <span>Periode: {report.period}</span>
+                <span>Period: {report.period}</span>
                 <span className="font-mono text-slate-700 font-semibold">{report.format}</span>
               </div>
 
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10.5px] text-slate-400 truncate">
-                  Update: {report.lastGenerated}
+                  Updated: {report.lastGenerated}
                 </span>
 
                 <Button

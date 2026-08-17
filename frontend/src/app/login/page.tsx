@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Masuk Portal Operasional — WMS Nusantara",
+  title: "Operations Portal Sign In — WMS Nusantara",
   description:
-    "Portal login enterprise multi-role untuk Admin Gudang, Customer, dan Driver Logistik WMS Nusantara.",
+    "Enterprise multi-role login portal for Warehouse Administrators, Customers, and Logistics Fleet Drivers.",
 };
 
 export default function LoginPage() {

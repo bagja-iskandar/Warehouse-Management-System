@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useDeliveryOrders } from "@/hooks/use-logistics";
 
 interface DispatchOrder {
   id: string;
@@ -45,47 +46,46 @@ const DISPATCH_ORDERS: DispatchOrder[] = [
     id: "do-1",
     doNumber: "DO-2026-001",
     tenantName: "PT Fresh Foods Indonesia",
-    recipientName: "FreshMarket Superstore BSD (Pak Hendra)",
-    recipientAddress: "Jl. Pahlawan Seribu No. 88, BSD City, Tangerang Selatan",
-    itemsSummary: "150 Koli Daging Wagyu & Salmon (Reefer -18°C)",
+    recipientName: "FreshMarket Superstore BSD (Mr. Hendra)",
+    recipientAddress: "Jl. Pahlawan Seribu No. 88, BSD City, South Tangerang",
+    itemsSummary: "150 Packages Wagyu Beef & Salmon (Reefer -18°C)",
     totalKoli: 150,
     assignedDriver: "Ahmad Subarjo",
-    assignedVehicle: "Truk Reefer Isuzu Giga",
+    assignedVehicle: "Isuzu Giga Reefer Truck",
     vehiclePlate: "B 9821 TKN",
     status: "IN_TRANSIT",
-    scheduledTime: "16 Agu 2026, 08:30 WIB",
-    estimatedArrival: "35 Menit (09:45 WIB)",
+    scheduledTime: "Aug 16, 2026, 08:30 WIB",
+    estimatedArrival: "35 Minutes (09:45 WIB)",
     hasDigitalPod: false,
   },
   {
     id: "do-2",
     doNumber: "DO-2026-002",
     tenantName: "CV Furnitur Nusantara",
-    recipientName: "Plaza Mebel Cibubur (Ibu Ratna)",
-    recipientAddress: "Jl. Alternatif Cibubur KM 4, Jakarta Timur",
-    itemsSummary: "35 Unit Meja Makan Kayu Jati & Kursi",
-    totalKoli: 35,
+    recipientName: "Showroom Furniture Kemang (Mrs. Sarah)",
+    recipientAddress: "Jl. Kemang Raya No. 42, South Jakarta",
+    itemsSummary: "20 Sets 3-Seater Velvet Minimalist Sofa",
+    totalKoli: 20,
     assignedDriver: "Doni Prasetyo",
-    assignedVehicle: "Box Truck Hino Dutro",
+    assignedVehicle: "Hino Dutro Box Truck",
     vehiclePlate: "B 1234 XYZ",
     status: "LOADING",
-    scheduledTime: "16 Agu 2026, 09:15 WIB",
-    estimatedArrival: "10:30 WIB",
+    scheduledTime: "Aug 16, 2026, 10:00 WIB",
     hasDigitalPod: false,
   },
   {
     id: "do-3",
     doNumber: "DO-2026-003",
     tenantName: "PT Global Retailindo",
-    recipientName: "Toko Retail Sunter Indah (Bpk Kevin)",
-    recipientAddress: "Ruko Sunter Garden Blok D No. 5, Jakarta Utara",
-    itemsSummary: "60 Box Peralatan Elektronik Rumah Tangga",
+    recipientName: "Retail Store Sunter Indah (Mr. Kevin)",
+    recipientAddress: "Ruko Sunter Garden Blok D No. 5, North Jakarta",
+    itemsSummary: "60 Boxes Household Electronic Appliances",
     totalKoli: 60,
     assignedDriver: "Rian Hidayat",
-    assignedVehicle: "Blind Van Daihatsu GranMax",
+    assignedVehicle: "Daihatsu GranMax Blind Van",
     vehiclePlate: "B 5678 KLM",
     status: "QUEUED",
-    scheduledTime: "16 Agu 2026, 13:00 WIB",
+    scheduledTime: "Aug 16, 2026, 13:00 WIB",
     hasDigitalPod: false,
   },
   {
@@ -93,24 +93,53 @@ const DISPATCH_ORDERS: DispatchOrder[] = [
     doNumber: "DO-2026-000",
     tenantName: "PT Sumber Frozen Makmur",
     recipientName: "Super Indo Kelapa Gading",
-    recipientAddress: "Jl. Boulevard Raya Blok LA No. 1, Jakarta Utara",
-    itemsSummary: "80 Koli Dairy Butter & Keju",
+    recipientAddress: "Jl. Boulevard Raya Blok LA No. 1, North Jakarta",
+    itemsSummary: "80 Packages Dairy Butter & Cheese",
     totalKoli: 80,
     assignedDriver: "Ahmad Subarjo",
-    assignedVehicle: "Truk Reefer Isuzu Giga",
+    assignedVehicle: "Isuzu Giga Reefer Truck",
     vehiclePlate: "B 9821 TKN",
     status: "DELIVERED",
-    scheduledTime: "15 Agu 2026, 14:00 WIB",
+    scheduledTime: "Aug 15, 2026, 14:00 WIB",
     hasDigitalPod: true,
   },
 ];
 
 export default function LogisticsManagementPage() {
+  const { data: liveOrders } = useDeliveryOrders();
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredOrders = DISPATCH_ORDERS.filter((order) => {
-    const matchStatus = statusFilter === "ALL" || order.status === statusFilter;
+  const activeOrders: DispatchOrder[] =
+    liveOrders && liveOrders.length > 0
+      ? liveOrders.map((o) => ({
+          id: o.id,
+          doNumber: o.orderNumber,
+          tenantName: o.customerName || "PT Fresh Foods Indonesia",
+          recipientName: `${o.destinationAddress} (${o.customerName})`,
+          recipientAddress: o.destinationAddress,
+          itemsSummary: o.goodsSummary || "WMS Cargo Commodities",
+          totalKoli: Math.round((o.totalVolumeM3 || 1) * 20),
+          assignedDriver: o.driverName || "WMS Driver",
+          assignedVehicle: o.vehicleType || "Isuzu Giga Reefer Truck",
+          vehiclePlate: o.vehiclePlate || "B 9821 WMS",
+          status:
+            o.status === "DELIVERED" || o.status === "CONFIRMED"
+              ? ("DELIVERED" as const)
+              : o.status === "IN_TRANSIT" || o.status === "EN_ROUTE_PICKUP"
+              ? ("IN_TRANSIT" as const)
+              : o.status === "PICKED_UP"
+              ? ("LOADING" as const)
+              : ("QUEUED" as const),
+          scheduledTime: o.scheduledDate || "16 Aug 2026",
+          estimatedArrival: "35 Minutes",
+          hasDigitalPod: Boolean(o.proofOfDeliveryUrl),
+        }))
+      : DISPATCH_ORDERS;
+
+  const filteredOrders = activeOrders.filter((order) => {
+    const matchStatus =
+      statusFilter === "ALL" || order.status === statusFilter;
     const matchSearch =
       order.doNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.tenantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,14 +155,14 @@ export default function LogisticsManagementPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Logistik & Antrean Dispatch Delivery Order
+              Logistics & Dispatch Delivery Order Queue
             </h1>
             <Badge className="bg-indigo-600 text-white text-[10px]">
               Active Dispatch
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Jadwal pengiriman armada, alokasi loading dock, live tracking rute, dan bukti serah terima (Digital POD).
+            Fleet dispatch schedules, loading dock allocations, live GPS route tracking, and digital proof of delivery (Digital POD).
           </p>
         </div>
 
@@ -148,7 +177,7 @@ export default function LogisticsManagementPage() {
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Buat Delivery Order (DO)</span>
+            <span>Create Delivery Order (DO)</span>
           </Button>
         </div>
       </div>
@@ -156,33 +185,33 @@ export default function LogisticsManagementPage() {
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Penugasan DO Hari Ini</span>
-          <p className="text-2xl font-extrabold text-slate-900">{DISPATCH_ORDERS.length} Pengiriman</p>
-          <p className="text-[11px] text-slate-400">Total 325 Koli muatan</p>
+          <span className="text-xs font-semibold text-slate-500">Today&apos;s Total DO Assignments</span>
+          <p className="text-2xl font-extrabold text-slate-900">{DISPATCH_ORDERS.length} Shipments</p>
+          <p className="text-[11px] text-slate-400">Total 325 Packages cargo</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Dalam Transit GPS</span>
+          <span className="text-xs font-semibold text-slate-500">In Transit GPS</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-amber-600">1 Armada</p>
+            <p className="text-2xl font-extrabold text-amber-600">1 Fleet</p>
             <Badge variant="warning" className="text-[10px]">In-Transit</Badge>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">B 9821 TKN Menuju BSD</p>
+          <p className="text-[11px] text-slate-400 font-mono">B 9821 TKN Heading to BSD</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Proses Muat di Dock</span>
-          <p className="text-2xl font-extrabold text-indigo-600">1 Armada</p>
+          <span className="text-xs font-semibold text-slate-500">Loading Dock Process</span>
+          <p className="text-2xl font-extrabold text-indigo-600">1 Fleet</p>
           <p className="text-[11px] text-slate-400">Loading Dock 1 — JKT-01</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Digital POD Terverifikasi</span>
+          <span className="text-xs font-semibold text-slate-500">Verified Digital POD</span>
           <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
             <CheckCircle2 className="h-4 w-4" />
-            <span>1 Selesai Tervalidasi</span>
+            <span>1 Completed & Validated</span>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">DO-2026-000 (Foto & TTD)</p>
+          <p className="text-[11px] text-slate-400 font-mono">DO-2026-000 (Photo & Signature)</p>
         </div>
       </div>
 
@@ -199,7 +228,7 @@ export default function LogisticsManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Status ({DISPATCH_ORDERS.length})
+              All Statuses ({DISPATCH_ORDERS.length})
             </button>
             <button
               onClick={() => setStatusFilter("IN_TRANSIT")}
@@ -209,7 +238,7 @@ export default function LogisticsManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Dalam Transit
+              In Transit
             </button>
             <button
               onClick={() => setStatusFilter("LOADING")}
@@ -229,7 +258,7 @@ export default function LogisticsManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Selesai (POD)
+              Completed (POD)
             </button>
           </div>
 
@@ -237,7 +266,7 @@ export default function LogisticsManagementPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari no DO, tenant, penerima, atau driver..."
+              placeholder="Search DO number, tenant, recipient, or driver..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
@@ -250,13 +279,13 @@ export default function LogisticsManagementPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">No. DO & Customer</th>
-                <th className="py-3 px-3">Tujuan & Penerima</th>
-                <th className="py-3 px-3">Rincian Muatan</th>
-                <th className="py-3 px-3">Driver & Truk</th>
-                <th className="py-3 px-3">Status Pengiriman</th>
-                <th className="py-3 px-3">Jadwal / Estimasi</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3">DO No. & Customer</th>
+                <th className="py-3 px-3">Destination & Recipient</th>
+                <th className="py-3 px-3">Cargo Details</th>
+                <th className="py-3 px-3">Driver & Truck</th>
+                <th className="py-3 px-3">Delivery Status</th>
+                <th className="py-3 px-3">Schedule / Estimate</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -288,7 +317,7 @@ export default function LogisticsManagementPage() {
                       {order.itemsSummary}
                     </span>
                     <span className="text-[10.5px] text-slate-400">
-                      Total: {order.totalKoli} Koli
+                      Total: {order.totalKoli} Packages
                     </span>
                   </td>
 
@@ -306,7 +335,7 @@ export default function LogisticsManagementPage() {
                   <td className="py-3.5 px-3">
                     {order.status === "IN_TRANSIT" ? (
                       <Badge variant="warning" className="text-[10.5px]">
-                        Dalam Transit
+                        In Transit
                       </Badge>
                     ) : order.status === "LOADING" ? (
                       <Badge variant="default" className="text-[10.5px] bg-indigo-600">
@@ -314,11 +343,11 @@ export default function LogisticsManagementPage() {
                       </Badge>
                     ) : order.status === "QUEUED" ? (
                       <Badge variant="outline" className="text-[10.5px]">
-                        Antrean Penugasan
+                        Assignment Queue
                       </Badge>
                     ) : (
                       <Badge variant="success" className="text-[10.5px]">
-                        Selesai (POD)
+                        Completed (POD)
                       </Badge>
                     )}
                   </td>
@@ -342,7 +371,7 @@ export default function LogisticsManagementPage() {
                       variant="ghost"
                       className="h-8 px-2.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
                     >
-                      Surat Jalan →
+                      Waybill →
                     </Button>
                   </td>
                 </tr>

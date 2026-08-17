@@ -42,12 +42,12 @@ const DRIVERS_DATA: DriverRecord[] = [
     id: "drv-1",
     name: "Ahmad Subarjo",
     phone: "0812-3456-7890",
-    simType: "SIM B2 Umum",
-    simExpiry: "14 Agu 2028",
-    assignedVehicle: "Truk Reefer Isuzu Giga",
+    simType: "SIM B2 General",
+    simExpiry: "Aug 14, 2028",
+    assignedVehicle: "Isuzu Giga Reefer Truck",
     vehiclePlate: "B 9821 TKN",
     status: "ON_DUTY",
-    currentLocation: "Tol JORR KM 18 (Menuju BSD)",
+    currentLocation: "JORR Toll KM 18 (Heading to BSD)",
     activeDeliveryOrder: "DO-2026-001",
     completedTrips: 142,
     rating: 4.9,
@@ -57,11 +57,11 @@ const DRIVERS_DATA: DriverRecord[] = [
     name: "Doni Prasetyo",
     phone: "0813-8877-6655",
     simType: "SIM B1",
-    simExpiry: "20 Mei 2027",
-    assignedVehicle: "Box Truck Hino Dutro",
+    simExpiry: "May 20, 2027",
+    assignedVehicle: "Hino Dutro Box Truck",
     vehiclePlate: "B 1234 XYZ",
     status: "ON_DUTY",
-    currentLocation: "Gudang Cakung — Loading Dock 1",
+    currentLocation: "Cakung Warehouse — Loading Dock 1",
     activeDeliveryOrder: "DO-2026-002",
     completedTrips: 98,
     rating: 4.8,
@@ -71,11 +71,11 @@ const DRIVERS_DATA: DriverRecord[] = [
     name: "Rian Hidayat",
     phone: "0815-4433-2211",
     simType: "SIM A",
-    simExpiry: "02 Okt 2029",
-    assignedVehicle: "Blind Van Daihatsu GranMax",
+    simExpiry: "Oct 02, 2029",
+    assignedVehicle: "Daihatsu GranMax Blind Van",
     vehiclePlate: "B 5678 KLM",
     status: "AVAILABLE",
-    currentLocation: "Pool Armada Gudang Cakung",
+    currentLocation: "Cakung Warehouse Fleet Pool",
     completedTrips: 64,
     rating: 4.7,
   },
@@ -83,12 +83,12 @@ const DRIVERS_DATA: DriverRecord[] = [
     id: "drv-4",
     name: "Budi Santoso",
     phone: "0819-0011-2233",
-    simType: "SIM B2 Umum",
-    simExpiry: "18 Jan 2028",
-    assignedVehicle: "Truk Reefer Mitsubishi Fuso",
+    simType: "SIM B2 General",
+    simExpiry: "Jan 18, 2028",
+    assignedVehicle: "Mitsubishi Fuso Reefer Truck",
     vehiclePlate: "B 3344 SBY",
     status: "RESTING",
-    currentLocation: "Mess Driver Pool Bandung",
+    currentLocation: "Bandung Fleet Pool Driver Quarters",
     completedTrips: 210,
     rating: 4.9,
   },
@@ -119,14 +119,14 @@ export default function DriverManagementPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Manajemen Driver & Personel Armada
+              Driver & Fleet Personnel Management
             </h1>
             <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
               Fleet Drivers
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar pengemudi logistik, status penugasan Delivery Order (DO), verifikasi SIM, dan performa on-time.
+            List of logistics drivers, active Delivery Order (DO) assignments, driver license verification, and on-time performance.
           </p>
         </div>
 
@@ -136,12 +136,12 @@ export default function DriverManagementPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Data Driver</span>
+            <span>Export Driver Data</span>
           </Button>
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Registrasi Driver Baru</span>
+            <span>Register New Driver</span>
           </Button>
         </div>
       </div>
@@ -149,28 +149,28 @@ export default function DriverManagementPage() {
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Driver Terdaftar</span>
-          <p className="text-2xl font-extrabold text-slate-900">{DRIVERS_DATA.length} Personel</p>
-          <p className="text-[11px] text-slate-400">Terverifikasi SIM B1/B2/A</p>
+          <span className="text-xs font-semibold text-slate-500">Total Registered Drivers</span>
+          <p className="text-2xl font-extrabold text-slate-900">{DRIVERS_DATA.length} Personnel</p>
+          <p className="text-[11px] text-slate-400">Verified SIM B1/B2/A Licenses</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Sedang Bertugas (On-Duty)</span>
+          <span className="text-xs font-semibold text-slate-500">On-Duty Active Drivers</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-amber-600">{onDutyCount} Driver</p>
+            <p className="text-2xl font-extrabold text-amber-600">{onDutyCount} Drivers</p>
             <Badge variant="warning" className="text-[10px]">In-Transit</Badge>
           </div>
-          <p className="text-[11px] text-slate-400">Membawa delivery order aktif</p>
+          <p className="text-[11px] text-slate-400">Carrying active delivery orders</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Standby di Pool</span>
-          <p className="text-2xl font-extrabold text-emerald-600">{availableCount} Driver</p>
-          <p className="text-[11px] text-slate-400">Siap menerima dispatch baru</p>
+          <span className="text-xs font-semibold text-slate-500">Standby in Pool</span>
+          <p className="text-2xl font-extrabold text-emerald-600">{availableCount} Drivers</p>
+          <p className="text-[11px] text-slate-400">Ready for new dispatch</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Rating Performa Rata-rata</span>
+          <span className="text-xs font-semibold text-slate-500">Average Performance Rating</span>
           <div className="flex items-center gap-1.5">
             <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
             <span className="text-2xl font-extrabold text-slate-900">4.85 / 5.0</span>
@@ -192,7 +192,7 @@ export default function DriverManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Driver ({DRIVERS_DATA.length})
+              All Drivers ({DRIVERS_DATA.length})
             </button>
             <button
               onClick={() => setStatusFilter("ON_DUTY")}
@@ -202,7 +202,7 @@ export default function DriverManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Sedang Bertugas
+              On Duty
             </button>
             <button
               onClick={() => setStatusFilter("AVAILABLE")}
@@ -212,7 +212,7 @@ export default function DriverManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Standby di Pool
+              Standby in Pool
             </button>
           </div>
 
@@ -220,7 +220,7 @@ export default function DriverManagementPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari nama driver, plat truk, atau no HP..."
+              placeholder="Search driver name, truck plate, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
@@ -233,13 +233,13 @@ export default function DriverManagementPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">Nama Driver</th>
-                <th className="py-3 px-3">Kontak & SIM</th>
-                <th className="py-3 px-3">Armada Terpasang</th>
-                <th className="py-3 px-3">Status Saat Ini</th>
-                <th className="py-3 px-3">Lokasi / Tugas Aktif</th>
-                <th className="py-3 px-3">Total Trip & Rating</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3">Driver Name</th>
+                <th className="py-3 px-3">Contact & License</th>
+                <th className="py-3 px-3">Assigned Vehicle</th>
+                <th className="py-3 px-3">Current Status</th>
+                <th className="py-3 px-3">Location / Active Task</th>
+                <th className="py-3 px-3">Total Trips & Rating</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -268,7 +268,7 @@ export default function DriverManagementPage() {
                       {driver.phone}
                     </span>
                     <span className="text-[10.5px] text-slate-500 block">
-                      {driver.simType} • Berlaku: {driver.simExpiry}
+                      {driver.simType} • Valid until: {driver.simExpiry}
                     </span>
                   </td>
 
@@ -286,15 +286,15 @@ export default function DriverManagementPage() {
                   <td className="py-3.5 px-3">
                     {driver.status === "ON_DUTY" ? (
                       <Badge variant="warning" className="text-[10.5px]">
-                        Dalam Tugas
+                        On Duty
                       </Badge>
                     ) : driver.status === "AVAILABLE" ? (
                       <Badge variant="success" className="text-[10.5px]">
-                        Standby Siap
+                        Standby Ready
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="text-[10.5px]">
-                        Istirahat
+                        Resting
                       </Badge>
                     )}
                   </td>
@@ -307,7 +307,7 @@ export default function DriverManagementPage() {
                     </span>
                     {driver.activeDeliveryOrder && (
                       <span className="text-[10.5px] text-indigo-600 font-mono font-bold block mt-0.5">
-                        Tugas: {driver.activeDeliveryOrder}
+                        Task: {driver.activeDeliveryOrder}
                       </span>
                     )}
                   </td>
@@ -318,7 +318,7 @@ export default function DriverManagementPage() {
                       <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                       <span>{driver.rating}</span>
                       <span className="text-slate-400 font-normal ml-1">
-                        ({driver.completedTrips} trip)
+                        ({driver.completedTrips} trips)
                       </span>
                     </div>
                   </td>

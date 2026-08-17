@@ -14,21 +14,21 @@ export const DEMO_CREDENTIALS: Record<
 > = {
   ADMIN: {
     email: "admin@wms.id",
-    password: "password123",
-    roleName: "Admin Gudang",
-    description: "Akses penuh manajemen kapasitas rak, armada, & tagihan",
+    password: "Password123!",
+    roleName: "Warehouse Admin",
+    description: "Full access to rack capacity, fleet, & billing management",
   },
   CUSTOMER: {
     email: "customer@freshfoods.id",
-    password: "password123",
-    roleName: "Customer Perusahaan",
-    description: "Sewa ruang cold storage, booking, & monitoring barang",
+    password: "Password123!",
+    roleName: "Corporate Customer",
+    description: "Rent cold storage space, bookings, & goods monitoring",
   },
   DRIVER: {
     email: "driver@wms.id",
-    password: "password123",
-    roleName: "Driver Logistik",
-    description: "Tugas penjemputan/pengantaran & pemilihan armada truk",
+    password: "Password123!",
+    roleName: "Logistics Driver",
+    description: "Pickup/delivery tasks & truck fleet selection",
   },
 };
 
@@ -44,8 +44,8 @@ export function useAuth() {
     onSuccess: (authenticatedUser) => {
       setUser(authenticatedUser);
       queryClient.invalidateQueries({ queryKey: ["auth"] });
-      toast.success("Autentikasi Berhasil", {
-        description: `Selamat datang kembali, ${authenticatedUser.name}`,
+      toast.success("Authentication Successful", {
+        description: `Welcome back, ${authenticatedUser.name}`,
       });
 
       // Role-based redirection
@@ -65,8 +65,8 @@ export function useAuth() {
       }
     },
     onError: (error: Error) => {
-      toast.error("Gagal Masuk", {
-        description: error.message || "Email atau kata sandi tidak valid.",
+      toast.error("Sign In Failed", {
+        description: error.message || "Invalid email or password.",
       });
     },
   });
@@ -78,33 +78,33 @@ export function useAuth() {
     onSuccess: (newUser) => {
       setUser(newUser);
       queryClient.invalidateQueries({ queryKey: ["auth"] });
-      toast.success("Pendaftaran Berhasil", {
-        description: `Akun perusahaan ${newUser.companyName || newUser.name} berhasil dibuat.`,
+      toast.success("Registration Successful", {
+        description: `Corporate account ${newUser.companyName || newUser.name} created successfully.`,
       });
       router.push("/customer/dashboard");
     },
     onError: (error: Error) => {
-      toast.error("Pendaftaran Gagal", {
-        description: error.message || "Gagal membuat akun customer.",
+      toast.error("Registration Failed", {
+        description: error.message || "Failed to create customer account.",
       });
     },
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>): Promise<UserProfile> => {
-      if (!user) throw new Error("Pengguna tidak terautentikasi.");
+      if (!user) throw new Error("User not authenticated.");
       return await authService.updateProfile(user.id, updates);
     },
     onSuccess: (updatedUser) => {
       setUser(updatedUser);
       queryClient.invalidateQueries({ queryKey: ["auth"] });
-      toast.success("Profil Berhasil Diperbarui", {
-        description: "Informasi akun dan data perusahaan berhasil disimpan.",
+      toast.success("Profile Updated Successfully", {
+        description: "Account information and company details saved successfully.",
       });
     },
     onError: (error: Error) => {
-      toast.error("Gagal Memperbarui Profil", {
-        description: error.message || "Terjadi kesalahan saat memperbarui profil.",
+      toast.error("Failed to Update Profile", {
+        description: error.message || "An error occurred while updating profile.",
       });
     },
   });
@@ -117,26 +117,31 @@ export function useAuth() {
       currentPass: string;
       newPass: string;
     }): Promise<boolean> => {
-      if (!user) throw new Error("Pengguna tidak terautentikasi.");
+      if (!user) throw new Error("User not authenticated.");
       return await authService.changePassword(user.id, currentPass, newPass);
     },
     onSuccess: () => {
-      toast.success("Kata Sandi Berhasil Diperbarui", {
-        description: "Kata sandi akun Anda telah berhasil diubah.",
+      toast.success("Password Updated Successfully", {
+        description: "Your account password has been updated successfully.",
       });
     },
     onError: (error: Error) => {
-      toast.error("Gagal Mengubah Kata Sandi", {
-        description: error.message || "Kata sandi saat ini tidak valid.",
+      toast.error("Failed to Change Password", {
+        description: error.message || "Current password is invalid.",
       });
     },
   });
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      // Ignore network error on logout
+    }
     storeLogout();
     queryClient.clear();
-    toast.info("Sesi Berakhir", {
-      description: "Anda telah keluar dari sistem operasional WMS.",
+    toast.info("Session Ended", {
+      description: "You have signed out of WMS operations.",
     });
     router.push("/login");
   };

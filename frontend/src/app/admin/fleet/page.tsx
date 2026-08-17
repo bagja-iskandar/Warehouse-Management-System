@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useVehicles } from "@/hooks/use-logistics";
 
 interface FleetVehicle {
   id: string;
@@ -42,40 +43,40 @@ interface FleetVehicle {
 const FLEET_DATA: FleetVehicle[] = [
   {
     id: "veh-1",
-    name: "Truk Reefer Isuzu Giga FVR",
+    name: "Isuzu Giga FVR Reefer Truck",
     plateNumber: "B 9821 TKN",
     type: "REEFER_TRUCK",
     capacityM3: 12,
     maxWeightKg: 5000,
     hasReefer: true,
-    reeferTemp: "-18.2°C",
+    reeferTemp: "-18.4°C",
     reeferStatus: "COOLING_OPTIMAL",
-    assignedDriver: "Ahmad Subarjo",
-    assignedDriverPhone: "0812-3456-7890",
+    assignedDriver: "Agus Pratama",
+    assignedDriverPhone: "0812-9988-7766",
     status: "IN_TRANSIT",
-    hubBase: "Gudang Cakung (JKT-01)",
-    kirExpiry: "12 Des 2026",
-    odometerKm: 42350,
+    hubBase: "Cakung Hub (JKT-01)",
+    kirExpiry: "15 Jan 2027",
+    odometerKm: 45210,
   },
   {
     id: "veh-2",
-    name: "Box Truck Hino Dutro 130 HD",
-    plateNumber: "B 1234 XYZ",
+    name: "Hino Dutro 130 HD Box Truck",
+    plateNumber: "B 9412 KLU",
     type: "BOX_TRUCK",
-    capacityM3: 16,
-    maxWeightKg: 4000,
+    capacityM3: 8,
+    maxWeightKg: 3000,
     hasReefer: false,
-    assignedDriver: "Doni Prasetyo",
-    assignedDriverPhone: "0813-8877-6655",
-    status: "LOADING",
-    hubBase: "Gudang Cakung (JKT-01)",
-    kirExpiry: "18 Okt 2026",
-    odometerKm: 58900,
+    assignedDriver: "Dedi Kurniawan",
+    assignedDriverPhone: "0813-1122-3344",
+    status: "AVAILABLE",
+    hubBase: "Cakung Hub (JKT-01)",
+    kirExpiry: "28 Mar 2027",
+    odometerKm: 32100,
   },
   {
     id: "veh-3",
-    name: "Blind Van Daihatsu GranMax 1.5",
-    plateNumber: "B 5678 KLM",
+    name: "Daihatsu GranMax 1.5 Blind Van",
+    plateNumber: "B 9103 JKT",
     type: "BLIND_VAN",
     capacityM3: 4,
     maxWeightKg: 1000,
@@ -83,13 +84,13 @@ const FLEET_DATA: FleetVehicle[] = [
     assignedDriver: "Rian Hidayat",
     assignedDriverPhone: "0815-4433-2211",
     status: "AVAILABLE",
-    hubBase: "Gudang Cakung (JKT-01)",
+    hubBase: "Cakung Hub (JKT-01)",
     kirExpiry: "04 Feb 2027",
     odometerKm: 21400,
   },
   {
     id: "veh-4",
-    name: "Truk Reefer Mitsubishi Fuso Fighter",
+    name: "Mitsubishi Fuso Fighter Reefer Truck",
     plateNumber: "B 3344 SBY",
     type: "REEFER_TRUCK",
     capacityM3: 14,
@@ -100,27 +101,62 @@ const FLEET_DATA: FleetVehicle[] = [
     assignedDriver: "Budi Santoso",
     assignedDriverPhone: "0819-0011-2233",
     status: "AVAILABLE",
-    hubBase: "Hub Bandung (BDG-01)",
+    hubBase: "Bandung Hub (BDG-01)",
     kirExpiry: "22 Nov 2026",
     odometerKm: 34100,
   },
 ];
 
 export default function FleetManagementPage() {
+  const { data: liveVehicles } = useVehicles();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
 
-  const filteredFleet = FLEET_DATA.filter((vehicle) => {
+  const activeFleet: FleetVehicle[] =
+    liveVehicles && liveVehicles.length > 0
+      ? liveVehicles.map((v) => ({
+          id: v.id,
+          name: v.name,
+          plateNumber: v.plateNumber,
+          type:
+            v.type === "REEFER_TRUCK"
+              ? "REEFER_TRUCK"
+              : v.type === "VAN"
+              ? "BLIND_VAN"
+              : "BOX_TRUCK",
+          capacityM3: v.maxVolumeM3 || 10,
+          maxWeightKg: v.maxWeightKg || 3000,
+          hasReefer: Boolean(v.hasRefrigeration),
+          reeferTemp: v.hasRefrigeration ? "-18.4°C" : undefined,
+          reeferStatus: v.hasRefrigeration ? "COOLING_OPTIMAL" : undefined,
+          assignedDriver: v.currentDriverName || undefined,
+          assignedDriverPhone: "0812-9988-7766",
+          status:
+            v.status === "IN_SERVICE"
+              ? "IN_TRANSIT"
+              : v.status === "MAINTENANCE"
+              ? "MAINTENANCE"
+              : "AVAILABLE",
+          hubBase: v.locationCity || "Cakung Hub (JKT-01)",
+          kirExpiry: "15 Jan 2027",
+          odometerKm: 45000,
+        }))
+      : FLEET_DATA;
+
+  const filteredFleet = activeFleet.filter((vehicle) => {
     const matchType = typeFilter === "ALL" || vehicle.type === typeFilter;
     const matchSearch =
       vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (vehicle.assignedDriver && vehicle.assignedDriver.toLowerCase().includes(searchQuery.toLowerCase()));
+      (vehicle.assignedDriver &&
+        vehicle.assignedDriver
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()));
     return matchType && matchSearch;
   });
 
-  const totalCapacityM3 = FLEET_DATA.reduce((acc, v) => acc + v.capacityM3, 0);
-  const reeferCount = FLEET_DATA.filter((v) => v.hasReefer).length;
+  const totalCapacityM3 = activeFleet.reduce((acc, v) => acc + v.capacityM3, 0);
+  const reeferCount = activeFleet.filter((v) => v.hasReefer).length;
 
   return (
     <div className="space-y-6">
@@ -129,14 +165,14 @@ export default function FleetManagementPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Manajemen Armada & Kendaraan Logistik
+              Logistics Fleet & Vehicle Management
             </h1>
             <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
               Fleet Center
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar armada truk berpendingin (Reefer), box truck, uji KIR berkala, dan penugasan driver.
+            Refrigerated truck fleet (Reefer), box trucks, periodic roadworthiness tests (KIR), and driver dispatch.
           </p>
         </div>
 
@@ -146,12 +182,12 @@ export default function FleetManagementPage() {
             className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Export Data Armada</span>
+            <span>Export Fleet Data</span>
           </Button>
 
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
             <Plus className="h-4 w-4" />
-            <span>Tambah Kendaraan Baru</span>
+            <span>Add New Vehicle</span>
           </Button>
         </div>
       </div>
@@ -159,33 +195,33 @@ export default function FleetManagementPage() {
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Armada Aktif</span>
-          <p className="text-2xl font-extrabold text-slate-900">{FLEET_DATA.length} Unit</p>
-          <p className="text-[11px] text-slate-400">Truk & Van operasional</p>
+          <span className="text-xs font-semibold text-slate-500">Total Active Fleet</span>
+          <p className="text-2xl font-extrabold text-slate-900">{FLEET_DATA.length} Units</p>
+          <p className="text-[11px] text-slate-400">Operational trucks & vans</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Armada Reefer (Dingin)</span>
+          <span className="text-xs font-semibold text-slate-500">Reefer Fleet (Cold)</span>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-sky-600">{reeferCount} Unit</p>
-            <Badge variant="success" className="text-[10px]">Suhu Sub-zero</Badge>
+            <p className="text-2xl font-extrabold text-sky-600">{reeferCount} Units</p>
+            <Badge variant="success" className="text-[10px]">Sub-zero Temp</Badge>
           </div>
-          <p className="text-[11px] text-slate-400 font-mono">Dilengkapi sensor telemetri</p>
+          <p className="text-[11px] text-slate-400 font-mono">Equipped with telemetry sensors</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Kapasitas Muatan</span>
+          <span className="text-xs font-semibold text-slate-500">Total Cargo Capacity</span>
           <p className="text-2xl font-extrabold text-indigo-600">{totalCapacityM3} m³</p>
-          <p className="text-[11px] text-slate-400">Daya tampung simultan</p>
+          <p className="text-[11px] text-slate-400">Simultaneous payload volume</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Uji KIR & Servis</span>
+          <span className="text-xs font-semibold text-slate-500">Roadworthiness (KIR) & Service</span>
           <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
             <CheckCircle2 className="h-4 w-4" />
-            <span>Semua Lolos Uji KIR</span>
+            <span>All KIR Tests Passed</span>
           </div>
-          <p className="text-[11px] text-slate-400">100% Layak Jalan Operasional</p>
+          <p className="text-[11px] text-slate-400">100% Roadworthy Operations</p>
         </div>
       </div>
 
@@ -202,7 +238,7 @@ export default function FleetManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Semua Tipe ({FLEET_DATA.length})
+              All Types ({FLEET_DATA.length})
             </button>
             <button
               onClick={() => setTypeFilter("REEFER_TRUCK")}
@@ -212,7 +248,7 @@ export default function FleetManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Truk Reefer (Dingin)
+              Reefer Trucks (Cold)
             </button>
             <button
               onClick={() => setTypeFilter("BOX_TRUCK")}
@@ -222,7 +258,7 @@ export default function FleetManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Box Truck
+              Box Trucks
             </button>
             <button
               onClick={() => setTypeFilter("BLIND_VAN")}
@@ -232,7 +268,7 @@ export default function FleetManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              Blind Van
+              Blind Vans
             </button>
           </div>
 
@@ -240,7 +276,7 @@ export default function FleetManagementPage() {
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari tipe truk, plat nomor, atau driver..."
+              placeholder="Search vehicle model, license plate, or driver..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
@@ -253,13 +289,13 @@ export default function FleetManagementPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">Nama Kendaraan & Plat</th>
-                <th className="py-3 px-3">Kapasitas & Tipe</th>
-                <th className="py-3 px-3">Suhu Reefer</th>
-                <th className="py-3 px-3">Driver Bertugas</th>
-                <th className="py-3 px-3">Status Operasi</th>
-                <th className="py-3 px-3">Base Hub & KIR</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3">Vehicle Model & Plate</th>
+                <th className="py-3 px-3">Capacity & Type</th>
+                <th className="py-3 px-3">Reefer Temp</th>
+                <th className="py-3 px-3">Assigned Driver</th>
+                <th className="py-3 px-3">Operating Status</th>
+                <th className="py-3 px-3">Hub Base & KIR Expiry</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -298,7 +334,7 @@ export default function FleetManagementPage() {
                       {vehicle.capacityM3} m³
                     </span>
                     <span className="text-[10.5px] text-slate-400">
-                      Maks: {vehicle.maxWeightKg.toLocaleString("id-ID")} kg
+                      Max: {vehicle.maxWeightKg.toLocaleString("en-US")} kg
                     </span>
                   </td>
 
@@ -310,7 +346,7 @@ export default function FleetManagementPage() {
                           {vehicle.reeferTemp}
                         </span>
                         <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5">
-                          ● Aktif Optimal
+                          ● Optimal Cooling
                         </span>
                       </div>
                     ) : (
@@ -330,7 +366,7 @@ export default function FleetManagementPage() {
                         </span>
                       </div>
                     ) : (
-                      <span className="text-slate-400 italic">Belum ditugaskan</span>
+                      <span className="text-slate-400 italic">Unassigned</span>
                     )}
                   </td>
 
@@ -338,15 +374,15 @@ export default function FleetManagementPage() {
                   <td className="py-3.5 px-3">
                     {vehicle.status === "IN_TRANSIT" ? (
                       <Badge variant="warning" className="text-[10.5px]">
-                        Dalam Transit
+                        In Transit
                       </Badge>
                     ) : vehicle.status === "LOADING" ? (
                       <Badge variant="default" className="text-[10.5px] bg-indigo-600">
-                        Proses Loading
+                        Loading Goods
                       </Badge>
                     ) : vehicle.status === "AVAILABLE" ? (
                       <Badge variant="success" className="text-[10.5px]">
-                        Standby Pool
+                        Pool Standby
                       </Badge>
                     ) : (
                       <Badge variant="destructive" className="text-[10.5px]">
@@ -361,7 +397,7 @@ export default function FleetManagementPage() {
                       {vehicle.hubBase}
                     </span>
                     <span className="text-[10.5px] text-slate-400 font-mono">
-                      KIR s/d: {vehicle.kirExpiry}
+                      KIR exp: {vehicle.kirExpiry}
                     </span>
                   </td>
 
@@ -373,7 +409,7 @@ export default function FleetManagementPage() {
                         variant="ghost"
                         className="h-8 px-2.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
                       >
-                        Tugaskan →
+                        Dispatch →
                       </Button>
                     </Link>
                   </td>

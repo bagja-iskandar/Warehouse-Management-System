@@ -7,13 +7,13 @@ export const SEED_INVOICES: Invoice[] = [
     customerId: "usr-cust-1",
     customerName: "Siti Rahma (CV Fresh Frozen Nusantara)",
     customerEmail: "customer@freshfoods.id",
-    billingMonth: "Agustus 2026",
+    billingMonth: "August 2026",
     issueDate: "2026-08-01T00:00:00Z",
     dueDate: "2026-08-10T23:59:59Z",
     items: [
       {
         id: "item-1",
-        description: "Sewa Cold Storage (Slot COLD-A01) - 0.96 m3",
+        description: "Cold Storage Rental (Slot COLD-A01) - 0.96 m3",
         goodsName: "Norwegian Salmon Fillet Grade A",
         volumeM3: 0.96,
         ratePerM3: 2500000,
@@ -21,7 +21,7 @@ export const SEED_INVOICES: Invoice[] = [
       },
       {
         id: "item-2",
-        description: "Sewa Cold Storage (Slot COLD-A02) - 0.72 m3",
+        description: "Cold Storage Rental (Slot COLD-A02) - 0.72 m3",
         goodsName: "Australian Premium Wagyu Beef",
         volumeM3: 0.72,
         ratePerM3: 2500000,
@@ -29,7 +29,7 @@ export const SEED_INVOICES: Invoice[] = [
       },
       {
         id: "item-3",
-        description: "Sewa Rak Standar (Slot RAK-F01) - 3.24 m3",
+        description: "Standard Rack Rental (Slot RAK-F01) - 3.24 m3",
         goodsName: "Executive Ergonomic Office Chairs",
         volumeM3: 3.24,
         ratePerM3: 1000000,
@@ -37,7 +37,7 @@ export const SEED_INVOICES: Invoice[] = [
       },
     ],
     subtotal: 7440000,
-    penaltyFee: 150000, // Kena denda karena telat bayar melewati tgl 10 Agustus
+    penaltyFee: 150000, // Late fee penalty applied
     totalAmount: 7590000,
     status: "OVERDUE",
     createdAt: "2026-08-01T00:00:00Z",
@@ -48,14 +48,14 @@ export const SEED_INVOICES: Invoice[] = [
     customerId: "usr-cust-1",
     customerName: "Siti Rahma (CV Fresh Frozen Nusantara)",
     customerEmail: "customer@freshfoods.id",
-    billingMonth: "Juli 2026",
+    billingMonth: "July 2026",
     issueDate: "2026-07-01T00:00:00Z",
     dueDate: "2026-07-10T23:59:59Z",
     paidDate: "2026-07-08T15:20:00Z",
     items: [
       {
         id: "item-4",
-        description: "Sewa Rak Standar (Slot RAK-F01) - Juli 2026",
+        description: "Standard Rack Rental (Slot RAK-F01) - July 2026",
         volumeM3: 3.24,
         ratePerM3: 1000000,
         subtotal: 3240000,

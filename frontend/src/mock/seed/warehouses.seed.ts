@@ -3,10 +3,10 @@ import { WarehouseDetail } from "@/types";
 export const SEED_WAREHOUSES: WarehouseDetail[] = [
   {
     id: "wh-jkt-central",
-    name: "Gudang Utama Cakung Logistics Hub",
+    name: "Cakung Logistics Central Hub",
     code: "WH-CKG-01",
-    address: "Kawasan Industri Pulo Gadung Kav. 12-14",
-    city: "Jakarta Timur",
+    address: "Pulo Gadung Industrial Estate Block 12-14",
+    city: "East Jakarta",
     totalCapacityM3: 5000,
     usedCapacityM3: 3150,
     slotsCount: 24,
@@ -105,7 +105,7 @@ export const SEED_WAREHOUSES: WarehouseDetail[] = [
   },
   {
     id: "wh-bdg-01",
-    name: "Gudang Distribusi Gedebage Cold Hub",
+    name: "Gedebage Cold Distribution Hub",
     code: "WH-BDG-01",
     address: "Jl. Soekarno Hatta No. 788",
     city: "Bandung",

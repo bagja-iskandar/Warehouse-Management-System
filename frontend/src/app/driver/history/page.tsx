@@ -35,11 +35,11 @@ const DRIVER_TRIPS: DriverTripHistory[] = [
     id: "dt-1",
     doNumber: "DO-2026-000",
     recipientName: "Super Indo Kelapa Gading",
-    recipientAddress: "Jl. Boulevard Raya Blok LA No. 1, Jakarta Utara",
+    recipientAddress: "Jl. Boulevard Raya Blok LA No. 1, North Jakarta",
     vehiclePlate: "B 9821 TKN",
-    itemsSummary: "80 Koli Dairy Butter & Keju Mozzarella",
+    itemsSummary: "80 Packages Dairy Butter & Mozzarella Cheese",
     totalKoli: 80,
-    deliveryDate: "15 Agu 2026, 14:00 WIB",
+    deliveryDate: "Aug 15, 2026, 14:00 WIB",
     customerRating: 5.0,
     status: "DELIVERED",
   },
@@ -47,11 +47,11 @@ const DRIVER_TRIPS: DriverTripHistory[] = [
     id: "dt-2",
     doNumber: "DO-2026-998",
     recipientName: "GrandLucky Superstore SCBD",
-    recipientAddress: "Kawasan Niaga Terpadu Sudirman Lot 28, Jakarta Selatan",
+    recipientAddress: "Sudirman Central Business District Lot 28, South Jakarta",
     vehiclePlate: "B 9821 TKN",
-    itemsSummary: "120 Koli Daging Sirloin & Ribeye Australia",
+    itemsSummary: "120 Packages Australian Sirloin & Ribeye Beef",
     totalKoli: 120,
-    deliveryDate: "14 Agu 2026, 10:30 WIB",
+    deliveryDate: "Aug 14, 2026, 10:30 WIB",
     customerRating: 4.9,
     status: "DELIVERED",
   },
@@ -59,11 +59,11 @@ const DRIVER_TRIPS: DriverTripHistory[] = [
     id: "dt-3",
     doNumber: "DO-2026-995",
     recipientName: "Hotel Mulia Senayan",
-    recipientAddress: "Jl. Asia Afrika Senayan, Jakarta Pusat",
+    recipientAddress: "Jl. Asia Afrika Senayan, Central Jakarta",
     vehiclePlate: "B 9821 TKN",
-    itemsSummary: "60 Koli Salmon Norwegia & Scallop",
+    itemsSummary: "60 Packages Norwegian Salmon & Scallop",
     totalKoli: 60,
-    deliveryDate: "12 Agu 2026, 11:15 WIB",
+    deliveryDate: "Aug 12, 2026, 11:15 WIB",
     customerRating: 5.0,
     status: "DELIVERED",
   },
@@ -86,14 +86,14 @@ export default function DriverDeliveryHistoryPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Riwayat Pengantaran Saya (Delivery History)
+              My Delivery Trip History
             </h1>
             <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
               Driver Log
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Catatan historis seluruh delivery order yang telah berhasil diselesaikan beserta rating kepuasan customer.
+            Historical log of all successfully delivered orders along with customer satisfaction ratings.
           </p>
         </div>
       </div>
@@ -101,24 +101,24 @@ export default function DriverDeliveryHistoryPage() {
       {/* 3 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Pengantaran Selesai</span>
-          <p className="text-2xl font-extrabold text-slate-900">142 Trip</p>
-          <p className="text-[11px] text-slate-400">100% Digital POD Terverifikasi</p>
+          <span className="text-xs font-semibold text-slate-500">Total Completed Deliveries</span>
+          <p className="text-2xl font-extrabold text-slate-900">142 Trips</p>
+          <p className="text-[11px] text-slate-400">100% Digital POD Verified</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Rating Rata-rata Pelayanan</span>
+          <span className="text-xs font-semibold text-slate-500">Average Service Rating</span>
           <div className="flex items-center gap-1.5">
             <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
             <span className="text-2xl font-extrabold text-slate-900">4.95 / 5.0</span>
           </div>
-          <p className="text-[11px] text-emerald-600 font-semibold">99.2% Ketepatan Waktu (On-time)</p>
+          <p className="text-[11px] text-emerald-600 font-semibold">99.2% On-Time Delivery Rate</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Muatan Terkirim</span>
-          <p className="text-2xl font-extrabold text-indigo-600">12.450 Koli</p>
-          <p className="text-[11px] text-slate-400">Armada Truk Reefer B 9821 TKN</p>
+          <span className="text-xs font-semibold text-slate-500">Total Cargo Delivered</span>
+          <p className="text-2xl font-extrabold text-indigo-600">12,450 Packages</p>
+          <p className="text-[11px] text-slate-400">Reefer Truck Fleet B 9821 TKN</p>
         </div>
       </div>
 
@@ -126,14 +126,14 @@ export default function DriverDeliveryHistoryPage() {
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <h2 className="text-sm font-bold text-slate-900">
-            Daftar Pengiriman Terselesaikan
+            Completed Deliveries Directory
           </h2>
 
           <div className="relative w-full sm:w-72">
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari no DO, penerima, atau barang..."
+              placeholder="Search DO number, recipient, or cargo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"
@@ -145,11 +145,11 @@ export default function DriverDeliveryHistoryPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">No. DO</th>
-                <th className="py-3 px-3">Tujuan & Penerima</th>
-                <th className="py-3 px-3">Muatan Barang</th>
-                <th className="py-3 px-3">Waktu Selesai</th>
-                <th className="py-3 px-3">Rating Customer</th>
+                <th className="py-3 px-3">DO No.</th>
+                <th className="py-3 px-3">Destination & Recipient</th>
+                <th className="py-3 px-3">Cargo Summary</th>
+                <th className="py-3 px-3">Completion Time</th>
+                <th className="py-3 px-3">Customer Rating</th>
                 <th className="py-3 px-3">Status</th>
               </tr>
             </thead>
@@ -179,7 +179,7 @@ export default function DriverDeliveryHistoryPage() {
                       {trip.itemsSummary}
                     </span>
                     <span className="text-[10.5px] text-slate-400">
-                      Total: {trip.totalKoli} Koli
+                      Total: {trip.totalKoli} Packages
                     </span>
                   </td>
 
@@ -196,7 +196,7 @@ export default function DriverDeliveryHistoryPage() {
 
                   <td className="py-3.5 px-3">
                     <Badge variant="success" className="text-[10.5px]">
-                      Selesai (POD)
+                      Completed (POD)
                     </Badge>
                   </td>
                 </tr>

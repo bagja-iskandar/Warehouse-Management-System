@@ -42,15 +42,15 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    group: "OPERASIONAL GUDANG",
+    group: "WAREHOUSE OPERATIONS",
     items: [
       {
-        title: "Dashboard Operasional",
+        title: "Operational Dashboard",
         href: "/admin/dashboard",
         icon: LayoutDashboard,
       },
       {
-        title: "Kapasitas & Grid Rak",
+        title: "Capacity & Rack Grid",
         href: "/admin/warehouse/capacity",
         icon: Grid3X3,
         badge: "Live",
@@ -61,53 +61,53 @@ const NAV_GROUPS: NavGroup[] = [
         icon: Warehouse,
       },
       {
-        title: "Manajemen Barang",
+        title: "Goods Management",
         href: "/admin/goods",
         icon: Boxes,
       },
     ],
   },
   {
-    group: "ARMADA & PENGIRIMAN",
+    group: "FLEET & DISPATCH",
     items: [
       {
-        title: "Dispatch Logistik",
+        title: "Logistics Dispatch",
         href: "/admin/logistics",
         icon: Truck,
-        badge: "4 Antrean",
+        badge: "4 In Queue",
       },
       {
-        title: "Armada Kendaraan",
+        title: "Vehicle Fleet",
         href: "/admin/fleet",
         icon: Car,
       },
       {
-        title: "Sensor & Telemetri",
+        title: "Sensors & Telemetry",
         href: "/admin/monitoring",
         icon: Activity,
       },
     ],
   },
   {
-    group: "PENGGUNA & KEUANGAN",
+    group: "USERS & FINANCE",
     items: [
       {
-        title: "Customer & Penyewa",
+        title: "Customers & Tenants",
         href: "/admin/customers",
         icon: Users,
       },
       {
-        title: "Driver / Kurir",
+        title: "Drivers / Couriers",
         href: "/admin/drivers",
         icon: UserCheck,
       },
       {
-        title: "Tagihan & Faktur",
+        title: "Billing & Invoices",
         href: "/admin/billing",
         icon: Receipt,
       },
       {
-        title: "Laporan & Ekspor",
+        title: "Reports & Analytics",
         href: "/admin/reports",
         icon: BarChart3,
       },
@@ -156,7 +156,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <button
               onClick={onClose}
               className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-              aria-label="Tutup navigasi"
+              aria-label="Close navigation"
             >
               <X className="h-4 w-4" />
             </button>
@@ -172,7 +172,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               </div>
               <div className="truncate">
                 <p className="text-[11px] font-bold text-slate-900 truncate leading-tight">
-                  Gudang Cakung
+                  Cakung Central Hub
                 </p>
                 <p className="text-[9.5px] text-indigo-600 font-mono font-medium leading-tight">
                   JKT-01 • Standard & Cold
@@ -252,10 +252,10 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               </div>
               <div className="truncate">
                 <p className="text-[11.5px] font-bold text-slate-800 truncate leading-tight">
-                  {user?.name || "Admin Operasional"}
+                  {user?.name || "Operations Admin"}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium truncate leading-tight">
-                  Admin Gudang
+                  Warehouse Admin
                 </p>
               </div>
             </Link>
@@ -263,7 +263,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <button
               onClick={() => logout()}
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-              title="Keluar dari sesi"
+              title="Sign out of session"
               aria-label="Logout"
             >
               <LogOut className="h-3.5 w-3.5" />

@@ -54,43 +54,43 @@ export function RegisterForm() {
 
     // Client-side validations
     if (!formData.name.trim()) {
-      setValidationError("Silakan masukkan nama lengkap PIC.");
+      setValidationError("Please enter the PIC full name.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
-      setValidationError("Format email perusahaan tidak valid (contoh: pic@perusahaan.com).");
+      setValidationError("Invalid company email format (e.g. pic@company.com).");
       return;
     }
 
     if (!formData.phone.trim() || formData.phone.length < 8) {
-      setValidationError("Nomor telepon / WhatsApp minimal 8 digit angka.");
+      setValidationError("Phone / WhatsApp number must be at least 8 digits.");
       return;
     }
 
     if (!formData.companyName.trim()) {
-      setValidationError("Silakan masukkan nama perusahaan atau bisnis Anda.");
+      setValidationError("Please enter your company or business name.");
       return;
     }
 
     if (!formData.address.trim()) {
-      setValidationError("Silakan masukkan alamat lengkap perusahaan.");
+      setValidationError("Please enter the complete company address.");
       return;
     }
 
     if (!formData.password || formData.password.length < 6) {
-      setValidationError("Kata sandi minimal 6 karakter.");
+      setValidationError("Password must be at least 6 characters.");
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setValidationError("Konfirmasi kata sandi tidak cocok dengan kata sandi.");
+      setValidationError("Password confirmation does not match.");
       return;
     }
 
     if (!agreeTerms) {
-      setValidationError("Anda harus menyetujui Syarat & Ketentuan Layanan untuk melanjutkan.");
+      setValidationError("You must accept the Terms & Conditions of Service to proceed.");
       return;
     }
 
@@ -106,7 +106,7 @@ export function RegisterForm() {
       setIsSuccess(true);
     } catch (err: unknown) {
       const error = err as Error;
-      setValidationError(error.message || "Gagal melakukan pendaftaran akun customer.");
+      setValidationError(error.message || "Failed to register customer account.");
     }
   };
 
@@ -127,10 +127,10 @@ export function RegisterForm() {
           </p>
           <div className="w-full h-px bg-slate-100 my-4" />
           <h2 className="text-sm font-semibold text-slate-800">
-            Pendaftaran Akun Customer Baru
+            New Customer Registration
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-sm">
-            Daftarkan perusahaan Anda untuk mulai menyewa ruang penyimpanan gudang standard & cold storage.
+            Register your business to start renting standard warehouse storage and cold storage space.
           </p>
         </div>
 
@@ -153,17 +153,17 @@ export function RegisterForm() {
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">
-              Pendaftaran Berhasil!
+              Registration Successful!
             </h3>
             <p className="text-xs text-slate-600">
-              Akun customer perusahaan Anda telah aktif. Mengalihkan ke Customer Portal...
+              Your corporate customer account is now active. Redirecting to Customer Portal...
             </p>
             <div className="pt-2">
               <Link
                 href="/customer/dashboard"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 underline"
               >
-                Klik di sini jika tidak dialihkan secara otomatis
+                Click here if not redirected automatically
               </Link>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function RegisterForm() {
               {/* PIC Name */}
               <div className="space-y-1">
                 <Label htmlFor="name" className="text-xs font-semibold text-slate-700">
-                  Nama Lengkap PIC
+                  PIC Full Name
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -183,7 +183,7 @@ export function RegisterForm() {
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Nama PIC Perusahaan"
+                    placeholder="Company PIC Name"
                     value={formData.name}
                     onChange={(e) => handleChange("name", e.target.value)}
                     disabled={isRegistering}
@@ -196,7 +196,7 @@ export function RegisterForm() {
               {/* Company Email */}
               <div className="space-y-1">
                 <Label htmlFor="reg-email" className="text-xs font-semibold text-slate-700">
-                  Email Perusahaan
+                  Company Email
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -205,7 +205,7 @@ export function RegisterForm() {
                   <Input
                     id="reg-email"
                     type="email"
-                    placeholder="nama@perusahaan.com"
+                    placeholder="name@company.com"
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                     disabled={isRegistering}
@@ -218,7 +218,7 @@ export function RegisterForm() {
               {/* Phone Number */}
               <div className="space-y-1">
                 <Label htmlFor="phone" className="text-xs font-semibold text-slate-700">
-                  Nomor Telepon / WhatsApp
+                  Phone / WhatsApp Number
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -227,7 +227,7 @@ export function RegisterForm() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="081234567890"
+                    placeholder="+62 812 3456 7890"
                     value={formData.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
                     disabled={isRegistering}
@@ -240,7 +240,7 @@ export function RegisterForm() {
               {/* Company Name */}
               <div className="space-y-1">
                 <Label htmlFor="companyName" className="text-xs font-semibold text-slate-700">
-                  Nama Perusahaan / Bisnis
+                  Company / Business Name
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -249,7 +249,7 @@ export function RegisterForm() {
                   <Input
                     id="companyName"
                     type="text"
-                    placeholder="PT / CV Nama Bisnis"
+                    placeholder="Company Name Ltd / Inc"
                     value={formData.companyName}
                     onChange={(e) => handleChange("companyName", e.target.value)}
                     disabled={isRegistering}
@@ -263,7 +263,7 @@ export function RegisterForm() {
             {/* Full-Width Address */}
             <div className="space-y-1">
               <Label htmlFor="address" className="text-xs font-semibold text-slate-700">
-                Alamat Lengkap Perusahaan / Kantor
+                Full Company / Office Address
               </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -272,7 +272,7 @@ export function RegisterForm() {
                 <Input
                   id="address"
                   type="text"
-                  placeholder="Jl. Jenderal Sudirman No. 45, Jakarta Selatan"
+                  placeholder="45 Commercial Blvd, Suite 200, Jakarta"
                   value={formData.address}
                   onChange={(e) => handleChange("address", e.target.value)}
                   disabled={isRegistering}
@@ -287,7 +287,7 @@ export function RegisterForm() {
               {/* Password */}
               <div className="space-y-1">
                 <Label htmlFor="reg-password" className="text-xs font-semibold text-slate-700">
-                  Kata Sandi
+                  Password
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -308,7 +308,7 @@ export function RegisterForm() {
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
-                    aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -322,7 +322,7 @@ export function RegisterForm() {
               {/* Confirm Password */}
               <div className="space-y-1">
                 <Label htmlFor="confirmPassword" className="text-xs font-semibold text-slate-700">
-                  Konfirmasi Kata Sandi
+                  Confirm Password
                 </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -354,11 +354,11 @@ export function RegisterForm() {
                 htmlFor="agreeTerms"
                 className="text-xs text-slate-600 select-none cursor-pointer leading-tight"
               >
-                Saya menyetujui{" "}
+                I agree to the{" "}
                 <span className="text-indigo-600 font-medium hover:underline">
-                  Syarat & Ketentuan Layanan Pergudangan
+                  Warehouse Terms & Conditions of Service
                 </span>{" "}
-                WMS Nusantara.
+                of WMS Nusantara.
               </label>
             </div>
 
@@ -371,11 +371,11 @@ export function RegisterForm() {
               {isRegistering ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Mendaftarkan Akun Customer...</span>
+                  <span>Registering Customer Account...</span>
                 </>
               ) : (
                 <>
-                  <span>Daftarkan Akun Customer</span>
+                  <span>Register Customer Account</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -386,12 +386,12 @@ export function RegisterForm() {
         {/* Link back to Login */}
         <div className="mt-6 pt-4 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
-            Sudah memiliki akun?{" "}
+            Already have an account?{" "}
             <Link
               href="/login"
               className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
             >
-              Masuk ke Portal Operasional
+              Sign in to Operations Portal
             </Link>
           </p>
         </div>
@@ -401,7 +401,7 @@ export function RegisterForm() {
       <div className="mt-6 text-center text-slate-400 flex items-center justify-center gap-1.5 text-[11px]">
         <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
         <span>
-          Enkripsi End-to-End 256-bit • Akses Terotentikasi WMS Multi-Role • v1.0.0
+          256-bit End-to-End Encryption • Multi-Role Authenticated WMS Access • v1.0.0
         </span>
       </div>
     </div>

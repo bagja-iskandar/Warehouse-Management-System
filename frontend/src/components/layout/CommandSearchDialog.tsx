@@ -25,7 +25,7 @@ interface SearchItem {
   id: string;
   title: string;
   subtitle: string;
-  category: "Halaman" | "Barang & SKU" | "Slot Rak" | "Armada";
+  category: "Page" | "Goods & SKU" | "Rack Slot" | "Fleet";
   href: string;
   icon: React.ElementType;
 }
@@ -33,65 +33,65 @@ interface SearchItem {
 const SEARCH_ITEMS: SearchItem[] = [
   {
     id: "nav-dash",
-    title: "Dashboard Operasional",
-    subtitle: "Ringkasan metrik gudang, utilisasi rak, dan status armada",
-    category: "Halaman",
+    title: "Operational Dashboard",
+    subtitle: "Overview of warehouse metrics, rack utilization, and fleet status",
+    category: "Page",
     href: "/admin/dashboard",
     icon: LayoutDashboard,
   },
   {
     id: "nav-cap",
-    title: "Kapasitas & Grid Rak",
-    subtitle: "Visualisasi slot rak standard dan cold storage",
-    category: "Halaman",
+    title: "Capacity & Rack Grid",
+    subtitle: "Visualization of standard and cold storage rack slots",
+    category: "Page",
     href: "/admin/warehouse/capacity",
     icon: Grid3X3,
   },
   {
     id: "nav-goods",
-    title: "Manajemen Barang & Inventaris",
-    subtitle: "Daftar SKU, mutasi stock, dan QR code",
-    category: "Halaman",
+    title: "Goods & Inventory Management",
+    subtitle: "SKU catalog, stock movements, and QR barcodes",
+    category: "Page",
     href: "/admin/goods",
     icon: Boxes,
   },
   {
     id: "nav-logistics",
-    title: "Dispatch & Antrean Logistik",
-    subtitle: "Penugasan driver, rute pengiriman, dan digital POD",
-    category: "Halaman",
+    title: "Logistics Dispatch & Queue",
+    subtitle: "Driver assignment, delivery routes, and digital POD",
+    category: "Page",
     href: "/admin/logistics",
     icon: Truck,
   },
   {
     id: "nav-billing",
-    title: "Tagihan & Faktur Sewa",
-    subtitle: "Status pembayaran bulanan dan kalkulasi denda keterlambatan",
-    category: "Halaman",
+    title: "Rental Billing & Invoices",
+    subtitle: "Monthly payment status and overdue penalty calculations",
+    category: "Page",
     href: "/admin/billing",
     icon: Receipt,
   },
   {
     id: "sku-1",
-    title: "Daging Sapi Wagyu A5 (BAR-FRESH-001)",
+    title: "Wagyu Beef Ribeye A5 (BAR-FRESH-001)",
     subtitle: "Cold Storage Zone A • Slot A-01-01 • PT Fresh Foods",
-    category: "Barang & SKU",
+    category: "Goods & SKU",
     href: "/admin/goods",
     icon: Boxes,
   },
   {
     id: "sku-2",
-    title: "Sofa Minimalis 3-Seater (BAR-FURN-001)",
+    title: "Minimalist 3-Seater Sofa (BAR-FURN-001)",
     subtitle: "Standard Zone B • Slot B-02-01 • CV Furnitur Nusantara",
-    category: "Barang & SKU",
+    category: "Goods & SKU",
     href: "/admin/goods",
     icon: Boxes,
   },
   {
     id: "fleet-1",
-    title: "Truk Reefer Isuzu Giga (B 9821 TKN)",
-    subtitle: "Suhu Aktif -18°C • Driver: Ahmad Subarjo • Dalam Perjalanan",
-    category: "Armada",
+    title: "Isuzu Giga Reefer Truck (B 9821 TKN)",
+    subtitle: "Active Temp -18°C • Driver: Ahmad Subarjo • In Transit",
+    category: "Fleet",
     href: "/admin/fleet",
     icon: Car,
   },
@@ -143,7 +143,7 @@ export function CommandSearchDialog({ isOpen, onClose }: CommandSearchDialogProp
           <Search className="h-4 w-4 text-slate-400 mr-3" />
           <input
             type="text"
-            placeholder="Cari fitur, SKU barang, armada, atau faktur..."
+            placeholder="Search features, goods SKU, fleet, or invoices..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
@@ -152,7 +152,7 @@ export function CommandSearchDialog({ isOpen, onClose }: CommandSearchDialogProp
           <button
             onClick={onClose}
             className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-200/60"
-            aria-label="Tutup pencarian"
+            aria-label="Close search"
           >
             <X className="h-4 w-4" />
           </button>
@@ -162,7 +162,7 @@ export function CommandSearchDialog({ isOpen, onClose }: CommandSearchDialogProp
         <div className="max-h-80 overflow-y-auto p-2 divide-y divide-slate-100">
           {filteredItems.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
-              Tidak ada hasil pencarian yang cocok dengan &quot;{query}&quot;
+              No search results matching &quot;{query}&quot;
             </div>
           ) : (
             filteredItems.map((item) => {
@@ -202,15 +202,15 @@ export function CommandSearchDialog({ isOpen, onClose }: CommandSearchDialogProp
         <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
           <div className="flex items-center gap-3">
             <span>
-              Navigasi: <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">↑</kbd>{" "}
+              Navigate: <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">↑</kbd>{" "}
               <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">↓</kbd>
             </span>
             <span>
-              Pilih: <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">Enter</kbd>
+              Select: <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">Enter</kbd>
             </span>
           </div>
           <span>
-            Tutup: <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">Esc</kbd>
+            Close: <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono">Esc</kbd>
           </span>
         </div>
       </div>

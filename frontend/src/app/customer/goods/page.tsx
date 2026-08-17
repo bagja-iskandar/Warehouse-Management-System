@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useGoods } from "@/hooks/use-goods";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CustomerGood {
   id: string;
@@ -39,29 +41,29 @@ const CUSTOMER_GOODS: CustomerGood[] = [
   {
     id: "cg-1",
     sku: "BAR-FRESH-001",
-    name: "Daging Sapi Wagyu A5 Import",
+    name: "Import Wagyu Beef Ribeye A5",
     category: "COLD_STORAGE",
     slotCode: "A-01-01",
-    zone: "Zona A Cold Storage",
+    zone: "Zone A Cold Storage",
     quantityKoli: 150,
     volumeM3: 75,
     temperature: "-18.4°C",
     batchNumber: "BATCH-WGY-2026-08",
-    expiryDate: "12 Nov 2026",
+    expiryDate: "Nov 12, 2026",
     status: "OPTIMAL",
   },
   {
     id: "cg-2",
     sku: "BAR-FRESH-002",
-    name: "Salmon Fillet Premium Norwegia",
+    name: "Premium Norwegian Salmon Fillet",
     category: "COLD_STORAGE",
     slotCode: "A-01-02",
-    zone: "Zona A Cold Storage",
+    zone: "Zone A Cold Storage",
     quantityKoli: 120,
     volumeM3: 60,
     temperature: "-18.2°C",
     batchNumber: "BATCH-SLM-2026-08",
-    expiryDate: "28 Des 2026",
+    expiryDate: "Dec 28, 2026",
     status: "OPTIMAL",
   },
   {
@@ -70,29 +72,56 @@ const CUSTOMER_GOODS: CustomerGood[] = [
     name: "Frozen Seafood Assorted Mix",
     category: "COLD_STORAGE",
     slotCode: "A-02-01",
-    zone: "Zona A Cold Storage",
+    zone: "Zone A Cold Storage",
     quantityKoli: 140,
     volumeM3: 50,
     temperature: "-18.3°C",
     batchNumber: "BATCH-SEA-2026-07",
-    expiryDate: "15 Jan 2027",
+    expiryDate: "Jan 15, 2027",
     status: "OPTIMAL",
   },
 ];
 
 export default function CustomerGoodsInventoryPage() {
+  const { user } = useAuth();
+  const { data: liveGoods } = useGoods(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedQrItem, setSelectedQrItem] = useState<CustomerGood | null>(null);
 
-  const filteredGoods = CUSTOMER_GOODS.filter(
+  const activeGoods: CustomerGood[] =
+    liveGoods && liveGoods.length > 0
+      ? liveGoods.map((g) => ({
+          id: g.id,
+          sku: g.barcode,
+          name: g.name,
+          category: g.requiresColdStorage ? "COLD_STORAGE" : "STANDARD",
+          slotCode: g.slotCode || "A-01-01",
+          zone: g.requiresColdStorage
+            ? "Zone A Cold Storage"
+            : "Zone B Standard Rack",
+          quantityKoli: g.quantity,
+          volumeM3: g.dimensions?.volumeM3 || 10,
+          temperature:
+            g.currentTemperature != null
+              ? `${g.currentTemperature}°C`
+              : g.requiresColdStorage
+              ? "-18.4°C"
+              : "24.0°C",
+          batchNumber: `BATCH-${g.barcode.substring(0, 8)}`,
+          expiryDate: "Nov 12, 2026",
+          status: "OPTIMAL" as const,
+        }))
+      : CUSTOMER_GOODS;
+
+  const filteredGoods = activeGoods.filter(
     (g) =>
       g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.slotCode.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalKoli = CUSTOMER_GOODS.reduce((acc, g) => acc + g.quantityKoli, 0);
-  const totalVolume = CUSTOMER_GOODS.reduce((acc, g) => acc + g.volumeM3, 0);
+  const totalKoli = activeGoods.reduce((acc, g) => acc + g.quantityKoli, 0);
+  const totalVolume = activeGoods.reduce((acc, g) => acc + g.volumeM3, 0);
 
   return (
     <div className="space-y-6">
@@ -101,14 +130,14 @@ export default function CustomerGoodsInventoryPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Inventaris Barang Saya di Gudang
+              My Goods & Inventory in Warehouse
             </h1>
             <Badge className="bg-emerald-600 text-white text-[10px]">
               PT Fresh Foods Indonesia
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Daftar SKU barang tersimpan di slot rak, verifikasi QR code, dan monitoring masa simpan produk.
+            List of SKUs stored in rack slots, QR code verification, and product expiration tracking.
           </p>
         </div>
 
@@ -116,7 +145,7 @@ export default function CustomerGoodsInventoryPage() {
           <Link href="/customer/goods/input">
             <Button className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
               <Plus className="h-4 w-4" />
-              <span>Registrasi Barang Baru</span>
+              <span>Register New Goods</span>
             </Button>
           </Link>
         </div>
@@ -125,24 +154,24 @@ export default function CustomerGoodsInventoryPage() {
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total SKU Tersimpan</span>
-          <p className="text-2xl font-extrabold text-slate-900">{CUSTOMER_GOODS.length} SKU</p>
-          <p className="text-[11px] text-slate-400">Cold Storage Zona A (Hub Cakung)</p>
+          <span className="text-xs font-semibold text-slate-500">Total SKUs Stored</span>
+          <p className="text-2xl font-extrabold text-slate-900">{CUSTOMER_GOODS.length} SKUs</p>
+          <p className="text-[11px] text-slate-400">Cold Storage Zone A (Cakung Hub)</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Kuantitas Fisik</span>
-          <p className="text-2xl font-extrabold text-emerald-600">{totalKoli} Koli</p>
-          <p className="text-[11px] text-slate-400 font-mono">Setara {totalVolume} m³ Ruang</p>
+          <span className="text-xs font-semibold text-slate-500">Total Physical Quantity</span>
+          <p className="text-2xl font-extrabold text-emerald-600">{totalKoli} Packages</p>
+          <p className="text-[11px] text-slate-400 font-mono">Equivalent to {totalVolume} m³ Space</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Kondisi Suhu Penyimpanan</span>
+          <span className="text-xs font-semibold text-slate-500">Storage Temperature Condition</span>
           <div className="flex items-center gap-2">
             <p className="text-2xl font-extrabold text-sky-600">-18.4°C</p>
             <Badge variant="success" className="text-[10px]">Optimal</Badge>
           </div>
-          <p className="text-[11px] text-sky-700 font-medium">Suhu Sub-zero Terjaga</p>
+          <p className="text-[11px] text-sky-700 font-medium">Sub-zero Temp Maintained</p>
         </div>
       </div>
 
@@ -150,14 +179,14 @@ export default function CustomerGoodsInventoryPage() {
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <h2 className="text-sm font-bold text-slate-900">
-            Daftar Barang & Slot Rak
+            Goods & Rack Slots Directory
           </h2>
 
           <div className="relative w-full sm:w-72">
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari SKU, nama produk, atau slot..."
+              placeholder="Search SKU, product name, or slot..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:bg-white"
@@ -169,13 +198,13 @@ export default function CustomerGoodsInventoryPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">SKU & Nama Barang</th>
-                <th className="py-3 px-3">Slot Rak</th>
-                <th className="py-3 px-3">Kuantitas & Volume</th>
-                <th className="py-3 px-3">Suhu Aktif</th>
-                <th className="py-3 px-3">Nomor Batch</th>
-                <th className="py-3 px-3">Kadaluarsa</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="py-3 px-3">SKU & Goods Name</th>
+                <th className="py-3 px-3">Rack Slot</th>
+                <th className="py-3 px-3">Quantity & Volume</th>
+                <th className="py-3 px-3">Active Temp</th>
+                <th className="py-3 px-3">Batch Number</th>
+                <th className="py-3 px-3">Expiry Date</th>
+                <th className="py-3 px-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -208,7 +237,7 @@ export default function CustomerGoodsInventoryPage() {
 
                   <td className="py-3.5 px-3">
                     <span className="font-bold text-slate-900 block font-mono">
-                      {item.quantityKoli} Koli
+                      {item.quantityKoli} Packages
                     </span>
                     <span className="text-[10.5px] text-slate-400">
                       {item.volumeM3} m³
@@ -235,7 +264,7 @@ export default function CustomerGoodsInventoryPage() {
                       variant="ghost"
                       onClick={() => setSelectedQrItem(item)}
                       className="h-8 px-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
-                      title="Lihat Label QR"
+                      title="View QR Label"
                     >
                       <QrCode className="h-4 w-4" />
                     </Button>
@@ -257,7 +286,7 @@ export default function CustomerGoodsInventoryPage() {
 
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                QR Code Label Barang
+                Goods QR Code Label
               </h3>
               <p className="text-xs font-mono font-bold text-indigo-600 mt-0.5">
                 {selectedQrItem.sku}
@@ -283,10 +312,10 @@ export default function CustomerGoodsInventoryPage() {
                 onClick={() => setSelectedQrItem(null)}
                 className="w-full text-xs h-9"
               >
-                Tutup
+                Close
               </Button>
               <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9">
-                Cetak Label QR
+                Print QR Label
               </Button>
             </div>
           </div>
