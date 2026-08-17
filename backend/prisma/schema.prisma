@@ -1,0 +1,522 @@
+// ==============================================================================
+// WMS Nusantara — Master Relational Prisma Schema
+// Database Engine: PostgreSQL (Local pgAdmin & Cloud Ready)
+// ORM Version: Prisma ORM 6.x
+// Entities: 15 Core Relational Models & 14 Domain Enums
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------------------------------
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  DRIVER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum StorageZoneType {
+  STANDARD
+  COLD_STORAGE
+  HEAVY_DUTY
+}
+
+enum SlotStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+enum GoodsCategory {
+  FURNITURE
+  COLD_FOOD
+  GENERAL_ELECTRONICS
+  TEXTILE
+}
+
+enum GoodsStorageStatus {
+  DRAFT
+  PENDING_PICKUP
+  IN_TRANSIT_INBOUND
+  INSPECTING
+  STORED
+  PENDING_DELIVERY
+  IN_TRANSIT_OUTBOUND
+  DELIVERED
+  CANCELLED
+}
+
+enum VehicleType {
+  VAN
+  BOX_TRUCK_SMALL
+  REEFER_TRUCK
+  WING_BOX_LARGE
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_SERVICE
+  MAINTENANCE
+}
+
+enum OrderType {
+  PICKUP
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING_ASSIGNMENT
+  DRIVER_ASSIGNED
+  EN_ROUTE_PICKUP
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED_DESTINATION
+  DELIVERED
+  CONFIRMED
+  DELAYED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PENDING_VERIFICATION
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  QRIS
+  VIRTUAL_ACCOUNT
+}
+
+enum NotificationCategory {
+  BILLING_DUE
+  PAYMENT_RECEIVED
+  GOODS_STORED
+  GOODS_INSPECTED
+  DRIVER_DISPATCHED
+  DELIVERY_ARRIVED
+  SCHEDULE_DELAY
+  CONFIRMATION_REQUIRED
+}
+
+enum RelatedEntityType {
+  GOODS
+  ORDER
+  INVOICE
+  WAREHOUSE
+}
+
+// ------------------------------------------------------------------------------
+// CORE MODELS
+// ------------------------------------------------------------------------------
+
+model User {
+  id                   String     @id @default(uuid())
+  name                 String     @db.VarChar(100)
+  email                String     @unique @db.VarChar(150)
+  passwordHash         String     @map("password_hash") @db.VarChar(255)
+  role                 UserRole   @default(CUSTOMER)
+  phone                String     @db.VarChar(30)
+  avatarUrl            String?    @map("avatar_url") @db.Text
+  companyName          String?    @map("company_name") @db.VarChar(150)
+  address              String?    @db.Text
+  driverLicenseNumber  String?    @map("driver_license_number") @db.VarChar(50)
+  driverLicenseExpiry  DateTime?  @map("driver_license_expiry") @db.Date
+  status               UserStatus @default(ACTIVE)
+
+  createdAt            DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  refreshTokens        RefreshToken[]
+  goodsItems           GoodsItem[]
+  customerOrders       DeliveryOrder[]      @relation("CustomerOrders")
+  driverOrders         DeliveryOrder[]      @relation("DriverOrders")
+  operatedVehicles     Vehicle[]            @relation("DriverVehicle")
+  customerInvoices     Invoice[]            @relation("CustomerInvoices")
+  verifiedInvoices     Invoice[]            @relation("AdminVerifiedInvoices")
+  goodsMutations       GoodsMutation[]
+  notifications        SystemNotification[]
+  auditLogs            AuditLog[]
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Warehouse {
+  id             String        @id @default(uuid())
+  code           String        @unique @db.VarChar(30)
+  name           String        @db.VarChar(150)
+  address        String        @db.Text
+  city           String        @db.VarChar(100)
+  totalCapacityM3 Decimal      @map("total_capacity_m3") @db.Decimal(10, 2)
+  usedCapacityM3  Decimal      @default(0.00) @map("used_capacity_m3") @db.Decimal(10, 2)
+  isActive       Boolean       @default(true) @map("is_active")
+  managerName    String        @map("manager_name") @db.VarChar(100)
+  contactPhone   String        @map("contact_phone") @db.VarChar(30)
+
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  zones          StorageZone[]
+  slots          StorageSlot[]
+  goodsItems     GoodsItem[]
+
+  @@index([city])
+  @@index([isActive])
+  @@map("warehouses")
+}
+
+model StorageZone {
+  id            String          @id @default(uuid())
+  warehouseId   String          @map("warehouse_id")
+  name          String          @db.VarChar(100)
+  type          StorageZoneType
+  capacityM3    Decimal         @map("capacity_m3") @db.Decimal(10, 2)
+  usedM3        Decimal         @default(0.00) @map("used_m3") @db.Decimal(10, 2)
+  targetTempMin Decimal?        @map("target_temp_min") @db.Decimal(5, 2)
+  targetTempMax Decimal?        @map("target_temp_max") @db.Decimal(5, 2)
+
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  warehouse     Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  slots         StorageSlot[]
+
+  @@index([warehouseId])
+  @@index([type])
+  @@map("storage_zones")
+}
+
+model StorageSlot {
+  id                 String          @id @default(uuid())
+  warehouseId        String          @map("warehouse_id")
+  zoneId             String?         @map("zone_id")
+  code               String          @db.VarChar(30)
+  zone               StorageZoneType
+  capacityM3         Decimal         @map("capacity_m3") @db.Decimal(10, 2)
+  usedM3             Decimal         @default(0.00) @map("used_m3") @db.Decimal(10, 2)
+  temperatureCelsius Decimal?        @map("temperature_celsius") @db.Decimal(5, 2)
+  humidityPercent    Decimal?        @map("humidity_percent") @db.Decimal(5, 2)
+  status             SlotStatus      @default(AVAILABLE)
+
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  warehouse          Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  storageZone        StorageZone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  goodsItems         GoodsItem[]
+  telemetryLogs      TelemetryLog[]
+
+  @@unique([warehouseId, code])
+  @@index([warehouseId, status])
+  @@index([zone])
+  @@map("storage_slots")
+}
+
+model GoodsItem {
+  id                  String             @id @default(uuid())
+  barcode             String             @unique @db.VarChar(50)
+  customerId          String             @map("customer_id")
+  warehouseId         String             @map("warehouse_id")
+  slotId              String?            @map("slot_id")
+  name                String             @db.VarChar(200)
+  category            GoodsCategory
+  description         String             @db.Text
+  lengthCm            Decimal            @map("length_cm") @db.Decimal(10, 2)
+  widthCm             Decimal            @map("width_cm") @db.Decimal(10, 2)
+  heightCm            Decimal            @map("height_cm") @db.Decimal(10, 2)
+  volumeM3            Decimal            @map("volume_m3") @db.Decimal(10, 4)
+  weightKg            Decimal            @map("weight_kg") @db.Decimal(10, 2)
+  quantity            Int                @default(1)
+  unit                String             @db.VarChar(50)
+  requiresColdStorage Boolean            @default(false) @map("requires_cold_storage")
+  targetTempMin       Decimal?           @map("target_temp_min") @db.Decimal(5, 2)
+  targetTempMax       Decimal?           @map("target_temp_max") @db.Decimal(5, 2)
+  currentTemp         Decimal?           @map("current_temp") @db.Decimal(5, 2)
+  storageStartDate    DateTime           @map("storage_start_date") @db.Timestamptz(6)
+  storageEndDate      DateTime?          @map("storage_end_date") @db.Timestamptz(6)
+  monthlyRentalFee    Decimal            @map("monthly_rental_fee") @db.Decimal(14, 2)
+  status              GoodsStorageStatus @default(DRAFT)
+  imageUrl            String?            @map("image_url") @db.Text
+  qrCodeData          String             @map("qr_code_data") @db.Text
+
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  customer            User               @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  warehouse           Warehouse          @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  slot                StorageSlot?       @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  history             GoodsMutation[]
+  orderItems          OrderItem[]
+  invoiceItems        InvoiceItem[]
+
+  @@index([customerId])
+  @@index([warehouseId, status])
+  @@index([slotId])
+  @@index([category])
+  @@map("goods_items")
+}
+
+model GoodsMutation {
+  id          String             @id @default(uuid())
+  goodsId     String             @map("goods_id")
+  status      GoodsStorageStatus
+  title       String             @db.VarChar(150)
+  description String             @db.Text
+  actorId     String?            @map("actor_id")
+  actorName   String             @map("actor_name") @db.VarChar(100)
+  actorRole   String             @map("actor_role") @db.VarChar(50)
+  location    String?            @db.VarChar(150)
+  timestamp   DateTime           @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  goods       GoodsItem          @relation(fields: [goodsId], references: [id], onDelete: Cascade)
+  actor       User?              @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([goodsId])
+  @@index([timestamp])
+  @@map("goods_mutations")
+}
+
+model Vehicle {
+  id               String         @id @default(uuid())
+  plateNumber      String         @unique @map("plate_number") @db.VarChar(20)
+  name             String         @db.VarChar(100)
+  type             VehicleType
+  maxWeightKg      Decimal        @map("max_weight_kg") @db.Decimal(10, 2)
+  maxVolumeM3      Decimal        @map("max_volume_m3") @db.Decimal(10, 2)
+  hasRefrigeration Boolean        @default(false) @map("has_refrigeration")
+  minTempCelsius   Decimal?       @map("min_temp_celsius") @db.Decimal(5, 2)
+  status           VehicleStatus  @default(AVAILABLE)
+  currentDriverId  String?        @map("current_driver_id")
+  locationCity     String         @map("location_city") @db.VarChar(100)
+
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  driver           User?          @relation("DriverVehicle", fields: [currentDriverId], references: [id], onDelete: SetNull)
+  deliveryOrders   DeliveryOrder[]
+  telemetryLogs    TelemetryLog[]
+
+  @@index([type, status])
+  @@index([currentDriverId])
+  @@map("vehicles")
+}
+
+model DeliveryOrder {
+  id                   String        @id @default(uuid())
+  orderNumber          String        @unique @map("order_number") @db.VarChar(50)
+  type                 OrderType
+  customerId           String        @map("customer_id")
+  driverId             String?       @map("driver_id")
+  vehicleId            String?       @map("vehicle_id")
+  goodsSummary         String        @map("goods_summary") @db.Text
+  totalVolumeM3        Decimal       @map("total_volume_m3") @db.Decimal(10, 4)
+  totalWeightKg        Decimal       @map("total_weight_kg") @db.Decimal(10, 2)
+  requiresReefer       Boolean       @default(false) @map("requires_reefer")
+
+  originAddress        String        @map("origin_address") @db.Text
+  originCity           String        @map("origin_city") @db.VarChar(100)
+  destinationAddress   String        @map("destination_address") @db.Text
+  destinationCity      String        @map("destination_city") @db.VarChar(100)
+
+  scheduledDate        DateTime      @map("scheduled_date") @db.Date
+  scheduledTimeSlot    String        @map("scheduled_time_slot") @db.VarChar(50)
+
+  status               OrderStatus   @default(PENDING_ASSIGNMENT)
+  estimatedDurationMins Int          @default(0) @map("estimated_duration_mins")
+  distanceKm           Decimal       @default(0.00) @map("distance_km") @db.Decimal(8, 2)
+
+  isDelayed            Boolean       @default(false) @map("is_delayed")
+  delayReason          String?       @map("delay_reason") @db.Text
+  rescheduledTime      DateTime?     @map("rescheduled_time") @db.Timestamptz(6)
+
+  proofOfDeliveryUrl   String?       @map("proof_of_delivery_url") @db.Text
+  recipientName        String?       @map("recipient_name") @db.VarChar(100)
+  recipientSignature   String?       @map("recipient_signature") @db.Text
+  driverRating         Decimal?      @map("driver_rating") @db.Decimal(3, 2)
+
+  confirmedByCustomer  Boolean       @default(false) @map("confirmed_by_customer")
+  confirmedByDriver    Boolean       @default(false) @map("confirmed_by_driver")
+  confirmedByAdmin     Boolean       @default(false) @map("confirmed_by_admin")
+  confirmedAt          DateTime?     @map("confirmed_at") @db.Timestamptz(6)
+
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  customer             User          @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  driver               User?         @relation("DriverOrders", fields: [driverId], references: [id], onDelete: SetNull)
+  vehicle              Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  orderItems           OrderItem[]
+
+  @@index([customerId])
+  @@index([driverId, status])
+  @@index([scheduledDate])
+  @@map("delivery_orders")
+}
+
+model OrderItem {
+  id        String        @id @default(uuid())
+  orderId   String        @map("order_id")
+  goodsId   String        @map("goods_id")
+  quantity  Int           @default(1)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order     DeliveryOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  goods     GoodsItem     @relation(fields: [goodsId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, goodsId])
+  @@index([goodsId])
+  @@map("order_items")
+}
+
+model Invoice {
+  id                String         @id @default(uuid())
+  invoiceNumber     String         @unique @map("invoice_number") @db.VarChar(50)
+  customerId        String         @map("customer_id")
+  billingMonth      String         @map("billing_month") @db.VarChar(50)
+  issueDate         DateTime       @map("issue_date") @db.Timestamptz(6)
+  dueDate           DateTime       @map("due_date") @db.Timestamptz(6)
+  paidDate          DateTime?      @map("paid_date") @db.Timestamptz(6)
+
+  subtotal          Decimal        @db.Decimal(14, 2)
+  penaltyFee        Decimal        @default(0.00) @map("penalty_fee") @db.Decimal(14, 2)
+  totalAmount       Decimal        @map("total_amount") @db.Decimal(14, 2)
+
+  status            InvoiceStatus  @default(UNPAID)
+  paymentMethod     PaymentMethod? @map("payment_method")
+  paymentProofUrl   String?        @map("payment_proof_url") @db.Text
+  verifiedByAdminId String?        @map("verified_by_admin_id")
+  verifiedAt        DateTime?      @map("verified_at") @db.Timestamptz(6)
+
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  customer          User           @relation("CustomerInvoices", fields: [customerId], references: [id], onDelete: Restrict)
+  verifiedByAdmin   User?          @relation("AdminVerifiedInvoices", fields: [verifiedByAdminId], references: [id], onDelete: SetNull)
+  items             InvoiceItem[]
+
+  @@index([customerId, status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String     @id @default(uuid())
+  invoiceId   String     @map("invoice_id")
+  goodsId     String?    @map("goods_id")
+  description String     @db.VarChar(255)
+  goodsName   String?    @map("goods_name") @db.VarChar(200)
+  volumeM3    Decimal    @map("volume_m3") @db.Decimal(10, 4)
+  ratePerM3   Decimal    @map("rate_per_m3") @db.Decimal(14, 2)
+  subtotal    Decimal    @db.Decimal(14, 2)
+
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  invoice     Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  goods       GoodsItem? @relation(fields: [goodsId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model TelemetryLog {
+  id                 BigInt       @id @default(autoincrement())
+  slotId             String?      @map("slot_id")
+  vehicleId          String?      @map("vehicle_id")
+  temperatureCelsius Decimal      @map("temperature_celsius") @db.Decimal(5, 2)
+  humidityPercent    Decimal?     @map("humidity_percent") @db.Decimal(5, 2)
+  isAnomaly          Boolean      @default(false) @map("is_anomaly")
+  recordedAt         DateTime     @default(now()) @map("recorded_at") @db.Timestamptz(6)
+
+  slot               StorageSlot? @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  vehicle            Vehicle?     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([slotId, recordedAt(sort: Desc)])
+  @@index([vehicleId, recordedAt(sort: Desc)])
+  @@index([isAnomaly])
+  @@map("telemetry_logs")
+}
+
+model SystemNotification {
+  id                String               @id @default(uuid())
+  recipientUserId   String               @map("recipient_user_id")
+  recipientRole     UserRole             @map("recipient_role")
+  title             String               @db.VarChar(150)
+  message           String               @db.Text
+  category          NotificationCategory
+  relatedEntityId   String?              @map("related_entity_id") @db.VarChar(100)
+  relatedEntityType RelatedEntityType?   @map("related_entity_type")
+  isRead            Boolean              @default(false) @map("is_read")
+  actionUrl         String?              @map("action_url") @db.VarChar(255)
+
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipient         User                 @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([recipientUserId, isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("system_notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  action     String   @db.VarChar(100)
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String   @map("entity_id") @db.VarChar(100)
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
