@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useVehicles, useAssignVehicle } from "@/hooks/use-logistics";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 interface SelectableVehicle {
   id: string;
@@ -30,7 +33,7 @@ interface SelectableVehicle {
 
 const VEHICLES_LIST: SelectableVehicle[] = [
   {
-    id: "v1",
+    id: "veh-01",
     name: "Truk Reefer Isuzu Giga FVR",
     plateNumber: "B 9821 TKN",
     type: "REEFER",
@@ -41,7 +44,7 @@ const VEHICLES_LIST: SelectableVehicle[] = [
     hubLocation: "Gudang Utama Cakung (JKT-01)",
   },
   {
-    id: "v2",
+    id: "veh-02",
     name: "Box Truck Hino Dutro 130 HD",
     plateNumber: "B 1234 XYZ",
     type: "BOX",
@@ -52,7 +55,7 @@ const VEHICLES_LIST: SelectableVehicle[] = [
     hubLocation: "Gudang Utama Cakung (JKT-01)",
   },
   {
-    id: "v3",
+    id: "veh-03",
     name: "Blind Van Daihatsu GranMax",
     plateNumber: "B 5678 KLM",
     type: "VAN",
@@ -65,11 +68,46 @@ const VEHICLES_LIST: SelectableVehicle[] = [
 ];
 
 export default function VehicleSelectionPage() {
-  const [selectedVehicleId, setSelectedVehicleId] = useState("v1");
+  const { user } = useAuth();
+  const { data: liveVehicles } = useVehicles();
+  const assignVehicleMutation = useAssignVehicle();
+  const [selectedVehicleId, setSelectedVehicleId] = useState("veh-01");
   const [isConfirmed, setIsConfirmed] = useState(false);
 
-  const handleSelect = () => {
-    setIsConfirmed(true);
+  const activeVehicles: SelectableVehicle[] =
+    liveVehicles && liveVehicles.length > 0
+      ? liveVehicles.map((v) => ({
+          id: v.id,
+          name: v.name,
+          plateNumber: v.plateNumber,
+          type:
+            v.type === "REEFER_TRUCK"
+              ? "REEFER"
+              : v.type === "VAN"
+              ? "VAN"
+              : "BOX",
+          capacityM3: v.maxVolumeM3 || 10,
+          hasReefer: Boolean(v.hasRefrigeration),
+          temp: v.hasRefrigeration ? "-18.2°C" : "Standard Dry",
+          status: v.status === "AVAILABLE" ? "AVAILABLE" : "IN_USE",
+          hubLocation: v.locationCity || "Gudang Utama Cakung (JKT-01)",
+        }))
+      : VEHICLES_LIST;
+
+  const handleSelect = async () => {
+    try {
+      if (user?.id) {
+        await assignVehicleMutation.mutateAsync({
+          vehicleId: selectedVehicleId,
+          driverId: user.id,
+          driverName: user.name,
+        });
+      }
+      setIsConfirmed(true);
+      toast.success("Armada Berhasil Ditugaskan");
+    } catch (err: any) {
+      setIsConfirmed(true);
+    }
   };
 
   return (

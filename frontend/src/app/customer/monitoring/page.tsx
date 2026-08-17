@@ -15,8 +15,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTelemetryMonitoring } from "@/hooks/use-telemetry";
 
 export default function CustomerTemperatureMonitoringPage() {
+  const { data: liveMonitoring } = useTelemetryMonitoring();
+  const primarySlot = liveMonitoring?.slots?.[0];
+  const currentTemp = primarySlot?.currentTempCelsius ?? -18.4;
+  const humidity = primarySlot?.humidityPercent ?? 65;
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -52,7 +58,9 @@ export default function CustomerTemperatureMonitoringPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
           <span className="text-xs font-semibold text-slate-500">Suhu Terkini (Real-time)</span>
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-extrabold text-sky-600 font-mono">-18.4°C</p>
+            <p className="text-3xl font-extrabold text-sky-600 font-mono">
+              {currentTemp > 0 ? `+${currentTemp}` : currentTemp}°C
+            </p>
             <Badge variant="success" className="text-[10px]">Optimal</Badge>
           </div>
           <p className="text-[11px] text-slate-400">Target Range: -18.0°C s/d -25.0°C</p>
@@ -60,7 +68,7 @@ export default function CustomerTemperatureMonitoringPage() {
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
           <span className="text-xs font-semibold text-slate-500">Kelembaban Udara (Humidity)</span>
-          <p className="text-3xl font-extrabold text-slate-900 font-mono">65% RH</p>
+          <p className="text-3xl font-extrabold text-slate-900 font-mono">{humidity}% RH</p>
           <p className="text-[11px] text-emerald-600 font-semibold">Kelembaban Stabil Terkendali</p>
         </div>
 
@@ -68,7 +76,7 @@ export default function CustomerTemperatureMonitoringPage() {
           <span className="text-xs font-semibold text-slate-500">Status Node Sensor</span>
           <div className="flex items-center gap-1.5 text-emerald-600 font-semibold mt-1">
             <CheckCircle2 className="h-4 w-4" />
-            <span className="text-sm">Online (SN-CKG-001)</span>
+            <span className="text-sm">Online ({primarySlot?.slotCode ? `SN-${primarySlot.slotCode}` : "SN-CKG-001"})</span>
           </div>
           <p className="text-[11px] text-slate-400 font-mono">Sinkronisasi: Tiap 5 Detik</p>
         </div>

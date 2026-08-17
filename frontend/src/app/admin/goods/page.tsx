@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useGoods } from "@/hooks/use-goods";
 
 interface GoodsItem {
   id: string;
@@ -73,15 +74,15 @@ const GOODS_DATA: GoodsItem[] = [
   {
     id: "g3",
     sku: "BAR-FURN-001",
-    name: "Sofa Minimalis 3-Seater Velvet",
+    name: "Sofa Minimalis 3-Seater Fabric",
     category: "STANDARD",
     zone: "Zona B — Rak Standar",
     slotCode: "B-01-01",
     tenantName: "CV Furnitur Nusantara",
-    quantityKoli: 20,
-    volumeM3: 50,
+    quantityKoli: 8,
+    volumeM3: 40,
     temperature: "24.2°C",
-    batchNumber: "BATCH-SOF-2026-02",
+    batchNumber: "BATCH-SOF-2026-04",
     expiryDate: "N/A (Dry Good)",
     status: "GOOD",
   },
@@ -133,11 +134,38 @@ const GOODS_DATA: GoodsItem[] = [
 ];
 
 export default function GoodsManagementPage() {
+  const { data: liveGoods } = useGoods();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedQrItem, setSelectedQrItem] = useState<GoodsItem | null>(null);
 
-  const filteredGoods = GOODS_DATA.filter((item) => {
+  const activeGoods: GoodsItem[] =
+    liveGoods && liveGoods.length > 0
+      ? liveGoods.map((g) => ({
+          id: g.id,
+          sku: g.barcode,
+          name: g.name,
+          category: g.requiresColdStorage ? "COLD_STORAGE" : "STANDARD",
+          zone: g.requiresColdStorage
+            ? "Zona A — Cold Storage"
+            : "Zona B — Rak Standar",
+          slotCode: g.slotCode || "A-01-01",
+          tenantName: g.customerName || "Tenant WMS",
+          quantityKoli: g.quantity,
+          volumeM3: g.dimensions?.volumeM3 || 10,
+          temperature:
+            g.currentTemperature != null
+              ? `${g.currentTemperature}°C`
+              : g.requiresColdStorage
+              ? "-18.4°C"
+              : "24.0°C",
+          batchNumber: `BATCH-${g.barcode.substring(0, 8)}`,
+          expiryDate: "12 Nov 2026",
+          status: "GOOD" as const,
+        }))
+      : GOODS_DATA;
+
+  const filteredGoods = activeGoods.filter((item) => {
     const matchCat = selectedCategory === "ALL" || item.category === selectedCategory;
     const matchSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

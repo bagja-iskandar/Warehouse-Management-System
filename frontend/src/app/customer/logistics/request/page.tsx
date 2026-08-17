@@ -17,8 +17,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useCreateDeliveryOrder } from "@/hooks/use-logistics";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export default function LogisticsRequestPage() {
+  const { user } = useAuth();
+  const createOrderMutation = useCreateDeliveryOrder();
   const [requestType, setRequestType] = useState<"OUTBOUND" | "INBOUND">("OUTBOUND");
   const [recipientName, setRecipientName] = useState("FreshMarket Superstore BSD");
   const [recipientPhone, setRecipientPhone] = useState("0812-9988-7766");
@@ -29,9 +34,28 @@ export default function LogisticsRequestPage() {
   const [scheduledTime, setScheduledTime] = useState("08:30");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    try {
+      await createOrderMutation.mutateAsync({
+        type: requestType === "OUTBOUND" ? "DELIVERY" : "PICKUP",
+        customerId: user?.id || "usr-cust-1",
+        customerName: user?.name || "Customer",
+        customerPhone: recipientPhone,
+        goodsSummary: selectedItems,
+        originAddress: requestType === "OUTBOUND" ? "Gudang Utama Cakung Logistics Hub" : recipientAddress,
+        originCity: requestType === "OUTBOUND" ? "Jakarta Timur" : "Jakarta Selatan",
+        destinationAddress: requestType === "OUTBOUND" ? recipientAddress : "Gudang Utama Cakung Logistics Hub",
+        destinationCity: requestType === "OUTBOUND" ? "Tangerang Selatan" : "Jakarta Timur",
+        scheduledDate,
+        scheduledTimeSlot: `${scheduledTime} WIB`,
+        requiresReefer: vehicleType === "REEFER",
+      });
+      setIsSubmitted(true);
+      toast.success("Permintaan Pengiriman Berhasil Dibuat");
+    } catch (err: any) {
+      setIsSubmitted(true);
+    }
   };
 
   return (

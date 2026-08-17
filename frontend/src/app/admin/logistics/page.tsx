@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useDeliveryOrders } from "@/hooks/use-logistics";
 
 interface DispatchOrder {
   id: string;
@@ -61,16 +62,15 @@ const DISPATCH_ORDERS: DispatchOrder[] = [
     id: "do-2",
     doNumber: "DO-2026-002",
     tenantName: "CV Furnitur Nusantara",
-    recipientName: "Plaza Mebel Cibubur (Ibu Ratna)",
-    recipientAddress: "Jl. Alternatif Cibubur KM 4, Jakarta Timur",
-    itemsSummary: "35 Unit Meja Makan Kayu Jati & Kursi",
-    totalKoli: 35,
+    recipientName: "Showroom Furniture Kemang (Ibu Sarah)",
+    recipientAddress: "Jl. Kemang Raya No. 42, Jakarta Selatan",
+    itemsSummary: "20 Set Sofa Minimalis 3-Seater Velvet",
+    totalKoli: 20,
     assignedDriver: "Doni Prasetyo",
     assignedVehicle: "Box Truck Hino Dutro",
     vehiclePlate: "B 1234 XYZ",
     status: "LOADING",
-    scheduledTime: "16 Agu 2026, 09:15 WIB",
-    estimatedArrival: "10:30 WIB",
+    scheduledTime: "16 Agu 2026, 10:00 WIB",
     hasDigitalPod: false,
   },
   {
@@ -106,11 +106,40 @@ const DISPATCH_ORDERS: DispatchOrder[] = [
 ];
 
 export default function LogisticsManagementPage() {
+  const { data: liveOrders } = useDeliveryOrders();
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredOrders = DISPATCH_ORDERS.filter((order) => {
-    const matchStatus = statusFilter === "ALL" || order.status === statusFilter;
+  const activeOrders: DispatchOrder[] =
+    liveOrders && liveOrders.length > 0
+      ? liveOrders.map((o) => ({
+          id: o.id,
+          doNumber: o.orderNumber,
+          tenantName: o.customerName || "PT Fresh Foods Indonesia",
+          recipientName: `${o.destinationAddress} (${o.customerName})`,
+          recipientAddress: o.destinationAddress,
+          itemsSummary: o.goodsSummary || "Komoditas Kargo WMS",
+          totalKoli: Math.round((o.totalVolumeM3 || 1) * 20),
+          assignedDriver: o.driverName || "Driver WMS",
+          assignedVehicle: o.vehicleType || "Truk Reefer Isuzu Giga",
+          vehiclePlate: o.vehiclePlate || "B 9821 WMS",
+          status:
+            o.status === "DELIVERED" || o.status === "CONFIRMED"
+              ? ("DELIVERED" as const)
+              : o.status === "IN_TRANSIT" || o.status === "EN_ROUTE_PICKUP"
+              ? ("IN_TRANSIT" as const)
+              : o.status === "PICKED_UP"
+              ? ("LOADING" as const)
+              : ("QUEUED" as const),
+          scheduledTime: o.scheduledDate || "16 Agu 2026",
+          estimatedArrival: "35 Menit",
+          hasDigitalPod: Boolean(o.proofOfDeliveryUrl),
+        }))
+      : DISPATCH_ORDERS;
+
+  const filteredOrders = activeOrders.filter((order) => {
+    const matchStatus =
+      statusFilter === "ALL" || order.status === statusFilter;
     const matchSearch =
       order.doNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.tenantName.toLowerCase().includes(searchQuery.toLowerCase()) ||

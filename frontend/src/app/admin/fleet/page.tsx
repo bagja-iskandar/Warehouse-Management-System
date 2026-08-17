@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useVehicles } from "@/hooks/use-logistics";
 
 interface FleetVehicle {
   id: string;
@@ -48,34 +49,34 @@ const FLEET_DATA: FleetVehicle[] = [
     capacityM3: 12,
     maxWeightKg: 5000,
     hasReefer: true,
-    reeferTemp: "-18.2°C",
+    reeferTemp: "-18.4°C",
     reeferStatus: "COOLING_OPTIMAL",
-    assignedDriver: "Ahmad Subarjo",
-    assignedDriverPhone: "0812-3456-7890",
+    assignedDriver: "Agus Pratama",
+    assignedDriverPhone: "0812-9988-7766",
     status: "IN_TRANSIT",
     hubBase: "Gudang Cakung (JKT-01)",
-    kirExpiry: "12 Des 2026",
-    odometerKm: 42350,
+    kirExpiry: "15 Jan 2027",
+    odometerKm: 45210,
   },
   {
     id: "veh-2",
-    name: "Box Truck Hino Dutro 130 HD",
-    plateNumber: "B 1234 XYZ",
+    name: "Truk Box Hino Dutro 130 HD",
+    plateNumber: "B 9412 KLU",
     type: "BOX_TRUCK",
-    capacityM3: 16,
-    maxWeightKg: 4000,
+    capacityM3: 8,
+    maxWeightKg: 3000,
     hasReefer: false,
-    assignedDriver: "Doni Prasetyo",
-    assignedDriverPhone: "0813-8877-6655",
-    status: "LOADING",
+    assignedDriver: "Dedi Kurniawan",
+    assignedDriverPhone: "0813-1122-3344",
+    status: "AVAILABLE",
     hubBase: "Gudang Cakung (JKT-01)",
-    kirExpiry: "18 Okt 2026",
-    odometerKm: 58900,
+    kirExpiry: "28 Mar 2027",
+    odometerKm: 32100,
   },
   {
     id: "veh-3",
     name: "Blind Van Daihatsu GranMax 1.5",
-    plateNumber: "B 5678 KLM",
+    plateNumber: "B 9103 JKT",
     type: "BLIND_VAN",
     capacityM3: 4,
     maxWeightKg: 1000,
@@ -107,20 +108,55 @@ const FLEET_DATA: FleetVehicle[] = [
 ];
 
 export default function FleetManagementPage() {
+  const { data: liveVehicles } = useVehicles();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
 
-  const filteredFleet = FLEET_DATA.filter((vehicle) => {
+  const activeFleet: FleetVehicle[] =
+    liveVehicles && liveVehicles.length > 0
+      ? liveVehicles.map((v) => ({
+          id: v.id,
+          name: v.name,
+          plateNumber: v.plateNumber,
+          type:
+            v.type === "REEFER_TRUCK"
+              ? "REEFER_TRUCK"
+              : v.type === "VAN"
+              ? "BLIND_VAN"
+              : "BOX_TRUCK",
+          capacityM3: v.maxVolumeM3 || 10,
+          maxWeightKg: v.maxWeightKg || 3000,
+          hasReefer: Boolean(v.hasRefrigeration),
+          reeferTemp: v.hasRefrigeration ? "-18.4°C" : undefined,
+          reeferStatus: v.hasRefrigeration ? "COOLING_OPTIMAL" : undefined,
+          assignedDriver: v.currentDriverName || undefined,
+          assignedDriverPhone: "0812-9988-7766",
+          status:
+            v.status === "IN_SERVICE"
+              ? "IN_TRANSIT"
+              : v.status === "MAINTENANCE"
+              ? "MAINTENANCE"
+              : "AVAILABLE",
+          hubBase: v.locationCity || "Gudang Cakung (JKT-01)",
+          kirExpiry: "15 Jan 2027",
+          odometerKm: 45000,
+        }))
+      : FLEET_DATA;
+
+  const filteredFleet = activeFleet.filter((vehicle) => {
     const matchType = typeFilter === "ALL" || vehicle.type === typeFilter;
     const matchSearch =
       vehicle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.plateNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (vehicle.assignedDriver && vehicle.assignedDriver.toLowerCase().includes(searchQuery.toLowerCase()));
+      (vehicle.assignedDriver &&
+        vehicle.assignedDriver
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()));
     return matchType && matchSearch;
   });
 
-  const totalCapacityM3 = FLEET_DATA.reduce((acc, v) => acc + v.capacityM3, 0);
-  const reeferCount = FLEET_DATA.filter((v) => v.hasReefer).length;
+  const totalCapacityM3 = activeFleet.reduce((acc, v) => acc + v.capacityM3, 0);
+  const reeferCount = activeFleet.filter((v) => v.hasReefer).length;
 
   return (
     <div className="space-y-6">

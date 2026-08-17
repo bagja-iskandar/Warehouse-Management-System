@@ -53,11 +53,13 @@ export function useUpdateGoodsStatus() {
       id,
       status,
       note,
+      slotId,
     }: {
       id: string;
       status: GoodsItem["status"];
       note?: string;
-    }) => goodsService.updateStatus(id, status, note),
+      slotId?: string;
+    }) => goodsService.updateStatus(id, status, note, slotId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: goodsKeys.all });
     },

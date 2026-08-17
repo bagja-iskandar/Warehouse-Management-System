@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SlotDetailModal, SlotData } from "@/components/warehouse/SlotDetailModal";
+import { useWarehouse } from "@/hooks/use-warehouses";
 
 // Seeded Rack & Slot Data for Multi-Zones
 const INITIAL_SLOTS: SlotData[] = [
@@ -270,12 +271,55 @@ const INITIAL_SLOTS: SlotData[] = [
 ];
 
 export default function WarehouseCapacityPage() {
+  const { data: warehouseDetail } = useWarehouse("wh-jkt-central");
   const [selectedZone, setSelectedZone] = useState<"A" | "B" | "C">("A");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedSlot, setSelectedSlot] = useState<SlotData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredSlots = INITIAL_SLOTS.filter(
+  const liveSlots: SlotData[] | null =
+    warehouseDetail && warehouseDetail.slots && warehouseDetail.slots.length > 0
+      ? warehouseDetail.slots.map((s) => {
+          const zoneKey: "A" | "B" | "C" =
+            s.zone === "COLD_STORAGE" ? "A" : s.zone === "STANDARD" ? "B" : "C";
+          const statusKey: "OCCUPIED" | "PARTIAL" | "AVAILABLE" | "MAINTENANCE" =
+            s.status === "OCCUPIED"
+              ? s.usedM3 >= s.capacityM3
+                ? "OCCUPIED"
+                : "PARTIAL"
+              : s.status === "MAINTENANCE"
+              ? "MAINTENANCE"
+              : "AVAILABLE";
+
+          return {
+            id: s.id,
+            code: s.code,
+            zone: zoneKey,
+            zoneName:
+              zoneKey === "A"
+                ? "Zona A — Cold Storage"
+                : zoneKey === "B"
+                ? "Zona B — Rak Standar"
+                : "Zona C — Heavy Duty",
+            zoneType: s.zone,
+            temperature: s.temperatureCelsius != null ? `${s.temperatureCelsius}°C` : "24.0°C",
+            humidity: s.humidityPercent != null ? `${s.humidityPercent}% RH` : "55% RH",
+            status: statusKey,
+            capacityM3: s.capacityM3,
+            usedM3: s.usedM3,
+            tenantName: s.currentGoodsIds?.length > 0 ? "PT Fresh Foods Indonesia" : undefined,
+            tenantPic: s.currentGoodsIds?.length > 0 ? "Hendra Prasetya" : undefined,
+            itemSku: s.currentGoodsIds?.[0] ? `SKU-${s.currentGoodsIds[0].substring(0, 8).toUpperCase()}` : undefined,
+            itemName: s.zone === "COLD_STORAGE" ? "Komoditas Cold Chain Terdaftar" : "Barang Kargo Standar",
+            itemQuantity: s.currentGoodsIds?.length ? `${s.currentGoodsIds.length * 50} Koli` : undefined,
+            lastInspected: "16 Agu 2026",
+          };
+        })
+      : null;
+
+  const activeSlots = liveSlots && liveSlots.length > 0 ? liveSlots : INITIAL_SLOTS;
+
+  const filteredSlots = activeSlots.filter(
     (slot) =>
       slot.zone === selectedZone &&
       (statusFilter === "ALL" || slot.status === statusFilter)

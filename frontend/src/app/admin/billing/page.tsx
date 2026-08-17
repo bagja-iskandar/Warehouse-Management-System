@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useInvoices } from "@/hooks/use-billing";
 
 interface InvoiceRecord {
   id: string;
@@ -58,10 +59,10 @@ const INVOICES_DATA: InvoiceRecord[] = [
     invoiceNumber: "INV-2026-002",
     customerName: "CV Furnitur Nusantara",
     storagePlan: "Standard Storage (Dry Mebel)",
-    rentedSpaceM3: 300,
-    baseAmountRp: 15000000,
-    lateFeeRp: 750000, // 5% late penalty for 1 week
-    totalAmountRp: 15750000,
+    rentedSpaceM3: 100,
+    baseAmountRp: 3500000,
+    lateFeeRp: 350000,
+    totalAmountRp: 3850000,
     issueDate: "01 Agu 2026",
     dueDate: "10 Agu 2026",
     status: "OVERDUE",
@@ -97,24 +98,52 @@ const INVOICES_DATA: InvoiceRecord[] = [
 ];
 
 export default function BillingManagementPage() {
+  const { data: liveInvoices } = useInvoices();
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredInvoices = INVOICES_DATA.filter((inv) => {
-    const matchStatus = statusFilter === "ALL" || inv.status === statusFilter;
+  const activeInvoices: InvoiceRecord[] =
+    liveInvoices && liveInvoices.length > 0
+      ? liveInvoices.map((inv) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          customerName: inv.customerName || "PT Fresh Foods Indonesia",
+          storagePlan:
+            inv.penaltyFee > 0
+              ? "Cold Storage Sub-zero (-18°C) + Denda Keterlambatan"
+              : "Cold Storage Sub-zero (-18°C)",
+          rentedSpaceM3: Math.round(inv.subtotal / 50000) || 150,
+          baseAmountRp: inv.subtotal,
+          lateFeeRp: inv.penaltyFee,
+          totalAmountRp: inv.totalAmount,
+          issueDate: "01 Agu 2026",
+          dueDate: "10 Agu 2026",
+          paidDate: inv.paidDate ? "08 Agu 2026" : undefined,
+          status:
+            inv.status === "PAID"
+              ? ("PAID" as const)
+              : inv.status === "OVERDUE"
+              ? ("OVERDUE" as const)
+              : ("PENDING" as const),
+          daysOverdue: inv.status === "OVERDUE" ? 7 : undefined,
+        }))
+      : INVOICES_DATA;
+
+  const filteredInvoices = activeInvoices.filter((inv) => {
+    const matchStatus =
+      statusFilter === "ALL" || inv.status === statusFilter;
     const matchSearch =
       inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       inv.customerName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchStatus && matchSearch;
   });
 
-  const totalPaidRevenue = INVOICES_DATA.filter((i) => i.status === "PAID").reduce(
-    (acc, i) => acc + i.totalAmountRp,
-    0
-  );
-  const totalPendingRevenue = INVOICES_DATA.filter(
-    (i) => i.status === "PENDING" || i.status === "OVERDUE"
-  ).reduce((acc, i) => acc + i.totalAmountRp, 0);
+  const totalPaidRevenue = activeInvoices
+    .filter((i) => i.status === "PAID")
+    .reduce((acc, i) => acc + i.totalAmountRp, 0);
+  const totalPendingRevenue = activeInvoices
+    .filter((i) => i.status === "PENDING" || i.status === "OVERDUE")
+    .reduce((acc, i) => acc + i.totalAmountRp, 0);
 
   return (
     <div className="space-y-6">

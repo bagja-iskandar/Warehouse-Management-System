@@ -14,19 +14,19 @@ export const DEMO_CREDENTIALS: Record<
 > = {
   ADMIN: {
     email: "admin@wms.id",
-    password: "password123",
+    password: "Password123!",
     roleName: "Admin Gudang",
     description: "Akses penuh manajemen kapasitas rak, armada, & tagihan",
   },
   CUSTOMER: {
     email: "customer@freshfoods.id",
-    password: "password123",
+    password: "Password123!",
     roleName: "Customer Perusahaan",
     description: "Sewa ruang cold storage, booking, & monitoring barang",
   },
   DRIVER: {
     email: "driver@wms.id",
-    password: "password123",
+    password: "Password123!",
     roleName: "Driver Logistik",
     description: "Tugas penjemputan/pengantaran & pemilihan armada truk",
   },
@@ -132,7 +132,12 @@ export function useAuth() {
     },
   });
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      // Ignore network error on logout
+    }
     storeLogout();
     queryClient.clear();
     toast.info("Sesi Berakhir", {

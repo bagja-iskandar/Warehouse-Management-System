@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useWarehouses } from "@/hooks/use-warehouses";
 
 interface HubFacility {
   id: string;
@@ -88,10 +89,40 @@ const HUBS_DATA: HubFacility[] = [
 ];
 
 export default function WarehouseOverviewPage() {
+  const { data: liveWarehouses } = useWarehouses();
   const [selectedTab, setSelectedTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const filteredHubs = HUBS_DATA.filter((hub) => {
+  const activeHubs: HubFacility[] =
+    liveWarehouses && liveWarehouses.length > 0
+      ? liveWarehouses.map((w) => ({
+          id: w.id,
+          code: w.code,
+          name: w.name,
+          location: `${w.address}, ${w.city}`,
+          picName: `${w.managerName} (${w.contactPhone})`,
+          status: "NORMAL" as const,
+          totalCapacityM3: w.totalCapacityM3,
+          usedCapacityM3: w.usedCapacityM3,
+          coldCapacityM3: w.zones?.coldStorageCapacityM3 || 0,
+          coldUsedM3: Math.round(
+            (w.zones?.coldStorageCapacityM3 || 0) *
+              (w.usedCapacityM3 / (w.totalCapacityM3 || 1))
+          ),
+          coldTemp: "-18.4°C",
+          standardCapacityM3: w.zones?.standardCapacityM3 || 0,
+          standardUsedM3: Math.round(
+            (w.zones?.standardCapacityM3 || 0) *
+              (w.usedCapacityM3 / (w.totalCapacityM3 || 1))
+          ),
+          standardTemp: "24.0°C",
+          totalSlots: w.slotsCount || 0,
+          occupiedSlots: w.occupiedSlotsCount || 0,
+          activeTenantsCount: 4,
+        }))
+      : HUBS_DATA;
+
+  const filteredHubs = activeHubs.filter((hub) => {
     const matchTab =
       selectedTab === "ALL" ||
       (selectedTab === "CKG" && hub.code === "WH-CKG-01") ||
@@ -103,10 +134,10 @@ export default function WarehouseOverviewPage() {
     return matchTab && matchSearch;
   });
 
-  const totalCapacitySum = HUBS_DATA.reduce((acc, h) => acc + h.totalCapacityM3, 0);
-  const totalUsedSum = HUBS_DATA.reduce((acc, h) => acc + h.usedCapacityM3, 0);
-  const totalSlotsSum = HUBS_DATA.reduce((acc, h) => acc + h.totalSlots, 0);
-  const totalOccupiedSlotsSum = HUBS_DATA.reduce((acc, h) => acc + h.occupiedSlots, 0);
+  const totalCapacitySum = activeHubs.reduce((acc, h) => acc + h.totalCapacityM3, 0);
+  const totalUsedSum = activeHubs.reduce((acc, h) => acc + h.usedCapacityM3, 0);
+  const totalSlotsSum = activeHubs.reduce((acc, h) => acc + h.totalSlots, 0);
+  const totalOccupiedSlotsSum = activeHubs.reduce((acc, h) => acc + h.occupiedSlots, 0);
 
   return (
     <div className="space-y-6">

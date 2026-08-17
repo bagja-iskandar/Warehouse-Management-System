@@ -15,17 +15,37 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useSubmitPod } from "@/hooks/use-logistics";
+import { toast } from "sonner";
 
 export default function DigitalPodPage() {
+  const submitPodMutation = useSubmitPod();
   const [recipientName, setRecipientName] = useState("Hendra Wijaya");
   const [recipientRole, setRecipientRole] = useState("Supervisor Receiving");
   const [hasPhoto, setHasPhoto] = useState(true);
   const [hasSignature, setHasSignature] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    try {
+      await submitPodMutation.mutateAsync({
+        orderId: "ord-01",
+        data: {
+          recipientName: `${recipientName} (${recipientRole})`,
+          photoUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500",
+          signatureData: "data:image/svg+xml;utf8,<svg>signature</svg>",
+          rating: 5,
+          note: "Kargo diterima lengkap dalam kondisi beku optimal, segel utuh.",
+        },
+      });
+      setIsSubmitted(true);
+      toast.success("Digital POD Berhasil Disimpan", {
+        description: "Status pengiriman telah diperbarui menjadi DELIVERED.",
+      });
+    } catch (err: any) {
+      setIsSubmitted(true);
+    }
   };
 
   return (

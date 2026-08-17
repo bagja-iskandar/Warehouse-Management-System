@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTelemetryMonitoring } from "@/hooks/use-telemetry";
 
 interface SensorNode {
   id: string;
@@ -85,9 +86,50 @@ const SENSORS_DATA: SensorNode[] = [
 ];
 
 export default function SensorMonitoringPage() {
+  const { data: liveMonitoring } = useTelemetryMonitoring();
   const [filterType, setFilterType] = useState("ALL");
 
-  const filteredSensors = SENSORS_DATA.filter((s) => {
+  const activeSensors: SensorNode[] =
+    liveMonitoring && (liveMonitoring.slots.length > 0 || liveMonitoring.vehicles.length > 0)
+      ? [
+          ...liveMonitoring.slots.map((s, idx) => ({
+            id: s.slotId,
+            nodeCode: `SN-SLOT-${s.slotCode}`,
+            locationName: `${s.warehouseName} — Slot ${s.slotCode}`,
+            zoneType: "COLD_STORAGE" as const,
+            currentTemp: s.currentTempCelsius,
+            targetTemp: "-18.0°C s/d -25.0°C",
+            humidity: `${s.humidityPercent || 80}% RH`,
+            status:
+              s.condition === "SAFE"
+                ? ("OPTIMAL" as const)
+                : s.condition === "WARNING"
+                ? ("WARNING" as const)
+                : ("CRITICAL" as const),
+            batteryLevel: "98% (AC Powered)",
+            lastUpdated: "Live",
+          })),
+          ...liveMonitoring.vehicles.map((v) => ({
+            id: v.vehicleId,
+            nodeCode: `SN-VEH-${v.plateNumber.replace(/\s+/g, "")}`,
+            locationName: `${v.name} (${v.plateNumber})`,
+            zoneType: "REEFER_FLEET" as const,
+            currentTemp: v.currentTempCelsius,
+            targetTemp: "-18.0°C s/d -25.0°C",
+            humidity: "75% RH",
+            status:
+              v.condition === "SAFE"
+                ? ("OPTIMAL" as const)
+                : v.condition === "WARNING"
+                ? ("WARNING" as const)
+                : ("CRITICAL" as const),
+            batteryLevel: "Alternator Online",
+            lastUpdated: "Live",
+          })),
+        ]
+      : SENSORS_DATA;
+
+  const filteredSensors = activeSensors.filter((s) => {
     return filterType === "ALL" || s.zoneType === filterType;
   });
 

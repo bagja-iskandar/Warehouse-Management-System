@@ -275,7 +275,7 @@ export function LoginForm() {
         {/* Demo Credentials Quick Switcher Footer */}
         <div className="mt-3 pt-2 text-center">
           <p className="text-[11px] text-slate-400 leading-normal">
-            Akun Percobaan: <span className="text-slate-600 font-mono">{email}</span> (PW: password123)
+            Akun Percobaan: <span className="text-slate-600 font-mono">{email}</span> (PW: Password123!)
           </p>
         </div>
       </div>

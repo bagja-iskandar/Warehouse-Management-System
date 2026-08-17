@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useGoods } from "@/hooks/use-goods";
+import { useAuth } from "@/hooks/use-auth";
 
 interface CustomerGood {
   id: string;
@@ -81,18 +83,45 @@ const CUSTOMER_GOODS: CustomerGood[] = [
 ];
 
 export default function CustomerGoodsInventoryPage() {
+  const { user } = useAuth();
+  const { data: liveGoods } = useGoods(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedQrItem, setSelectedQrItem] = useState<CustomerGood | null>(null);
 
-  const filteredGoods = CUSTOMER_GOODS.filter(
+  const activeGoods: CustomerGood[] =
+    liveGoods && liveGoods.length > 0
+      ? liveGoods.map((g) => ({
+          id: g.id,
+          sku: g.barcode,
+          name: g.name,
+          category: g.requiresColdStorage ? "COLD_STORAGE" : "STANDARD",
+          slotCode: g.slotCode || "A-01-01",
+          zone: g.requiresColdStorage
+            ? "Zona A Cold Storage"
+            : "Zona B Rak Standar",
+          quantityKoli: g.quantity,
+          volumeM3: g.dimensions?.volumeM3 || 10,
+          temperature:
+            g.currentTemperature != null
+              ? `${g.currentTemperature}°C`
+              : g.requiresColdStorage
+              ? "-18.4°C"
+              : "24.0°C",
+          batchNumber: `BATCH-${g.barcode.substring(0, 8)}`,
+          expiryDate: "12 Nov 2026",
+          status: "OPTIMAL" as const,
+        }))
+      : CUSTOMER_GOODS;
+
+  const filteredGoods = activeGoods.filter(
     (g) =>
       g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.slotCode.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalKoli = CUSTOMER_GOODS.reduce((acc, g) => acc + g.quantityKoli, 0);
-  const totalVolume = CUSTOMER_GOODS.reduce((acc, g) => acc + g.volumeM3, 0);
+  const totalKoli = activeGoods.reduce((acc, g) => acc + g.quantityKoli, 0);
+  const totalVolume = activeGoods.reduce((acc, g) => acc + g.volumeM3, 0);
 
   return (
     <div className="space-y-6">
