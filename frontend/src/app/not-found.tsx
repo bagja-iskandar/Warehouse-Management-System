@@ -35,10 +35,10 @@ export default function NotFoundPage() {
             Error 404 — Not Found
           </span>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Halaman Tidak Ditemukan
+            Page Not Found
           </h1>
           <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
-            Rute atau dokumen yang Anda tuju tidak tersedia atau telah dipindahkan ke lokasi lain.
+            The page or resource you are looking for is not available or has been moved.
           </p>
         </div>
 
@@ -47,7 +47,7 @@ export default function NotFoundPage() {
           <Link href={getDashboardLink()} className="w-full">
             <Button className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer">
               <Home className="h-4 w-4" />
-              <span>Kembali ke Dashboard</span>
+              <span>Back to Dashboard</span>
             </Button>
           </Link>
 
@@ -56,7 +56,7 @@ export default function NotFoundPage() {
             className="w-full h-10 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Kembali ke Halaman Sebelumnya</span>
+            <span>Go Back to Previous Page</span>
           </button>
         </div>
       </div>

@@ -52,55 +52,55 @@ export function ErrorStateCard({
         return {
           icon: <WifiOff className="h-6 w-6" />,
           badgeColor: "bg-rose-50 border-rose-200 text-rose-600",
-          defaultTitle: "Gangguan Koneksi Jaringan",
+          defaultTitle: "Network Connection Issue",
           defaultMessage:
-            "Tidak dapat terhubung ke server WMS Nusantara. Periksa koneksi internet Anda.",
-          buttonLabel: "Coba Hubungkan Kembali",
+            "Unable to connect to WMS Nusantara server. Please check your network connection.",
+          buttonLabel: "Retry Connection",
         };
       case "forbidden":
         return {
           icon: <ShieldAlert className="h-6 w-6" />,
           badgeColor: "bg-amber-50 border-amber-200 text-amber-600",
-          defaultTitle: "Akses Ditolak (403)",
+          defaultTitle: "Access Denied (403)",
           defaultMessage:
-            "Akun Anda tidak memiliki izin untuk melihat atau mengelola data pada modul ini.",
-          buttonLabel: "Muat Ulang",
+            "Your account does not have permission to view or manage data in this module.",
+          buttonLabel: "Reload",
         };
       case "not_found":
         return {
           icon: <FileQuestion className="h-6 w-6" />,
           badgeColor: "bg-slate-50 border-slate-200 text-slate-600",
-          defaultTitle: "Data Tidak Ditemukan (404)",
+          defaultTitle: "Data Not Found (404)",
           defaultMessage:
-            "Informasi yang Anda cari tidak ditemukan dalam database atau telah dihapus.",
-          buttonLabel: "Muat Ulang Data",
+            "The requested information was not found in the database or has been deleted.",
+          buttonLabel: "Reload Data",
         };
       case "server_error":
         return {
           icon: <ServerCrash className="h-6 w-6" />,
           badgeColor: "bg-rose-50 border-rose-200 text-rose-600",
-          defaultTitle: "Kendala Pemrosesan Server (500)",
+          defaultTitle: "Server Processing Error (500)",
           defaultMessage:
-            "Terjadi kendala pada server saat memproses data. Seluruh data transaksi Anda tetap aman.",
-          buttonLabel: "Coba Lagi",
+            "An error occurred while processing data on the server. Your transaction data remains safe.",
+          buttonLabel: "Try Again",
         };
       case "empty":
         return {
           icon: <Inbox className="h-6 w-6" />,
           badgeColor: "bg-slate-50 border-slate-200 text-slate-500",
-          defaultTitle: "Belum Ada Data Tersedia",
+          defaultTitle: "No Data Available",
           defaultMessage:
-            "Saat ini belum ada data tercatat untuk filter atau kategori yang dipilih.",
-          buttonLabel: "Segarkan",
+            "There is currently no data recorded for the selected filter or category.",
+          buttonLabel: "Refresh",
         };
       default:
         return {
           icon: <AlertTriangle className="h-6 w-6" />,
           badgeColor: "bg-amber-50 border-amber-200 text-amber-600",
-          defaultTitle: "Gagal Memuat Informasi",
+          defaultTitle: "Failed to Load Information",
           defaultMessage:
-            "Terjadi kesalahan saat memproses data pada tampilan ini. Silakan coba kembali.",
-          buttonLabel: "Coba Lagi",
+            "An error occurred while processing data on this view. Please try again.",
+          buttonLabel: "Try Again",
         };
     }
   };

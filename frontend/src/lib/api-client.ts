@@ -126,27 +126,27 @@ function normalizeErrorMessage(status: number, data: any): string {
 
   switch (status) {
     case 400:
-      return backendMsg || "Permintaan tidak valid. Silakan periksa kembali data yang dimasukkan.";
+      return backendMsg || "Invalid request. Please verify the submitted information.";
     case 401:
-      return "Sesi login Anda telah berakhir. Silakan masuk kembali.";
+      return "Your login session has expired. Please sign in again.";
     case 403:
-      return "Akses ditolak. Anda tidak memiliki izin untuk melakukan tindakan ini.";
+      return "Access denied. You do not have permission to perform this action.";
     case 404:
-      return backendMsg || "Data yang dicari tidak ditemukan dalam sistem.";
+      return backendMsg || "The requested data was not found in the system.";
     case 409:
-      return backendMsg || "Terjadi konflik data operasional. Data mungkin telah diubah oleh pengguna lain.";
+      return backendMsg || "Operational data conflict. The resource may have been modified by another user.";
     case 422:
-      return backendMsg || "Data tidak dapat diproses karena tidak memenuhi aturan bisnis.";
+      return backendMsg || "Data cannot be processed because it violates business rules.";
     case 429:
-      return "Terlalu banyak permintaan ke server. Silakan tunggu beberapa saat sebelum mencoba kembali.";
+      return "Too many requests to the server. Please wait a moment before trying again.";
     case 500:
-      return "Terjadi kendala pada server WMS. Data Anda tetap aman. Silakan coba beberapa saat lagi.";
+      return "An unexpected server issue occurred. Your data remains safe. Please try again shortly.";
     case 502:
     case 503:
     case 504:
-      return "Layanan server WMS Nusantara sedang tidak tersedia sementara. Silakan coba kembali.";
+      return "WMS Nusantara server services are temporarily unavailable. Please try again in a few moments.";
     default:
-      return backendMsg || `Terjadi kesalahan operasional (Kode: ${status}).`;
+      return backendMsg || `An operational error occurred (Status Code: ${status}).`;
   }
 }
 
@@ -218,7 +218,7 @@ export async function apiClient<T = any>(
 
     if (fetchErr?.name === "AbortError" || fetchErr?.message === "REQUEST_TIMEOUT") {
       throw new AppApiError(
-        "Permintaan melebihi batas waktu (timeout). Silakan periksa koneksi internet Anda dan coba lagi.",
+        "Request timed out. Please check your network connection and try again.",
         408,
         { code: "TIMEOUT", correlationId: requestId }
       );
@@ -226,14 +226,14 @@ export async function apiClient<T = any>(
 
     if (typeof window !== "undefined" && !navigator.onLine) {
       throw new AppApiError(
-        "Koneksi internet terputus. Pastikan perangkat Anda terhubung ke jaringan.",
+        "Internet connection lost. Please ensure your device is connected to the network.",
         0,
         { code: "OFFLINE", correlationId: requestId }
       );
     }
 
     throw new AppApiError(
-      "Tidak dapat terhubung ke server WMS Nusantara. Periksa koneksi jaringan Anda.",
+      "Unable to connect to WMS Nusantara server. Please check your network connection.",
       0,
       { code: "NETWORK_ERROR", correlationId: requestId }
     );
@@ -294,7 +294,7 @@ export async function apiClient<T = any>(
               window.location.href = "/login?expired=true";
             }
             throw new AppApiError(
-              "Sesi login Anda telah berakhir. Silakan masuk kembali.",
+              "Your login session has expired. Please sign in again.",
               401,
               { code: "SESSION_EXPIRED", correlationId: requestId }
             );
@@ -324,7 +324,7 @@ export async function apiClient<T = any>(
     } else {
       clearStoredTokens();
       throw new AppApiError(
-        "Sesi login Anda tidak valid atau telah berakhir.",
+        "Your login session is invalid or has expired.",
         401,
         { code: "UNAUTHORIZED", correlationId: requestId }
       );

@@ -11,8 +11,8 @@ Semua akun default terdaftar pada database PostgreSQL dengan password: **`Passwo
 | Role / Peran | Email / Username | Password | Nama Pengguna / Instansi | Redirect Portal |
 | :--- | :--- | :--- | :--- | :--- |
 | **Warehouse Administrator** | `admin@wms.id` | `Password123!` | Budi Santoso (PT Logistik Prima Nusantara) | `/admin/dashboard` |
-| **Corporate Customer (Cold Storage)** | `customer@freshfoods.id` | `Password123!` | Siti Rahma (CV Fresh Frozen Nusantara) | `/customer/dashboard` |
-| **Corporate Customer (Standard Dry)** | `michael@megafurniture.co.id` | `Password123!` | Michael Tan (PT Mega Furniture Indo) | `/customer/dashboard` |
+| **Corporate Customer (Haidar)** | `haidar@gmail.com` | `Password123!` | Haidar (Tenant Cold Storage) | `/customer/dashboard` |
+| **Corporate Customer (Pandu)** | `pandu@gmail.com` | `Password123!` | Pandu (Tenant Standard Dry) | `/customer/dashboard` |
 | **Logistics Fleet Driver (Cakung)** | `driver@wms.id` | `Password123!` | Agus Pratama (Armada Reefer Cakung) | `/driver/dashboard` |
 | **Logistics Fleet Driver (Bandung)** | `dedi.driver@wms.id` | `Password123!` | Dedi Kurniawan (Armada Bandung) | `/driver/dashboard` |
 
@@ -81,13 +81,7 @@ Warehouse/
 
 ## 🚀 Panduan Menjalankan Aplikasi
 
-### 1. Menjalankan Infrastruktur (Docker)
-```bash
-# Menjalankan PostgreSQL 16 & MinIO di background
-docker compose up -d
-```
-
-### 2. Menjalankan Backend (NestJS + PostgreSQL)
+### 1. Menjalankan Backend (NestJS + PostgreSQL)
 ```bash
 cd backend
 
@@ -105,7 +99,7 @@ npm run start:dev
 - **API Base URL:** [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
 - **Swagger Documentation:** [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
 
-### 3. Menjalankan Frontend (Next.js 15)
+### 2. Menjalankan Frontend (Next.js 15)
 ```bash
 cd frontend
 

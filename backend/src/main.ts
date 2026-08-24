@@ -55,7 +55,9 @@ async function bootstrap() {
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type,Accept,Authorization,X-Requested-With,X-Idempotency-Key',
+    allowedHeaders:
+      'Content-Type,Accept,Authorization,X-Requested-With,X-Idempotency-Key,X-Request-ID,x-request-id,X-Correlation-ID,x-correlation-id',
+    exposedHeaders: 'X-Request-ID,x-request-id,X-Correlation-ID,x-correlation-id,Content-Disposition',
     credentials: true,
   });
 

@@ -21,23 +21,23 @@ export default function CustomerRouteError({
     <PageContainer>
       <PageHeader
         breadcrumb="Customer Portal > Error"
-        title="Kendala Pemuatan Layanan Customer"
-        subtitle="Layanan portal customer mengalami gangguan teknis sementara. Data sewa dan stok Anda tetap aman."
+        title="Customer Portal Loading Issue"
+        subtitle="The customer portal is experiencing a temporary technical issue. Your rental and inventory data remains safe."
         badgeText="Notice"
         badgeColor="bg-amber-600 text-white"
       />
 
-      <SectionCard title="Status Portal Tenant" className="p-8 text-center max-w-xl mx-auto space-y-5">
+      <SectionCard title="Tenant Portal Status" className="p-8 text-center max-w-xl mx-auto space-y-5">
         <div className="h-14 w-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
           <AlertCircle className="h-7 w-7" />
         </div>
 
         <div className="space-y-1.5">
           <h2 className="text-base font-bold text-slate-900">
-            Gagal Memuat Data Halaman
+            Unable to Load Page Data
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
-            Terjadi kendala saat mengambil informasi sewa atau logistik Anda. Silakan coba kembali atau hubungi support kami.
+            An issue occurred while retrieving your rental or logistics information. Please try again or contact our support team.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function CustomerRouteError({
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9.5 px-4 rounded-xl flex items-center gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            <span>Coba Lagi</span>
+            <span>Try Again</span>
           </Button>
 
           <Link href="/customer/dashboard">

@@ -25,7 +25,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   handleRequest<TUser = unknown>(err: unknown, user: TUser): TUser {
     if (err || !user) {
       throw new UnauthorizedException(
-        'Autentikasi gagal: Token tidak valid, kedaluwarsa, atau tidak disertakan',
+        'Authentication failed: Invalid, expired, or missing bearer token',
       );
     }
     return user;

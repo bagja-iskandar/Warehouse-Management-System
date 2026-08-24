@@ -22,13 +22,13 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
 
     if (!user || !user.role) {
-      throw new ForbiddenException('Akses ditolak: Informasi otentikasi peran tidak ditemukan');
+      throw new ForbiddenException('Access denied: Role authentication information not found');
     }
 
     const hasRole = requiredRoles.includes(user.role);
     if (!hasRole) {
       throw new ForbiddenException(
-        `Akses ditolak: Peran akun Anda (${user.role}) tidak memiliki hak akses untuk resource ini`,
+        `Access denied: Your account role (${user.role}) is not authorized to access this resource`,
       );
     }
 

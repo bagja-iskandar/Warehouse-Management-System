@@ -109,32 +109,32 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           const target = (exception as any).meta?.target;
           const targetField = Array.isArray(target) ? target.join(', ') : target;
           message = targetField
-            ? `Data dengan ${targetField} tersebut sudah terdaftar dalam sistem.`
-            : 'Data dengan nilai unik tersebut sudah terdaftar dalam sistem.';
+            ? `Data with specified ${targetField} already exists in the system.`
+            : 'A resource with this unique value already exists in the system.';
           break;
         }
         case 'P2025': {
           statusCode = HttpStatus.NOT_FOUND;
           code = 'RESOURCE_NOT_FOUND';
-          message = 'Data yang diminta tidak ditemukan atau sudah dihapus dari sistem.';
+          message = 'The requested resource was not found or has been deleted from the system.';
           break;
         }
         case 'P2003': {
           statusCode = HttpStatus.BAD_REQUEST;
           code = 'FOREIGN_KEY_CONSTRAINT_VIOLATION';
-          message = 'Operasi tidak dapat diproses karena ketergantungan relasi data.';
+          message = 'Operation cannot be processed due to relational data dependency.';
           break;
         }
         case 'P2014': {
           statusCode = HttpStatus.BAD_REQUEST;
           code = 'REQUIRED_RELATION_VIOLATION';
-          message = 'Perubahan yang diminta melanggar relasi data wajib.';
+          message = 'The requested change violates a required data relationship.';
           break;
         }
         default: {
           statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
           code = `PRISMA_${prismaCode}`;
-          message = 'Terjadi kendala pada penyimpanan database.';
+          message = 'A database storage error occurred.';
           break;
         }
       }
@@ -153,7 +153,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       if (process.env.NODE_ENV !== 'production') {
         message = exception.message || 'An unexpected internal error occurred';
       } else {
-        message = 'Terjadi kesalahan pada server. Silakan hubungi administrator.';
+        message = 'An unexpected internal server error occurred. Please contact administrator.';
       }
     }
 

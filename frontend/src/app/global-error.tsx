@@ -27,10 +27,10 @@ export default function GlobalError({
           {/* Error Details */}
           <div className="space-y-2">
             <h1 className="text-xl font-bold text-white tracking-tight">
-              Sistem Mengalami Kendala Kritis
+              Critical System Issue
             </h1>
             <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
-              Terjadi kesalahan fatal pada antarmuka aplikasi. Seluruh data transaksi di database tetap aman dan tidak terpengaruh.
+              A fatal error occurred on the application interface. All transaction data in the database remains safe and unaffected.
             </p>
           </div>
 
@@ -48,7 +48,7 @@ export default function GlobalError({
               className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Muat Ulang Komponen</span>
+              <span>Reload Component</span>
             </button>
             <button
               onClick={() => {
@@ -57,7 +57,7 @@ export default function GlobalError({
               className="w-full sm:w-auto px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <Home className="h-4 w-4" />
-              <span>Kembali ke Beranda</span>
+              <span>Back to Home</span>
             </button>
           </div>
         </div>

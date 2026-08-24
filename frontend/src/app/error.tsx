@@ -25,10 +25,10 @@ export default function AppError({
             <AlertTriangle className="h-7 w-7" />
           </div>
           <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-            Halaman Mengalami Kendala
+            Page Rendering Issue
           </h1>
           <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
-            Terjadi kendala saat merender komponen halaman ini. Anda dapat mencoba memuat ulang atau kembali ke dashboard.
+            An issue occurred while rendering this page component. You can try refreshing or returning to the home page.
           </p>
         </div>
 
@@ -46,7 +46,7 @@ export default function AppError({
             className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer"
           >
             <RefreshCw className="h-4 w-4" />
-            <span>Coba Muat Ulang Halaman</span>
+            <span>Reload Page</span>
           </Button>
 
           <Link href="/" className="w-full">
@@ -55,7 +55,7 @@ export default function AppError({
               className="w-full h-10 border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
             >
               <Home className="h-4 w-4" />
-              <span>Kembali ke Beranda</span>
+              <span>Back to Home</span>
             </Button>
           </Link>
         </div>

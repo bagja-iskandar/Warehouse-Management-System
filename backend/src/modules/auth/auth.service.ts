@@ -44,24 +44,24 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Email atau password salah');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Email atau password salah');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException(
-        'Akun Anda dinonaktifkan / disuspend. Hubungi Administrator.',
+        'Your account is suspended. Please contact Administrator.',
       );
     }
 
     if (user.status === UserStatus.PENDING_VERIFICATION) {
       throw new UnauthorizedException(
-        'Akun Anda masih dalam proses verifikasi email / registrasi.',
+        'Your account is pending verification.',
       );
     }
 
@@ -257,7 +257,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Profil pengguna tidak ditemukan');
+      throw new UnauthorizedException('User profile not found');
     }
 
     return {
@@ -286,17 +286,17 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Pengguna tidak ditemukan atau sesi tidak valid');
+      throw new UnauthorizedException('User not found or invalid session');
     }
 
     const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
 
     if (!isCurrentPasswordValid) {
-      throw new UnauthorizedException('Password saat ini tidak valid');
+      throw new UnauthorizedException('Current password is incorrect');
     }
 
     if (dto.currentPassword === dto.newPassword) {
-      throw new BadRequestException('Password baru tidak boleh sama dengan password lama');
+      throw new BadRequestException('New password cannot be the same as the old password');
     }
 
     const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
@@ -317,7 +317,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'Password berhasil diperbarui',
+      message: 'Password successfully updated',
     };
   }
 
@@ -330,11 +330,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('Akun dengan email tersebut tidak ditemukan dalam sistem');
+      throw new NotFoundException('Account with the specified email was not found in the system');
     }
 
     if (user.status === UserStatus.SUSPENDED) {
-      throw new UnauthorizedException('Akun pengguna sedang disuspend. Hubungi administrator.');
+      throw new UnauthorizedException('User account is suspended. Please contact administrator.');
     }
 
     const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
@@ -355,7 +355,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'Password berhasil diatur ulang. Silakan masuk menggunakan password baru Anda.',
+      message: 'Password successfully reset. Please sign in with your new password.',
     };
   }
 

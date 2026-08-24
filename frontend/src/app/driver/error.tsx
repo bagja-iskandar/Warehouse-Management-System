@@ -21,23 +21,23 @@ export default function DriverRouteError({
     <PageContainer>
       <PageHeader
         breadcrumb="Driver Portal > Error"
-        title="Kendala Pemuatan Tugas Pengemudi"
-        subtitle="Data tugas armada sedang mengalami gangguan sinkronisasi sementara."
+        title="Driver Task Loading Issue"
+        subtitle="Fleet task data is temporarily experiencing a synchronization issue."
         badgeText="Driver Notice"
         badgeColor="bg-amber-500 text-slate-950"
       />
 
-      <SectionCard title="Status Operasional Pengiriman" className="p-8 text-center max-w-xl mx-auto space-y-5">
+      <SectionCard title="Delivery Operational Status" className="p-8 text-center max-w-xl mx-auto space-y-5">
         <div className="h-14 w-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-sm">
           <AlertCircle className="h-7 w-7" />
         </div>
 
         <div className="space-y-1.5">
           <h2 className="text-base font-bold text-slate-900">
-            Gagal Memuat Daftar Tugas
+            Unable to Load Task List
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
-            Terjadi kendala saat menyinkronkan rute atau tugas pengiriman. Silakan muat ulang atau buka dashboard armada.
+            An issue occurred while synchronizing routes or delivery tasks. Please reload or open the fleet dashboard.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function DriverRouteError({
             className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs h-9.5 px-4 rounded-xl flex items-center gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            <span>Coba Lagi</span>
+            <span>Try Again</span>
           </Button>
 
           <Link href="/driver/dashboard">
