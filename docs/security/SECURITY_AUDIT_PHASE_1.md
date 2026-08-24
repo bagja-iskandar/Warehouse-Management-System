@@ -70,7 +70,7 @@ secretOrKey: configService.get<string>('jwt.accessSecret') || 'wms_development_s
 ### Finding ID: SEC-02
 **Severity:** HIGH  
 **Location:** Git Commit History & Infrastructure Specification  
-**File:** `backend/src/config/database.config.ts` (Commit `69e819a435f82518f7db7a0d5a3248e00f08826a`), [`backend/docker-compose.yml`](file:///d:/Project/Warehouse/backend/docker-compose.yml), `project-context/backend/INFRASTRUCTURE.md`  
+**File:** `backend/src/config/database.config.ts` (Commit `69e819a435f82518f7db7a0d5a3248e00f08826a`), [`backend/docker-compose.yml`](file:///d:/Project/Warehouse/backend/docker-compose.yml), `docs/operations/INFRASTRUCTURE.md`  
 **Lines:** `69e819a:database.config.ts:L6`, `docker-compose.yml:L10`, `INFRASTRUCTURE.md:L42`  
 **Issue:** Plaintext Database & Storage Credentials Pernah Di-commit ke Git History  
 **Why it matters:** Meskipun pada working tree saat ini `database.config.ts` telah diubah, Git history menyimpan commit `69e819a` secara permanen. Siapa pun yang memiliki akses ke repositori git dapat mengekstrak riwayat connection string tersebut.  
@@ -239,10 +239,9 @@ Tambahkan `.env`, `.env.development`, `.env.production` ke dalam `frontend/.giti
 ### Finding ID: SEC-12
 **Severity:** LOW  
 **Location:** Architecture Documentation Files  
-**File:** [`project-context/BACKEND_ARCHITECTURE.md`](file:///d:/Project/Warehouse/project-context/BACKEND_ARCHITECTURE.md), `project-context/backend/BACKEND_ARCHITECTURE.md`, [`docs/DATABASE_ARCHITECTURE.md`](file:///d:/Project/Warehouse/docs/DATABASE_ARCHITECTURE.md)  
-**Lines:** `BACKEND_ARCHITECTURE.md:L310`, `DATABASE_ARCHITECTURE.md:L123`  
+**File:** [`docs/architecture/BACKEND.md`](file:///d:/Project/Warehouse/docs/architecture/BACKEND.md), [`docs/database/DATABASE_ARCHITECTURE.md`](file:///d:/Project/Warehouse/docs/database/DATABASE_ARCHITECTURE.md)  
 **Issue:** Terdapat Contoh String Koneksi Database Literal pada File Dokumentasi Markdown  
-**Why it matters:** File dokumentasi mencantumkan contoh connection string dengan username dan password dummy. Meskipun untuk keperluan dokumentasi lokal, praktik terbaik adalah menggunakan placeholder murni (misal: `postgresql://<DB_USER>:<DB_PASSWORD>@...`).  
+**Why it matters:** File dokumentasi mencantumkan contoh connection string dengan username dan password dummy. Praktik terbaik adalah menggunakan placeholder murni (misal: `postgresql://<DB_USER>:<DB_PASSWORD>@...`).  
 **Recommended Fix:**
 Ganti string contoh di seluruh file markdown menjadi format placeholder `<USERNAME>:<PASSWORD>`.
 

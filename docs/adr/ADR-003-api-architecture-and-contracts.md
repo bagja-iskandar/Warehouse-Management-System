@@ -48,7 +48,7 @@ Kami memutuskan untuk menggunakan **RESTful JSON API (Prefix `/api/v1/`)** denga
 {
   "success": true,
   "message": "Operasi berhasil dieksekusi",
-  "data": { ... },
+  "data": { },
   "meta": {
     "page": 1,
     "limit": 10,

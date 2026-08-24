@@ -1,30 +1,35 @@
-# Skill Library Mapping — Warehouse Management System
-
-Dokumen ini memetakan keahlian (*skill suite*) yang diaktifkan untuk memandu perancangan, pengembangan, pengujian, dan pemeliharaan Warehouse Management System (WMS) sesuai standar industri dan best practices.
-
----
-
-## 1. Matrix Pemetaan Skill per Domain & Siklus Hidup
-
-| Domain | Skill Identifier | Peran Utama & Tanggung Jawab | Status Aktivasi |
-| :--- | :--- | :--- | :---: |
-| **Requirements & Business** | `business-analyst` | Validasi requirement SRS, use-case traceability, perancangan matriks fungsional, dan identifikasi KPI operasional. | **Active** |
-| **Architecture & Governance** | `architect-review`<br>`architecture-patterns`<br>`architecture-decision-records`<br>`context-driven-development` | Evaluasi integritas arsitektur, dokumentasi ADR, pemisahan bounded context (Admin, Customer, Driver), dan pencegahan code smell. | **Active** |
-| **Frontend Core & App Router** | `frontend-developer`<br>`nextjs-app-router-patterns`<br>`react-modernization` | Implementasi Next.js 15 App Router, React Server Components (RSC), Client Components, Error Boundaries, dan Suspense. | **Active (Phase 1+)** |
-| **Design System & UI/UX** | `tailwind-design-system`<br>`ui-ux-designer`<br>`ui-visual-validator`<br>`accessibility-compliance-accessibility-audit` | Standardisasi design tokens (WMS dark/light theme), integrasi shadcn/ui, micro-interactions, responsivitas multi-device, dan audit WCAG AA. | **Active (Phase 1+)** |
-| **Type Safety & Domain Model** | `typescript-pro`<br>`typescript-advanced-types` | Strict typing domain models (Warehouse, Slots, Goods, Orders, Invoices, Vehicles), Zod schemas, dan type-safe contracts. | **Active (Phase 1+)** |
-| **State Management & Caching** | `react-state-management` | Manajemen server-state dengan TanStack Query v5, query key factories, optimistic updates, dan lightweight client store (Zustand). | **Active (Phase 1+)** |
-| **API Abstraction & Mock Engine** | `api-design-principles`<br>`api-documenter`<br>`api-testing-observability-api-mock` | Desain kontrak REST API terstruktur, in-memory stateful mock engine, dan adapter layer tanpa hardcoded logic di komponen UI. | **Active (Phase 1+)** |
-| **Code Quality & Refactoring** | `code-review-excellence`<br>`codebase-cleanup-refactor-clean`<br>`legacy-modernizer`<br>`code-refactoring-tech-debt` | Review berkala, penjagaan modularitas komponen, low cognitive complexity, dan pembersihan technical debt. | **Active** |
-| **Testing & Quality Assurance** | `unit-testing-test-generate`<br>`javascript-testing-patterns`<br>`e2e-testing-patterns`<br>`test-automator` | Pengujian unit (kalkulator sewa, validasi Zod, form), component testing, dan E2E critical path (Customer sewa -> Driver dispatch -> POD). | **Scheduled (Phase 7)** |
-| **Security & RBAC** | `auth-implementation-patterns`<br>`frontend-security-coder`<br>`security-auditor` | Simulasi Role-Based Access Control granular (Admin, Customer, Driver), middleware route guard, sanitasi input XSS, dan token handling. | **Active (Phase 2+)** |
-| **Backend & Database** | `backend-architect`<br>`postgresql`<br>`sql-pro`<br>`database-migrations-sql-migrations` | Transisi ke backend relasional permanen (PostgreSQL/Prisma), indexing optimasi query, dan API gateway. | **Scheduled (Phase 8)** |
-| **Billing & Payments** | `payment-integration`<br>`stripe-integration`<br>`pci-compliance` | Logika penagihan bulanan (subscription), perhitungan denda keterlambatan (*late penalty*), upload bukti transfer, dan gateway readiness. | **Scheduled (Phase 6)** |
-| **Performance & DevOps** | `application-performance-performance-optimization`<br>`deployment-engineer`<br>`cicd-automation-workflow-automate` | Core Web Vitals optimization, bundle size analysis, CI/CD pipeline (GitHub Actions), dan containerized deployment. | **Scheduled (Phase 9)** |
+# Engineering Skills & Workflow Playbook
+**Warehouse Management System (WMS Nusantara)**
+*Curated Index of Repository Skills and Best-Practice Workflows for AI Agents & Engineers*
 
 ---
 
-## 2. Standar Prosedur Penggunaan Skill
-1. **Context-Driven:** Setiap keputusan teknis dan fitur merujuk pada SRS dan ADR yang telah disetujui PM.
-2. **Strict Typing:** Seluruh kode TypeScript wajib bebas dari `any` implisit maupun eksplisit tanpa justifikasi teknis kuat.
-3. **Component Isolation:** Komponen UI murni (*dumb components*) terpisah dari hooks dan service fetching (*smart containers*).
+## 1. Skill Categories & Directory Mapping
+
+Setiap skill tersimpan pada direktori `/skills/<skill-name>/` dan memuat panduan, instruksi, dan standar rekayasa:
+
+| Skill Directory | Domain / Spesialisasi | Kapan Menggunakan |
+| :--- | :--- | :--- |
+| `skills/docs-architect/` | Dokumentasi Teknis | Merancang dokumentasi, arsitektur informasi, standar API docs, dan single source of truth. |
+| `skills/codebase-cleanup-refactor-clean/` | Refactoring & Hygiene | Membersihkan dead code, restrukturisasi folder, menghapus artefak sementara tanpa regresi. |
+| `skills/secrets-management/` | Keamanan Secrets | Audit credential hardcoded, enkripsi, manajemen environment variable, dan rotasi secret. |
+| `skills/nextjs-app-router-patterns/` | Frontend Web | Pola App Router Next.js 15, Server vs Client components, layout hierarchy, routing guards. |
+| `skills/react-state-management/` | State Management | Zustand store design, React Query cache invalidation, hydration handling. |
+| `skills/application-performance-performance-optimization/` | Performa & Optimasi | Mengurangi bundle size, optimasi query rendering, memory leak prevention, indexing. |
+| `skills/postgresql/` | Database PostgreSQL | Query optimization, indexing strategy, transaction isolation, connection pooling, migrasi. |
+| `skills/systematic-debugging/` | Debugging Sistem | Investigasi root cause, reproduksi bug, tracing correlation ID, resilience testing. |
+
+---
+
+## 2. Standard Workflow Playbook
+
+1. **Investigasi & Audit Sebelum Mengubah Kode**:
+   - Selalu lakukan audit menyeluruh terhadap file yang terdampak.
+   - Buat laporan temuan atau rencana implementasi (*Implementation Plan*) sebelum melakukan modifikasi.
+2. **Kepatuhan Tipe Data (Strict Type-Safety)**:
+   - Backend: DTO menggunakan `class-validator` dan `class-transformer`.
+   - Frontend: Seluruh interaksi API mematuhi TypeScript interfaces di `src/types/`.
+3. **Atomic Transaction Enforcement**:
+   - Seluruh mutasi yang memengaruhi lebih dari satu tabel (contoh: alokasi slot barang $\rightarrow$ mutasi log $\rightarrow$ kalkulasi kapasitas gudang) wajib dibungkus dalam Prisma `$transaction`.
+4. **Resilience & Safe Fallbacks**:
+   - Cegah user mengalami infinite spinner atau blank screen dengan error boundaries dan fallback card yang deskriptif.

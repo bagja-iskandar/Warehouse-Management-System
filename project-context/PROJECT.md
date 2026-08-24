@@ -1,27 +1,18 @@
-# WMS Nusantara — Project Context & Master Specification
+# WMS Nusantara — Project Master Context
+**Warehouse Management & Cold Chain Logistics Platform**
+
+---
 
 ## 1. Project Overview
 
-**Project Name:** Warehouse Management System (WMS Nusantara)  
-**Project Type:** Modern Web-based & Mobile-ready Warehouse Management and Cold Chain Logistics Platform  
-**Architecture:** Monorepo (`/frontend` Web Client, `/backend` API Gateway, `/docs` System Specs)  
-**Current Status:** **Frontend Phase 1–7 100% COMPLETE & STABLE** | **Backend Phase 8: READY FOR IMPLEMENTATION**
+- **Project Name:** Warehouse Management System (WMS Nusantara)
+- **Project Type:** Modern Web-based & Mobile-ready Cold Chain Logistics & Warehouse Management System
+- **Architecture:** Monorepo (`/frontend` Next.js 15 Web Client, `/backend` NestJS 10 API Gateway, `/docs` Technical Documentation)
+- **Current Status:** 🔒 **FRONTEND (PHASE 1–7) & BACKEND (PHASE 8–12) 100% IMPLEMENTED, INTEGRATED & STABILIZED** | 🛡️ **SECURITY & QA READY**
 
 ---
 
-## 2. Business Objectives & Core Capabilities
-
-WMS Nusantara adalah modernisasi sistem pergudangan terintegrasi yang melayani penyimpanan umum (*General Dry Storage*) dan rantai dingin (*Cold Storage Sub-zero*):
-
-1. **Self-Service Storage Rental:** Customer dapat menghitung estimasi volume ($m^3$) dan menyewa ruang gudang secara mandiri.
-2. **Cold Chain Integrity:** Pemantauan telemetri suhu real-time (ambang batas $-18.0^\circ\text{C}$ s/d $-25.0^\circ\text{C}$) pada ruang simpan dan armada truk reefer.
-3. **Fleet & Logistics Dispatch:** Pengelolaan armada truk (*Reefer & Box*), penugasan driver, alokasi loading dock, dan pelacakan rute GPS.
-4. **Digital Proof of Delivery (POD):** Validasi serah terima kargo menggunakan dokumentasi foto dan tanda tangan digital (*E-Signature*).
-5. **Automated Billing & Penalty:** Penerbitan faktur sewa bulanan dan perhitungan otomatis denda keterlambatan pembayaran sebesar $5\%$ per minggu.
-
----
-
-## 3. Multi-Role Personas
+## 2. Business Capabilities & Multi-Role Personas
 
 ```text
 ┌───────────────────────────┐   ┌───────────────────────────┐   ┌───────────────────────────┐
@@ -37,22 +28,28 @@ WMS Nusantara adalah modernisasi sistem pergudangan terintegrasi yang melayani p
 └───────────────────────────┘   └───────────────────────────┘   └───────────────────────────┘
 ```
 
----
-
-## 4. Repositori & Monorepo Architecture
-
-```text
-Warehouse/
-├── frontend/             # Next.js 15 App Router Web Client (Port 3000)
-├── backend/              # Standalone API Server & PostgreSQL Gateway (Target Port 5000/8080)
-├── docs/                 # SRS docx, API contracts, dan arsitektur database
-└── Project-Context/      # Master Context, Roadmap, API Contract, dan Domain Models
-```
+1. **Self-Service Storage Rental ($m^3$)**: Penyewaan kapasitas mandiri dengan kalkulasi otomatis volume kubikasi.
+2. **Cold Chain Integrity Sub-Zero**: Pemantauan suhu real-time ($-18.0^\circ\text{C}$ s/d $-25.0^\circ\text{C}$) dengan alarm anomali.
+3. **Fleet Dispatch & Logistics**: Penugasan armada (Reefer, Box, Van), checklist dock, dan rute GPS live.
+4. **Digital Proof of Delivery (POD)**: Bukti serah terima berbasis foto dan tanda tangan digital (*E-Signature*).
+5. **Billing & Denda Keterlambatan**: Tagihan bulanan otomatis dan penalti $5\%/\text{minggu}$ keterlambatan bayar.
 
 ---
 
-## 5. Constraint & Aturan Arsitektur Backend
+## 3. Master Documentation Index (`/docs`)
 
-1. **Zero Direct DB Access from Clients:** Web Frontend (Next.js) dan Mobile Client (Kotlin Android) **tidak boleh mengakses PostgreSQL secara langsung**. Seluruh komunikasi wajib melalui REST API.
-2. **Frozen Frontend UI:** UI/UX frontend telah 100% selesai dan diaudit. Backend developer wajib menyesuaikan response data dengan kontrak `FRONTEND_API_CONTRACT.md`.
-3. **Stateless JWT Authentication:** Backend bertanggung jawab memvalidasi JWT Bearer token dan menegakkan Role-Based Access Control (RBAC).
+Untuk detail arsitektur lengkap, silakan merujuk ke direktori `/docs`:
+
+- **System Architecture**: [`docs/architecture/SYSTEM_OVERVIEW.md`](file:///d:/Project/Warehouse/docs/architecture/SYSTEM_OVERVIEW.md)
+- **Backend Architecture**: [`docs/architecture/BACKEND.md`](file:///d:/Project/Warehouse/docs/architecture/BACKEND.md)
+- **Frontend Architecture**: [`docs/architecture/FRONTEND.md`](file:///d:/Project/Warehouse/docs/architecture/FRONTEND.md)
+- **Domain Models & Relational Schema**: [`docs/architecture/DOMAIN_MODELS.md`](file:///d:/Project/Warehouse/docs/architecture/DOMAIN_MODELS.md)
+- **Design System & UI Tokens**: [`docs/architecture/DESIGN_SYSTEM.md`](file:///d:/Project/Warehouse/docs/architecture/DESIGN_SYSTEM.md)
+- **REST API Contract & Envelopes**: [`docs/api/API_CONTRACT.md`](file:///d:/Project/Warehouse/docs/api/API_CONTRACT.md)
+- **Database Architecture & Migration**: [`docs/database/DATABASE_ARCHITECTURE.md`](file:///d:/Project/Warehouse/docs/database/DATABASE_ARCHITECTURE.md)
+- **Architecture Decision Records (ADRs)**: [`docs/adr/README.md`](file:///d:/Project/Warehouse/docs/adr/README.md)
+- **Infrastructure & Docker Compose**: [`docs/operations/INFRASTRUCTURE.md`](file:///d:/Project/Warehouse/docs/operations/INFRASTRUCTURE.md)
+- **Security Audit Phase 1**: [`docs/security/SECURITY_AUDIT_PHASE_1.md`](file:///d:/Project/Warehouse/docs/security/SECURITY_AUDIT_PHASE_1.md)
+- **Pre-QA Readiness Declaration**: [`docs/qa/PRE_QA_READINESS.md`](file:///d:/Project/Warehouse/docs/qa/PRE_QA_READINESS.md)
+- **System Stabilization Audit**: [`docs/qa/SYSTEM_STABILIZATION_AUDIT.md`](file:///d:/Project/Warehouse/docs/qa/SYSTEM_STABILIZATION_AUDIT.md)
+- **SRS 16 Use Cases Traceability**: [`docs/qa/SRS_TRACEABILITY.md`](file:///d:/Project/Warehouse/docs/qa/SRS_TRACEABILITY.md)

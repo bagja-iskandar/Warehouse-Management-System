@@ -1,14 +1,14 @@
-# DESIGN SYSTEM BASELINE & UI TOKENS
+# Design System & UI Visual Standards
 **Warehouse Management System (WMS Nusantara)**
-*Visual Source of Truth & Token Standards*
+*Visual Source of Truth, Semantic Tokens, 7 UX States & Floating Shell Architecture*
 
 ---
 
 ## 1. Core Principles
 
 1. **Visual Source of Truth:** Admin Floating Shell adalah standar acuan visual. Customer dan Driver menerapkan prinsip *"Same Design System, Different Role Experience"*.
-2. **Rounded Floating Architecture:** Seluruh sidebar dan topbar menggunakan card melayang putih (`bg-white`, `rounded-2xl`, `border-slate-200`, `shadow-xl`) di atas canvas `#F8FAFC`.
-3. **Typography & Tabular Numbers:** Font Inter dengan angka tabular font-mono untuk kalkulasi volume $m^3$, nomor pelat kendaraan, dan suhu Cold Storage.
+2. **Rounded Floating Architecture:** Seluruh sidebar dan topbar menggunakan card melayang putih (`bg-white`, `rounded-2xl`, `border-slate-200`, `shadow-xl`) di atas canvas latar `#F8FAFC`.
+3. **Typography & Tabular Numbers:** Menggunakan font modern **Inter** dengan angka tabular `font-mono` untuk kalkulasi volume $m^3$, nomor pelat kendaraan, dan suhu Cold Storage.
 
 ---
 
@@ -53,10 +53,10 @@
 
 ## 4. Standarisasi 7 UX States
 
-1. **Loading State:** Skeleton loader (`MetricCardSkeleton`, `TableSkeleton`).
-2. **Empty State:** Ilustrasi inbox/search kosong dengan tombol action (`EmptyState.tsx`).
-3. **Success State:** Badge hijau dan modal notifikasi konfirmasi.
-4. **Error State:** Banner alert merah dengan pesan human-readable.
-5. **Validation State:** Pesan error validasi form Zod inline.
-6. **Disabled State:** Opacity 50% dengan cursor-not-allowed.
-7. **Confirmation State:** Dialog modal konfirmasi destruktif (`ConfirmationModal.tsx`).
+1. **Loading State:** Skeleton loader (`DashboardSkeleton`, `TableSkeleton`).
+2. **Empty State:** Komponen ilustrasi inbox/search kosong dengan tombol action (`DashboardEmptyState.tsx`).
+3. **Success State:** Badge hijau dan toast notifikasi konfirmasi.
+4. **Error State:** Komponen `ErrorStateCard.tsx` dengan Ref ID dan tombol aksi Retry.
+5. **Validation State:** Pesan error validasi form Zod inline di bawah input field.
+6. **Modal State:** Modal dialog dengan crisp backdrop `bg-slate-950/25` tanpa blur berlebih.
+7. **Hydration State:** Hydration gate untuk mencegah flicker saat initial render client.

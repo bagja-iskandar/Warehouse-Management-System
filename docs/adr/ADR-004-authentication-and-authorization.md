@@ -22,11 +22,11 @@ Sistem otentikasi harus stateless (kompatibel untuk Web dan Mobile Native) dan o
 
 ## Considered Options
 
-### Option 1: JWT Bearer Token (Stateless) + Argon2id Password Hash + NestJS RBAC Guard
+### Option 1: JWT Bearer Token (Stateless) + Bcrypt Password Hash + NestJS RBAC Guard
 - **Kelebihan:**
   - 100% client-agnostic (mudah dikonsumsi oleh Next.js Fetch API dan Android OkHttp/Retrofit Authenticator).
   - Server tidak perlu menyimpan session state di memori untuk setiap request.
-  - Argon2id adalah algoritma hashing pemenang *Password Hashing Competition (PHC)*, sangat tahan terhadap GPU/ASIC cracking.
+  - Bcrypt / Argon2 adalah algoritma hashing yang sangat tahan terhadap GPU/ASIC cracking.
   - NestJS `@UseGuards(JwtAuthGuard, RolesGuard)` dan decorator `@Roles('ADMIN')` sangat deklaratif dan aman.
 - **Kekurangan:**
   - Token JWT tidak dapat dibatalkan seketika tanpa blacklist store (dimitigasi dengan masa berlaku access token singkat 15m + refresh token rotation).
@@ -40,10 +40,10 @@ Sistem otentikasi harus stateless (kompatibel untuk Web dan Mobile Native) dan o
 
 ## Decision
 Kami memutuskan untuk menggunakan:
-1. **Stateless JWT (JSON Web Token)** untuk Access Token (umur 15-60 menit).
-2. **Argon2id** (atau bcrypt salt 12) untuk password hashing.
-3. **NestJS Passport JWT Strategy + Custom RolesGuard + Custom OwnershipInterceptor** untuk penegakan RBAC dan isolasi data per tenant.
-4. **Refresh Token Table** di PostgreSQL untuk mendukung token rotation dan logout multi-perangkat.
+1. **Stateless JWT (JSON Web Token)** untuk Access Token (umur 15 menit).
+2. **Bcrypt** dengan salt round 10 untuk password hashing.
+3. **NestJS Passport JWT Strategy + RolesGuard + Ownership Checks** untuk penegakan RBAC dan isolasi data per tenant.
+4. **Refresh Token Table** di PostgreSQL (dengan tokenHash SHA-256) untuk mendukung token rotation dan revocation multi-perangkat.
 
 ## Role & Permission Matrix
 
