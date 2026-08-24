@@ -11,8 +11,6 @@ Semua akun default terdaftar pada database PostgreSQL dengan password: **`Passwo
 | Role / Peran | Email / Username | Password | Nama Pengguna / Instansi | Redirect Portal |
 | :--- | :--- | :--- | :--- | :--- |
 | **Warehouse Administrator** | `admin@wms.id` | `Password123!` | Budi Santoso (PT Logistik Prima Nusantara) | `/admin/dashboard` |
-| **Corporate Customer (Haidar)** | `haidar@gmail.com` | `Password123!` | Haidar (Tenant Cold Storage) | `/customer/dashboard` |
-| **Corporate Customer (Pandu)** | `pandu@gmail.com` | `Password123!` | Pandu (Tenant Standard Dry) | `/customer/dashboard` |
 | **Logistics Fleet Driver (Cakung)** | `driver@wms.id` | `Password123!` | Agus Pratama (Armada Reefer Cakung) | `/driver/dashboard` |
 | **Logistics Fleet Driver (Bandung)** | `dedi.driver@wms.id` | `Password123!` | Dedi Kurniawan (Armada Bandung) | `/driver/dashboard` |
 
