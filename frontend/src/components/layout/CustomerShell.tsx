@@ -5,6 +5,7 @@ import { CustomerSidebar } from "./CustomerSidebar";
 import { CustomerTopbar } from "./CustomerTopbar";
 import { CommandSearchDialog } from "./CommandSearchDialog";
 import { NotificationDrawer } from "./NotificationDrawer";
+import { useOperationalCounts } from "@/hooks/use-operational-counts";
 
 interface CustomerShellProps {
   children: React.ReactNode;
@@ -14,6 +15,8 @@ export function CustomerShell({ children }: CustomerShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { data: counts } = useOperationalCounts();
+  const unreadNotificationsCount = counts?.unreadNotificationsCount ?? 0;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -30,7 +33,7 @@ export function CustomerShell({ children }: CustomerShellProps) {
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenNotifications={() => setIsNotificationsOpen(true)}
-          unreadNotificationsCount={2}
+          unreadNotificationsCount={unreadNotificationsCount}
         />
 
         {/* Page Main Content */}

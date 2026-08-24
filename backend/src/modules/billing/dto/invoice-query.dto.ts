@@ -7,7 +7,7 @@ export class InvoiceQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     enum: InvoiceStatus,
     description:
-      'Filter berdasarkan status tagihan faktur (UNPAID, PENDING_VERIFICATION, PAID, OVERDUE, CANCELLED)',
+      'Filter berdasarkan status tagihan faktur (UNPAID, PENDING_PAYMENT, PAID, OVERDUE, CANCELLED)',
     example: InvoiceStatus.UNPAID,
   })
   @IsOptional()

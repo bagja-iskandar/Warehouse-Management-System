@@ -8,6 +8,10 @@ import { useAuthStore } from "@/store/auth.store";
 import { LoginCredentials, UserProfile, UserRole, RegisterCustomerInput } from "@/types";
 import { SEED_USERS } from "@/mock/seed/users.seed";
 
+import { analyticsKeys } from "@/hooks/use-analytics";
+import { operationalCountsKeys } from "@/hooks/use-operational-counts";
+import { analyticsService } from "@/services/analytics.service";
+
 export const DEMO_CREDENTIALS: Record<
   UserRole,
   { email: string; password: string; roleName: string; description: string }
@@ -44,6 +48,47 @@ export function useAuth() {
     onSuccess: (authenticatedUser) => {
       setUser(authenticatedUser);
       queryClient.invalidateQueries({ queryKey: ["auth"] });
+
+      // Pre-warm dashboard queries immediately upon login
+      try {
+        if (authenticatedUser.role === "ADMIN") {
+          queryClient.prefetchQuery({
+            queryKey: analyticsKeys.adminOverview(),
+            queryFn: () => analyticsService.getAdminOverview(),
+            staleTime: 1000 * 45,
+          });
+          queryClient.prefetchQuery({
+            queryKey: operationalCountsKeys.current(authenticatedUser.id, authenticatedUser.role),
+            queryFn: () => analyticsService.getOperationalCounts(),
+            staleTime: 1000 * 15,
+          });
+        } else if (authenticatedUser.role === "CUSTOMER") {
+          queryClient.prefetchQuery({
+            queryKey: analyticsKeys.customerSummary(authenticatedUser.id),
+            queryFn: () => analyticsService.getCustomerSummary(authenticatedUser.id),
+            staleTime: 1000 * 45,
+          });
+          queryClient.prefetchQuery({
+            queryKey: operationalCountsKeys.current(authenticatedUser.id, authenticatedUser.role),
+            queryFn: () => analyticsService.getOperationalCounts(),
+            staleTime: 1000 * 15,
+          });
+        } else if (authenticatedUser.role === "DRIVER") {
+          queryClient.prefetchQuery({
+            queryKey: analyticsKeys.driverSummary(authenticatedUser.id),
+            queryFn: () => analyticsService.getDriverSummary(authenticatedUser.id),
+            staleTime: 1000 * 45,
+          });
+          queryClient.prefetchQuery({
+            queryKey: operationalCountsKeys.current(authenticatedUser.id, authenticatedUser.role),
+            queryFn: () => analyticsService.getOperationalCounts(),
+            staleTime: 1000 * 15,
+          });
+        }
+      } catch {
+        // safe fallback
+      }
+
       toast.success("Authentication Successful", {
         description: `Welcome back, ${authenticatedUser.name}`,
       });

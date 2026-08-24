@@ -15,6 +15,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  PageContainer,
+  PageHeader,
+  SectionCard,
+  EmptyState,
+} from "@/components/dashboard";
 import { useVehicles, useAssignVehicle } from "@/hooks/use-logistics";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -98,47 +104,45 @@ export default function VehicleSelectionPage() {
     try {
       if (user?.id) {
         await assignVehicleMutation.mutateAsync({
-          vehicleId: selectedVehicleId,
           driverId: user.id,
-          driverName: user.name,
+          vehicleId: selectedVehicleId,
         });
       }
       setIsConfirmed(true);
-      toast.success("Vehicle Assigned Successfully");
+      toast.success("Fleet Vehicle Assigned Successfully", {
+        description: `Vehicle is now active for your delivery shift.`,
+      });
     } catch (err: any) {
-      setIsConfirmed(true);
+      toast.error("Failed to assign vehicle", {
+        description: err?.message || "An unexpected error occurred.",
+      });
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Select Duty Fleet Vehicle
-            </h1>
-            <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
-              Fleet Assignment
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Select a refrigerated truck (Reefer) or dry box truck ready for today&apos;s delivery dispatch.
-          </p>
-        </div>
+  const selectedVehicle = activeVehicles.find((v) => v.id === selectedVehicleId);
 
-        <div className="flex items-center gap-2.5">
-          <Link href="/driver/dashboard">
-            <Button
-              variant="outline"
-              className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
-            >
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-      </div>
+  return (
+    <PageContainer>
+      {/* 1. Page Header */}
+      <PageHeader
+        breadcrumb="Driver Workstation > Vehicle Assignment"
+        title="Fleet Vehicle Selection & Shift Assignment"
+        subtitle="Select the active truck or van you will be driving for your operational delivery shift."
+        badgeText="Shift Assignment"
+        badgeColor="bg-amber-500 text-slate-950"
+        actions={
+          <div className="flex items-center gap-2.5">
+            <Link href="/driver/dashboard">
+              <Button
+                variant="outline"
+                className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
+              >
+                ← Back to Dashboard
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       {isConfirmed ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center max-w-xl mx-auto shadow-sm space-y-4 animate-in zoom-in-95">
@@ -146,85 +150,97 @@ export default function VehicleSelectionPage() {
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <h2 className="text-lg font-bold text-slate-900">
-            Fleet Vehicle Selected & Confirmed Successfully!
+            Vehicle Assigned to Your Profile!
           </h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            You are now connected to vehicle <span className="font-bold text-slate-900">Isuzu Reefer Truck (B 9821 TKN)</span>. Reefer box temperature telemetry is actively synchronized.
+            You are now assigned to <strong className="text-slate-800">{selectedVehicle?.name}</strong> (<strong className="font-mono text-indigo-600">{selectedVehicle?.plateNumber}</strong>). All telemetry data and delivery work orders are bound to this unit.
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
-            <Link href="/driver/dashboard">
-              <Button className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs h-9">
-                Start Duty on Dashboard →
+            <Link href="/driver/tasks">
+              <Button className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs h-9 px-5 shadow-sm">
+                View Assigned Tasks →
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmed(false)}
+              className="text-xs h-9"
+            >
+              Change Vehicle
+            </Button>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {VEHICLES_LIST.map((vehicle) => {
-            const isSelected = selectedVehicleId === vehicle.id;
-
-            return (
-              <div
-                key={vehicle.id}
-                onClick={() => setSelectedVehicleId(vehicle.id)}
-                className={`bg-white border-2 rounded-2xl p-6 shadow-sm cursor-pointer transition-all space-y-4 ${
-                  isSelected
-                    ? "border-amber-500 ring-2 ring-amber-500/20"
-                    : "border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold ${
-                      vehicle.hasReefer
-                        ? "bg-sky-50 text-sky-600"
-                        : "bg-amber-50 text-amber-700"
-                    }`}
-                  >
-                    {vehicle.hasReefer ? (
-                      <Thermometer className="h-5 w-5" />
-                    ) : (
-                      <Truck className="h-5 w-5" />
-                    )}
-                  </div>
-
-                  <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
-                    {vehicle.plateNumber}
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">{vehicle.name}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{vehicle.hubLocation}</p>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-[10.5px] text-slate-400 block">Capacity:</span>
-                    <span className="font-bold text-slate-800 font-mono">{vehicle.capacityM3} m³</span>
-                  </div>
-                  <div>
-                    <span className="text-[10.5px] text-slate-400 block">Unit Temp:</span>
-                    <span className="font-bold text-sky-700 font-mono">{vehicle.temp}</span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleSelect}
-                  className={`w-full text-xs font-bold h-9 rounded-xl ${
+        <SectionCard
+          title="Available Logistics Fleet Registry"
+          subtitle="Choose the operational vehicle matching your payload temperature and capacity requirements"
+          icon={Truck}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-1">
+            {activeVehicles.map((vehicle) => {
+              const isSelected = selectedVehicleId === vehicle.id;
+              return (
+                <div
+                  key={vehicle.id}
+                  onClick={() => setSelectedVehicleId(vehicle.id)}
+                  className={`bg-white border-2 rounded-2xl p-6 shadow-sm cursor-pointer transition-all space-y-4 ${
                     isSelected
-                      ? "bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      ? "border-amber-500 ring-2 ring-amber-500/20 shadow-md"
+                      : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  {isSelected ? "Use This Vehicle" : "Select Vehicle"}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold ${
+                        vehicle.hasReefer
+                          ? "bg-sky-50 text-sky-600"
+                          : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {vehicle.hasReefer ? (
+                        <Thermometer className="h-5 w-5" />
+                      ) : (
+                        <Truck className="h-5 w-5" />
+                      )}
+                    </div>
+
+                    <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                      {vehicle.plateNumber}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">{vehicle.name}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{vehicle.hubLocation}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-[10.5px] text-slate-400 block">Capacity:</span>
+                      <span className="font-bold text-slate-800 font-mono">{vehicle.capacityM3} m³</span>
+                    </div>
+                    <div>
+                      <span className="text-[10.5px] text-slate-400 block">Unit Temp:</span>
+                      <span className="font-bold text-sky-700 font-mono">{vehicle.temp}</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleSelect}
+                    className={`w-full text-xs font-bold h-9 rounded-xl ${
+                      isSelected
+                        ? "bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    }`}
+                  >
+                    {isSelected ? "Use This Vehicle" : "Select Vehicle"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </SectionCard>
       )}
-    </div>
+    </PageContainer>
   );
 }

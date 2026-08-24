@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { InvoiceStatus, PaymentMethod } from '@prisma/client';
+import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
 
 export class InvoiceCustomerSummaryDto {
   @ApiProperty({ example: 'usr-cust-1' })
@@ -39,6 +39,62 @@ export class InvoiceItemDto {
 
   @ApiProperty({ example: 2400000.0, description: 'Subtotal biaya item (IDR)' })
   subtotal: number;
+}
+
+export class PaymentResponseDto {
+  @ApiProperty({ example: 'pay-001' })
+  id: string;
+
+  @ApiProperty({ example: 'PAY-202608-1001' })
+  paymentNumber: string;
+
+  @ApiProperty({ example: 'inv-001' })
+  invoiceId: string;
+
+  @ApiProperty({ example: 'usr-cust-1' })
+  customerId: string;
+
+  @ApiPropertyOptional({ example: 'Siti Rahma' })
+  customerName?: string;
+
+  @ApiPropertyOptional({ example: 'CV Fresh Frozen Nusantara' })
+  customerCompany?: string | null;
+
+  @ApiProperty({ example: 7812000.0 })
+  amount: number;
+
+  @ApiProperty({ enum: PaymentMethod, example: 'BANK_TRANSFER' })
+  paymentMethod: PaymentMethod;
+
+  @ApiPropertyOptional({ example: 'TRX-BCA-98213123' })
+  paymentReference?: string | null;
+
+  @ApiPropertyOptional({ example: 'https://images.unsplash.com/...' })
+  proofUrl?: string | null;
+
+  @ApiProperty({ enum: PaymentStatus, example: 'UNDER_REVIEW' })
+  status: PaymentStatus;
+
+  @ApiPropertyOptional({ example: 'Pembayaran sewa cold storage' })
+  notes?: string | null;
+
+  @ApiPropertyOptional({ example: 'Bukti transfer buram' })
+  rejectionReason?: string | null;
+
+  @ApiPropertyOptional({ example: 'REC-202608-1001' })
+  receiptNumber?: string | null;
+
+  @ApiProperty({ example: '2026-08-20T10:00:00.000Z' })
+  submittedAt: string;
+
+  @ApiPropertyOptional({ example: null })
+  verifiedAt?: string | null;
+
+  @ApiPropertyOptional({ example: null })
+  verifiedByAdminId?: string | null;
+
+  @ApiPropertyOptional({ example: 'Budi Santoso (Admin)' })
+  verifiedByAdminName?: string | null;
 }
 
 export class InvoiceListItemDto {
@@ -90,6 +146,15 @@ export class InvoiceListItemDto {
   @ApiProperty({ enum: InvoiceStatus, example: 'OVERDUE' })
   status: InvoiceStatus;
 
+  @ApiPropertyOptional({ enum: PaymentStatus, example: 'NOT_STARTED' })
+  latestPaymentStatus?: PaymentStatus;
+
+  @ApiPropertyOptional({ example: 'REC-202608-8821' })
+  receiptNumber?: string | null;
+
+  @ApiPropertyOptional({ example: null })
+  latestRejectionReason?: string | null;
+
   @ApiPropertyOptional({ enum: PaymentMethod, example: 'VIRTUAL_ACCOUNT' })
   paymentMethod?: PaymentMethod | null;
 
@@ -114,6 +179,9 @@ export class InvoiceListItemDto {
   })
   overdueWeeks?: number;
 
+  @ApiProperty({ type: [PaymentResponseDto] })
+  payments?: PaymentResponseDto[];
+
   @ApiProperty({ example: '2026-08-01T00:00:00.000Z' })
   createdAt: string;
 
@@ -130,4 +198,7 @@ export class InvoiceDetailResponseDto extends InvoiceListItemDto {
 
   @ApiProperty({ type: [InvoiceItemDto] })
   items: InvoiceItemDto[];
+
+  @ApiPropertyOptional({ type: PaymentResponseDto })
+  latestPayment?: PaymentResponseDto | null;
 }

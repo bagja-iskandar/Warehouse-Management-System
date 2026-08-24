@@ -12,17 +12,20 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { CreateGoodsDto } from './dto/create-goods.dto';
 import { GoodsQueryDto } from './dto/goods-query.dto';
 import { GoodsDetailResponseDto, GoodsListItemDto } from './dto/goods-response.dto';
+import { TransferGoodsSlotDto } from './dto/transfer-goods-slot.dto';
 import { UpdateGoodsStatusDto } from './dto/update-goods-status.dto';
 import { GoodsService } from './goods.service';
 
 @ApiTags('Goods & Inventory')
 @ApiBearerAuth('JWT-auth')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('goods')
 export class GoodsController {
   constructor(private readonly goodsService: GoodsService) {}
@@ -107,6 +110,48 @@ export class GoodsController {
     };
   }
 
+  @Post(':id/transfer-slot')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Pemindahan Barang Antar Slot Rak Penyimpanan (Rack Transfer / Goods Movement)',
+    description:
+      'Memindahkan barang yang berstatus STORED ke slot rak tujuan lain dalam gudang yang sama, memvalidasi kesesuaian zona suhu dan kapasitas kubik m3, memperbarui utilisasi slot rak secara atomik, dan mencatat jejak audit mutasi.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID unik UUID barang atau Barcode/SKU',
+    example: 'brg-001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Barang berhasil dipindahkan ke slot rak tujuan',
+    type: GoodsDetailResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validasi pemindahan gagal (slot tidak kompatibel, kapasitas tidak mencukupi, dll)',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Hanya Admin yang berwenang melakukan pemindahan rak',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Barang atau slot rak tujuan tidak ditemukan',
+  })
+  async transferSlot(
+    @Param('id') id: string,
+    @Body() dto: TransferGoodsSlotDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: GoodsDetailResponseDto }> {
+    const data = await this.goodsService.transferSlot(id, dto, currentUser);
+    return {
+      message: 'Barang berhasil dipindahkan ke slot rak tujuan',
+      data,
+    };
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -134,6 +179,28 @@ export class GoodsController {
         totalItems: result.meta.totalItems,
         totalPages: result.meta.totalPages,
       },
+    };
+  }
+
+  @Get('mutations')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mendapatkan Riwayat Log Mutasi Barang Milik Customer (Audit Trail)',
+    description:
+      'Mengambil jejak audit mutasi status kargo barang (inbound, stored, inspection, outbound) milik akun customer yang terautentikasi.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Data riwayat mutasi barang berhasil diambil',
+  })
+  async findMutations(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Query('customerId') customerId?: string,
+  ) {
+    const data = await this.goodsService.findMutations(currentUser, customerId);
+    return {
+      message: 'Riwayat mutasi barang berhasil diambil',
+      data,
     };
   }
 

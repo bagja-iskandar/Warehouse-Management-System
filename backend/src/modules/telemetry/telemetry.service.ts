@@ -230,10 +230,13 @@ export class TelemetryService {
   /**
    * Mengambil snapshot live monitoring suhu & kelembaban untuk seluruh Cold Storage dan armada Reefer.
    */
-  async getMonitoringSnapshot(): Promise<TelemetryMonitoringResponseDto> {
-    // 1. Ambil seluruh slot Cold Storage
+  async getMonitoringSnapshot(warehouseId?: string): Promise<TelemetryMonitoringResponseDto> {
+    // 1. Ambil seluruh slot Cold Storage (difilter jika warehouseId disertakan)
     const coldSlots = await this.prisma.storageSlot.findMany({
-      where: { zone: StorageZoneType.COLD_STORAGE },
+      where: {
+        zone: StorageZoneType.COLD_STORAGE,
+        ...(warehouseId ? { warehouseId } : {}),
+      },
       include: {
         warehouse: { select: { id: true, code: true, name: true } },
         goodsItems: { select: { id: true, name: true } },

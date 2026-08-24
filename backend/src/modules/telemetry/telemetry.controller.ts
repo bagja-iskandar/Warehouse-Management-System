@@ -61,11 +61,11 @@ export class TelemetryController {
     description: 'Data live monitoring telemetri berhasil diambil',
     type: TelemetryMonitoringResponseDto,
   })
-  async getMonitoringSnapshot(): Promise<{
+  async getMonitoringSnapshot(@Query('warehouseId') warehouseId?: string): Promise<{
     message: string;
     data: TelemetryMonitoringResponseDto;
   }> {
-    const data = await this.telemetryService.getMonitoringSnapshot();
+    const data = await this.telemetryService.getMonitoringSnapshot(warehouseId);
     return {
       message: 'Data live monitoring telemetri berhasil diambil',
       data,

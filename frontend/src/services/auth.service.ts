@@ -12,6 +12,7 @@ export interface IAuthService {
   registerCustomer(input: RegisterCustomerInput): Promise<UserProfile>;
   updateProfile(id: string, updates: Partial<UserProfile>): Promise<UserProfile>;
   changePassword(id: string, currentPass: string, newPass: string): Promise<boolean>;
+  resetPassword(email: string, newPass: string): Promise<boolean>;
   getCurrentUser(id?: string): Promise<UserProfile | null>;
   logout(): Promise<boolean>;
   deleteAccount(id: string): Promise<boolean>;
@@ -122,6 +123,21 @@ export class HttpAuthService implements IAuthService {
     return true;
   }
 
+  async resetPassword(
+    email: string,
+    newPass: string
+  ): Promise<boolean> {
+    await apiClient("/auth/reset-password", {
+      method: "POST",
+      skipAuth: true,
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        newPassword: newPass,
+      }),
+    });
+    return true;
+  }
+
   async deleteAccount(id: string): Promise<boolean> {
     await apiClient(`/users/${id}`, {
       method: "DELETE",
@@ -204,6 +220,17 @@ export class MockAuthService implements IAuthService {
   ): Promise<boolean> {
     if (!currentPass || !newPass) {
       throw new Error("Current password and new password are required.");
+    }
+    if (newPass.length < 6) {
+      throw new Error("New password must be at least 6 characters.");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return true;
+  }
+
+  async resetPassword(email: string, newPass: string): Promise<boolean> {
+    if (!email || !newPass) {
+      throw new Error("Email and new password are required.");
     }
     if (newPass.length < 6) {
       throw new Error("New password must be at least 6 characters.");

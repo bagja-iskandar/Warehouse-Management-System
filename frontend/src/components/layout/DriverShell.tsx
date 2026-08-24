@@ -6,6 +6,7 @@ import { DriverTopbar } from "./DriverTopbar";
 import { DriverBottomNav } from "./DriverBottomNav";
 import { CommandSearchDialog } from "./CommandSearchDialog";
 import { NotificationDrawer } from "./NotificationDrawer";
+import { useOperationalCounts } from "@/hooks/use-operational-counts";
 
 interface DriverShellProps {
   children: React.ReactNode;
@@ -15,6 +16,8 @@ export function DriverShell({ children }: DriverShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { data: counts } = useOperationalCounts();
+  const unreadNotificationsCount = counts?.unreadNotificationsCount ?? 0;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -31,7 +34,7 @@ export function DriverShell({ children }: DriverShellProps) {
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenNotifications={() => setIsNotificationsOpen(true)}
-          unreadNotificationsCount={1}
+          unreadNotificationsCount={unreadNotificationsCount}
         />
 
         {/* Page Main Content */}

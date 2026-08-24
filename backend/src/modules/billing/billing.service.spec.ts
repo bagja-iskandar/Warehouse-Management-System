@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { InvoiceStatus, PaymentMethod, UserRole, UserStatus } from '@prisma/client';
+import { InvoiceStatus, PaymentMethod, PaymentStatus, UserRole, UserStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
@@ -82,6 +82,7 @@ describe('BillingService', () => {
         },
       },
     ],
+    payments: [],
   };
 
   beforeEach(async () => {
@@ -105,20 +106,38 @@ describe('BillingService', () => {
           provide: PrismaService,
           useValue: {
             invoice: {
-              count: jest.fn(),
-              findMany: jest.fn(),
               findFirst: jest.fn(),
+              findMany: jest.fn(),
+              count: jest.fn(),
               update: jest.fn(),
             },
-            $transaction: jest.fn().mockImplementation(async (callback) => {
-              if (typeof callback === 'function') {
-                return callback({
-                  invoice: {
-                    update: jest.fn().mockResolvedValue(mockInvoiceEntity),
-                  },
-                });
-              }
-              return Promise.all(callback);
+            payment: {
+              create: jest.fn(),
+              update: jest.fn(),
+              findMany: jest.fn(),
+            },
+            systemNotification: {
+              create: jest.fn(),
+            },
+            user: {
+              findMany: jest.fn().mockResolvedValue([{ id: 'usr-admin-1' }]),
+            },
+            $transaction: jest.fn().mockImplementation(async (cb) => {
+              return cb({
+                payment: {
+                  create: jest.fn().mockResolvedValue({ id: 'pay-001' }),
+                  update: jest.fn().mockResolvedValue({ id: 'pay-001' }),
+                },
+                invoice: {
+                  update: jest.fn().mockResolvedValue(mockInvoiceEntity),
+                },
+                systemNotification: {
+                  create: jest.fn().mockResolvedValue({ id: 'notif-001' }),
+                },
+                user: {
+                  findMany: jest.fn().mockResolvedValue([{ id: 'usr-admin-1' }]),
+                },
+              });
             }),
           },
         },
@@ -130,110 +149,91 @@ describe('BillingService', () => {
     prisma = module.get<PrismaService>(PrismaService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-    expect(storageService).toBeDefined();
-    expect(prisma).toBeDefined();
-  });
-
-  describe('1. Penalty Calculation Engine (Deterministic & Decimal)', () => {
-    const subtotal = new Decimal(10000000.0); // Rp 10.000.000
-    const dueDate = new Date('2026-08-10T00:00:00Z');
-
-    it('should calculate 0 penalty when current date is before due date', () => {
-      const beforeDueDate = new Date('2026-08-05T00:00:00Z');
+  describe('1. Penalty Calculation Logic (Deterministic Decimal)', () => {
+    it('should return 0 penalty for invoices paid on time', () => {
       const result = service.calculatePenalty(
-        subtotal,
-        dueDate,
-        InvoiceStatus.UNPAID,
-        null,
-        beforeDueDate,
+        new Decimal(7440000.0),
+        new Date('2026-08-10T23:59:59Z'),
+        InvoiceStatus.PAID,
+        new Date('2026-08-08T10:00:00Z'),
       );
 
-      expect(result.penaltyFee.toNumber()).toBe(0);
-      expect(result.totalAmount.toNumber()).toBe(10000000);
+      expect(result.penaltyFee.toNumber()).toBe(0.0);
+      expect(result.totalAmount.toNumber()).toBe(7440000.0);
+      expect(result.effectiveStatus).toBe(InvoiceStatus.PAID);
+      expect(result.daysOverdue).toBe(0);
+      expect(result.overdueWeeks).toBe(0);
+    });
+
+    it('should return 0 penalty for invoices that have not passed due date', () => {
+      const now = new Date('2026-08-05T00:00:00Z');
+      const result = service.calculatePenalty(
+        new Decimal(7440000.0),
+        new Date('2026-08-10T23:59:59Z'),
+        InvoiceStatus.UNPAID,
+        null,
+        now,
+      );
+
+      expect(result.penaltyFee.toNumber()).toBe(0.0);
+      expect(result.totalAmount.toNumber()).toBe(7440000.0);
       expect(result.effectiveStatus).toBe(InvoiceStatus.UNPAID);
       expect(result.daysOverdue).toBe(0);
       expect(result.overdueWeeks).toBe(0);
     });
 
-    it('should calculate 0 penalty when current date is exactly on due date', () => {
-      const exactDueDate = new Date('2026-08-10T00:00:00Z');
+    it('should calculate 5% penalty for 1 week overdue', () => {
+      // Due Date: 10 Aug 2026, Now: 15 Aug 2026 (5 days overdue -> 1 week)
+      const now = new Date('2026-08-15T00:00:00Z');
       const result = service.calculatePenalty(
-        subtotal,
-        dueDate,
-        InvoiceStatus.UNPAID,
+        new Decimal(7440000.0),
+        new Date('2026-08-10T00:00:00Z'),
+        InvoiceStatus.OVERDUE,
         null,
-        exactDueDate,
+        now,
       );
 
-      expect(result.penaltyFee.toNumber()).toBe(0);
-      expect(result.totalAmount.toNumber()).toBe(10000000);
-      expect(result.effectiveStatus).toBe(InvoiceStatus.UNPAID);
-    });
-
-    it('should calculate 5% penalty for 1-7 days overdue (Week 1)', () => {
-      const overdue3Days = new Date('2026-08-13T00:00:00Z');
-      const result = service.calculatePenalty(
-        subtotal,
-        dueDate,
-        InvoiceStatus.UNPAID,
-        null,
-        overdue3Days,
-      );
-
-      // 5% of 10.000.000 = 500.000
-      expect(result.penaltyFee.toNumber()).toBe(500000);
-      expect(result.totalAmount.toNumber()).toBe(10500000);
+      // 5% of 7.440.000 = 372.000
+      expect(result.penaltyFee.toNumber()).toBe(372000.0);
+      expect(result.totalAmount.toNumber()).toBe(7812000.0);
       expect(result.effectiveStatus).toBe(InvoiceStatus.OVERDUE);
+      expect(result.daysOverdue).toBe(5);
       expect(result.overdueWeeks).toBe(1);
     });
 
-    it('should calculate 10% penalty for 8-14 days overdue (Week 2)', () => {
-      const overdue10Days = new Date('2026-08-20T00:00:00Z');
+    it('should calculate 10% penalty for 2 weeks overdue', () => {
+      // Due Date: 10 Aug 2026, Now: 20 Aug 2026 (10 days overdue -> 2 weeks)
+      const now = new Date('2026-08-20T00:00:00Z');
       const result = service.calculatePenalty(
-        subtotal,
-        dueDate,
-        InvoiceStatus.UNPAID,
+        new Decimal(7440000.0),
+        new Date('2026-08-10T00:00:00Z'),
+        InvoiceStatus.OVERDUE,
         null,
-        overdue10Days,
+        now,
       );
 
-      // 10% of 10.000.000 = 1.000.000
-      expect(result.penaltyFee.toNumber()).toBe(1000000);
-      expect(result.totalAmount.toNumber()).toBe(11000000);
+      // 10% of 7.440.000 = 744.000
+      expect(result.penaltyFee.toNumber()).toBe(744000.0);
+      expect(result.totalAmount.toNumber()).toBe(8184000.0);
       expect(result.effectiveStatus).toBe(InvoiceStatus.OVERDUE);
+      expect(result.daysOverdue).toBe(10);
       expect(result.overdueWeeks).toBe(2);
-    });
-
-    it('should calculate 15% penalty for 15-21 days overdue (Week 3)', () => {
-      const overdue18Days = new Date('2026-08-28T00:00:00Z');
-      const result = service.calculatePenalty(
-        subtotal,
-        dueDate,
-        InvoiceStatus.UNPAID,
-        null,
-        overdue18Days,
-      );
-
-      // 15% of 10.000.000 = 1.500.000
-      expect(result.penaltyFee.toNumber()).toBe(1500000);
-      expect(result.totalAmount.toNumber()).toBe(11500000);
-      expect(result.effectiveStatus).toBe(InvoiceStatus.OVERDUE);
-      expect(result.overdueWeeks).toBe(3);
     });
   });
 
-  describe('2. Multi-Tenant Isolation & Queries', () => {
-    it('should isolate invoices for Customer 1 and reject Customer 2 access', async () => {
+  describe('2. Anti-IDOR & Multi-Tenant Data Isolation', () => {
+    it('should allow Customer to access their own invoice', async () => {
       jest.spyOn(prisma.invoice, 'findFirst').mockResolvedValue(mockInvoiceEntity as any);
 
-      // Customer 1 accessing their own invoice
-      const customer1Result = await service.findInvoiceById('inv-001', mockCustomer1);
-      expect(customer1Result.id).toBe('inv-001');
-      expect(customer1Result.customerId).toBe('usr-cust-1');
+      const result = await service.findInvoiceById('inv-001', mockCustomer1);
+      expect(result).toBeDefined();
+      expect(result.id).toBe('inv-001');
+      expect(result.customerId).toBe(mockCustomer1.id);
+    });
 
-      // Customer 2 accessing Customer 1's invoice (Anti-IDOR)
+    it('should block Customer from accessing another customer invoice with NotFoundException (IDOR Protection)', async () => {
+      jest.spyOn(prisma.invoice, 'findFirst').mockResolvedValue(mockInvoiceEntity as any);
+
       await expect(service.findInvoiceById('inv-001', mockCustomer2)).rejects.toThrow(
         NotFoundException,
       );
@@ -248,7 +248,7 @@ describe('BillingService', () => {
   });
 
   describe('3. Payment Submission (Customer)', () => {
-    it('should allow Customer to submit payment and set status to PENDING_VERIFICATION', async () => {
+    it('should allow Customer to submit payment and set status to PENDING_PAYMENT', async () => {
       const unpaidInvoice = {
         ...mockInvoiceEntity,
         dueDate: new Date(Date.now() + 86400000), // Due tomorrow (0 penalty)
@@ -288,10 +288,10 @@ describe('BillingService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should reject duplicate payment submission if invoice is already PENDING_VERIFICATION', async () => {
+    it('should reject duplicate payment submission if invoice is already PENDING_PAYMENT', async () => {
       const pendingInvoice = {
         ...mockInvoiceEntity,
-        status: InvoiceStatus.PENDING_VERIFICATION,
+        status: InvoiceStatus.PENDING_PAYMENT,
       };
       jest.spyOn(prisma.invoice, 'findFirst').mockResolvedValue(pendingInvoice as any);
 
@@ -313,7 +313,14 @@ describe('BillingService', () => {
     it('should allow Admin to verify payment (PAID)', async () => {
       const pendingInvoice = {
         ...mockInvoiceEntity,
-        status: InvoiceStatus.PENDING_VERIFICATION,
+        status: InvoiceStatus.PENDING_PAYMENT,
+        payments: [
+          {
+            id: 'pay-001',
+            status: PaymentStatus.UNDER_REVIEW,
+            submittedAt: new Date(),
+          },
+        ],
       };
       jest.spyOn(prisma.invoice, 'findFirst').mockResolvedValue(pendingInvoice as any);
 

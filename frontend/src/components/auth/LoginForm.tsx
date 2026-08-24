@@ -2,50 +2,48 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Layers, Loader2, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth, DEMO_CREDENTIALS } from "@/hooks/use-auth";
-import { UserRole } from "@/types";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ShieldCheck,
+  Layers,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function LoginForm() {
-  const { login, isPending, demoCredentials } = useAuth();
+  const { login, isPending } = useAuth();
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>("ADMIN");
-  const [email, setEmail] = useState(demoCredentials.ADMIN.email);
-  const [password, setPassword] = useState(demoCredentials.ADMIN.password);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Handle role tab change and autofill demo credentials
-  const handleRoleChange = (roleValue: string) => {
-    const role = roleValue as UserRole;
-    setSelectedRole(role);
-    setEmail(demoCredentials[role].email);
-    setPassword(demoCredentials[role].password);
-    setValidationError(null);
-  };
-
-  // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
-    // Client-side basic validation
-    if (!email.trim()) {
-      setValidationError("Please enter your work email or username.");
+    const emailTrimmed = email.trim();
+
+    // Client-side validation
+    if (!emailTrimmed) {
+      setValidationError("Please enter your registered work email.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setValidationError("Invalid email format (e.g. name@company.com).");
+    if (!emailRegex.test(emailTrimmed)) {
+      setValidationError("Please enter a valid email address (e.g. name@company.com).");
       return;
     }
 
@@ -56,15 +54,13 @@ export function LoginForm() {
 
     try {
       await login({
-        email: email.trim(),
+        email: emailTrimmed,
         password,
-        role: selectedRole,
       });
     } catch (err: unknown) {
       const error = err as Error;
       setValidationError(
-        error.message ||
-          "Invalid credentials or role selected. Please verify your email and password."
+        error.message || "Invalid email or password. Please verify your credentials."
       );
     }
   };
@@ -72,11 +68,11 @@ export function LoginForm() {
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8">
       {/* Centered Login Card */}
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg p-6 sm:p-8 md:p-10 shadow-sm">
+      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-2xl p-7 sm:p-9 shadow-xl shadow-slate-200/40">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center">
-          <div className="h-12 w-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm mb-3">
-            <Layers className="h-6 w-6 stroke-[2.2]" />
+          <div className="h-11 w-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 mb-3">
+            <Layers className="h-5.5 w-5.5 stroke-[2.3]" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             WMS Nusantara
@@ -84,60 +80,22 @@ export function LoginForm() {
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Enterprise Warehouse & Logistics Platform
           </p>
+
           <div className="w-full h-px bg-slate-100 my-4" />
-          <h2 className="text-sm font-semibold text-slate-800">
+
+          <h2 className="text-sm font-bold text-slate-900 tracking-tight">
             Sign In to Operations Portal
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Select your operational role context to continue:
+            Enter your credentials to access your operational dashboard.
           </p>
-        </div>
-
-        {/* Role Switcher Tabs */}
-        <div className="mt-4">
-          <Tabs
-            value={selectedRole}
-            onValueChange={handleRoleChange}
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-3 w-full bg-slate-100 p-1 rounded-sm">
-              <TabsTrigger
-                value="ADMIN"
-                className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm rounded-sm py-1.5"
-              >
-                Admin
-              </TabsTrigger>
-              <TabsTrigger
-                value="CUSTOMER"
-                className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm rounded-sm py-1.5"
-              >
-                Customer
-              </TabsTrigger>
-              <TabsTrigger
-                value="DRIVER"
-                className="text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm rounded-sm py-1.5"
-              >
-                Driver
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {/* Role Context Hint */}
-          <div className="mt-2 px-1 text-[11px] text-slate-500 flex items-center justify-between">
-            <span className="font-medium text-slate-700">
-              {demoCredentials[selectedRole].roleName}
-            </span>
-            <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-              Demo Autofill Active
-            </span>
-          </div>
         </div>
 
         {/* Error Feedback State */}
         {validationError && (
           <div className="mt-4 animate-in fade-in duration-200">
-            <Alert variant="destructive" className="py-2.5">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" className="py-2.5 rounded-xl border-rose-200 bg-rose-50 text-rose-800">
+              <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0" />
               <AlertDescription className="text-xs font-medium leading-tight">
                 {validationError}
               </AlertDescription>
@@ -147,16 +105,16 @@ export function LoginForm() {
 
         {/* Form Inputs */}
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          {/* Email / Username Field */}
+          {/* Email Field */}
           <div className="space-y-1.5">
             <Label
               htmlFor="email"
               className="text-xs font-semibold text-slate-700"
             >
-              Work Email / Username
+              Work Email Address
             </Label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Mail className="h-4 w-4" />
               </div>
               <Input
@@ -169,7 +127,8 @@ export function LoginForm() {
                   if (validationError) setValidationError(null);
                 }}
                 disabled={isPending}
-                className="pl-9 text-xs h-10 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                className="pl-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
+                autoComplete="email"
                 required
               />
             </div>
@@ -186,13 +145,13 @@ export function LoginForm() {
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-[11px] font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+                className="text-[11.5px] font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
               >
                 Forgot Password?
               </Link>
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Lock className="h-4 w-4" />
               </div>
               <Input
@@ -205,14 +164,15 @@ export function LoginForm() {
                   if (validationError) setValidationError(null);
                 }}
                 disabled={isPending}
-                className="pl-9 pr-9 text-xs h-10 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                className="pl-10 pr-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
+                autoComplete="current-password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -230,6 +190,7 @@ export function LoginForm() {
               id="remember"
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(!!checked)}
+              className="rounded-md"
             />
             <label
               htmlFor="remember"
@@ -243,16 +204,16 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={isPending}
-            className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-sm shadow-sm transition-all flex items-center justify-center gap-2 mt-2"
+            className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Verifying Credentials...</span>
+                <span>Signing in to Operations...</span>
               </>
             ) : (
               <>
-                <span>Sign In to Operations</span>
+                <span>Sign In</span>
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -260,7 +221,7 @@ export function LoginForm() {
         </form>
 
         {/* Register Customer Link */}
-        <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+        <div className="mt-5 pt-4 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
             Don&apos;t have an account?{" "}
             <Link
@@ -271,20 +232,13 @@ export function LoginForm() {
             </Link>
           </p>
         </div>
-
-        {/* Demo Credentials Quick Switcher Footer */}
-        <div className="mt-3 pt-2 text-center">
-          <p className="text-[11px] text-slate-400 leading-normal">
-            Demo Account: <span className="text-slate-600 font-mono">{email}</span> (PW: Password123!)
-          </p>
-        </div>
       </div>
 
       {/* Enterprise Security Compliance Footer */}
       <div className="mt-6 text-center text-slate-400 flex items-center justify-center gap-1.5 text-[11px]">
-        <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
+        <ShieldCheck className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
         <span>
-          256-bit End-to-End Encryption • Multi-Role Authenticated WMS Access • v1.0.0
+          256-bit SSL Encryption • Multi-Role Authenticated WMS Access • v1.0.0
         </span>
       </div>
     </div>

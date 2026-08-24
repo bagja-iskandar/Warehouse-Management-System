@@ -44,6 +44,35 @@ export class OrderVehicleSummaryDto {
   hasRefrigeration: boolean;
 }
 
+export class OrderItemDto {
+  @ApiProperty({ example: 'item-01' })
+  id: string;
+
+  @ApiProperty({ example: 'brg-001' })
+  goodsId: string;
+
+  @ApiProperty({ example: 'Frozen Beef' })
+  name: string;
+
+  @ApiProperty({ example: 'BRG-2026-FOD-123' })
+  barcode: string;
+
+  @ApiProperty({ example: 5 })
+  quantity: number;
+
+  @ApiProperty({ example: 'Packages' })
+  unit: string;
+
+  @ApiProperty({ example: 0.06 })
+  volumeM3: number;
+
+  @ApiProperty({ example: 1.5 })
+  weightKg: number;
+
+  @ApiProperty({ example: true })
+  requiresColdStorage: boolean;
+}
+
 export class DeliveryOrderListItemDto {
   @ApiProperty({ example: 'ord-01' })
   id: string;
@@ -65,6 +94,12 @@ export class DeliveryOrderListItemDto {
 
   @ApiProperty({ example: ['brg-001'], type: [String] })
   goodsItemIds: string[];
+
+  @ApiProperty({ type: [OrderItemDto] })
+  items: OrderItemDto[];
+
+  @ApiProperty({ example: 5, description: 'Total koli/packages dari seluruh item dalam manifest' })
+  totalPackages: number;
 
   @ApiProperty({ example: '30x Norwegian Salmon Fillet Grade A' })
   goodsSummary: string;
@@ -160,7 +195,4 @@ export class DeliveryOrderDetailResponseDto extends DeliveryOrderListItemDto {
 
   @ApiPropertyOptional({ type: OrderVehicleSummaryDto })
   vehicle?: OrderVehicleSummaryDto | null;
-
-  @ApiProperty({ type: [GoodsListItemDto] })
-  items: GoodsListItemDto[];
 }

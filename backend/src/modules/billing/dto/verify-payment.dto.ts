@@ -14,8 +14,16 @@ export class VerifyPaymentDto {
   action: 'VERIFY' | 'REJECT';
 
   @ApiPropertyOptional({
+    example: 'Bukti transfer tidak terbaca / nominal tidak sesuai',
+    description: 'Alasan penolakan bukti pembayaran (Wajib jika action = REJECT)',
+  })
+  @IsOptional()
+  @IsString()
+  rejectionReason?: string;
+
+  @ApiPropertyOptional({
     example: 'Dana Rp 7.812.000 telah terverifikasi masuk ke rekening operasional WMS',
-    description: 'Catatan admin terkait hasil verifikasi atau alasan penolakan',
+    description: 'Catatan admin terkait hasil verifikasi',
   })
   @IsOptional()
   @IsString()

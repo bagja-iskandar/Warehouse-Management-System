@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TermsModal } from "./TermsModal";
 
 export function RegisterForm() {
   const { register, isRegistering } = useAuth();
@@ -39,7 +40,9 @@ export function RegisterForm() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -60,11 +63,11 @@ export function RegisterForm() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
-      setValidationError("Invalid company email format (e.g. pic@company.com).");
+      setValidationError("Please enter a valid company email address (e.g. pic@company.com).");
       return;
     }
 
-    if (!formData.phone.trim() || formData.phone.length < 8) {
+    if (!formData.phone.trim() || formData.phone.trim().length < 8) {
       setValidationError("Phone / WhatsApp number must be at least 8 digits.");
       return;
     }
@@ -75,7 +78,7 @@ export function RegisterForm() {
     }
 
     if (!formData.address.trim()) {
-      setValidationError("Please enter the complete company address.");
+      setValidationError("Please enter the complete company / office address.");
       return;
     }
 
@@ -90,14 +93,14 @@ export function RegisterForm() {
     }
 
     if (!agreeTerms) {
-      setValidationError("You must accept the Terms & Conditions of Service to proceed.");
+      setValidationError("Please read and accept the Terms & Conditions of Service to proceed.");
       return;
     }
 
     try {
       await register({
         name: formData.name.trim(),
-        email: formData.email.trim(),
+        email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         companyName: formData.companyName.trim(),
         address: formData.address.trim(),
@@ -106,18 +109,20 @@ export function RegisterForm() {
       setIsSuccess(true);
     } catch (err: unknown) {
       const error = err as Error;
-      setValidationError(error.message || "Failed to register customer account.");
+      setValidationError(
+        error.message || "Failed to register customer account. Please try again."
+      );
     }
   };
 
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8">
       {/* Centered Registration Card */}
-      <div className="w-full max-w-lg bg-white border border-slate-200 rounded-lg p-6 sm:p-8 md:p-10 shadow-sm">
+      <div className="w-full max-w-lg bg-white border border-slate-200/90 rounded-2xl p-7 sm:p-9 shadow-xl shadow-slate-200/40">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center">
-          <div className="h-12 w-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm mb-3">
-            <Layers className="h-6 w-6 stroke-[2.2]" />
+          <div className="h-11 w-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 mb-3">
+            <Layers className="h-5.5 w-5.5 stroke-[2.3]" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             WMS Nusantara
@@ -125,20 +130,22 @@ export function RegisterForm() {
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Enterprise Warehouse & Logistics Platform
           </p>
+
           <div className="w-full h-px bg-slate-100 my-4" />
-          <h2 className="text-sm font-semibold text-slate-800">
-            New Customer Registration
+
+          <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+            Create Customer Account
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-sm">
-            Register your business to start renting standard warehouse storage and cold storage space.
+            Register your company to lease warehouse storage and manage logistics operations.
           </p>
         </div>
 
         {/* Error Feedback Banner */}
         {validationError && (
           <div className="mt-4 animate-in fade-in duration-200">
-            <Alert variant="destructive" className="py-2.5">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" className="py-2.5 rounded-xl border-rose-200 bg-rose-50 text-rose-800">
+              <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0" />
               <AlertDescription className="text-xs font-medium leading-tight">
                 {validationError}
               </AlertDescription>
@@ -156,7 +163,7 @@ export function RegisterForm() {
               Registration Successful!
             </h3>
             <p className="text-xs text-slate-600">
-              Your corporate customer account is now active. Redirecting to Customer Portal...
+              Your corporate customer account has been created. Redirecting to Customer Portal...
             </p>
             <div className="pt-2">
               <Link
@@ -168,26 +175,26 @@ export function RegisterForm() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-5 space-y-3.5">
             {/* 2-Column Grid for Personal & Company Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* PIC Name */}
               <div className="space-y-1">
                 <Label htmlFor="name" className="text-xs font-semibold text-slate-700">
                   PIC Full Name
                 </Label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <User className="h-4 w-4" />
                   </div>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Company PIC Name"
+                    placeholder="PIC Full Name"
                     value={formData.name}
                     onChange={(e) => handleChange("name", e.target.value)}
                     disabled={isRegistering}
-                    className="pl-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                    className="pl-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                     required
                   />
                 </div>
@@ -199,7 +206,7 @@ export function RegisterForm() {
                   Company Email
                 </Label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Mail className="h-4 w-4" />
                   </div>
                   <Input
@@ -209,7 +216,7 @@ export function RegisterForm() {
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                     disabled={isRegistering}
-                    className="pl-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                    className="pl-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                     required
                   />
                 </div>
@@ -221,17 +228,17 @@ export function RegisterForm() {
                   Phone / WhatsApp Number
                 </Label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Phone className="h-4 w-4" />
                   </div>
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+62 812 3456 7890"
+                    placeholder="081234567890"
                     value={formData.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
                     disabled={isRegistering}
-                    className="pl-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                    className="pl-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                     required
                   />
                 </div>
@@ -243,17 +250,17 @@ export function RegisterForm() {
                   Company / Business Name
                 </Label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Building2 className="h-4 w-4" />
                   </div>
                   <Input
                     id="companyName"
                     type="text"
-                    placeholder="Company Name Ltd / Inc"
+                    placeholder="PT Fresh Foods Indonesia"
                     value={formData.companyName}
                     onChange={(e) => handleChange("companyName", e.target.value)}
                     disabled={isRegistering}
-                    className="pl-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                    className="pl-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                     required
                   />
                 </div>
@@ -263,34 +270,34 @@ export function RegisterForm() {
             {/* Full-Width Address */}
             <div className="space-y-1">
               <Label htmlFor="address" className="text-xs font-semibold text-slate-700">
-                Full Company / Office Address
+                Company / Office Address
               </Label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <MapPin className="h-4 w-4" />
                 </div>
                 <Input
                   id="address"
                   type="text"
-                  placeholder="45 Commercial Blvd, Suite 200, Jakarta"
+                  placeholder="Jl. Industri Raya No. 45, Jakarta"
                   value={formData.address}
                   onChange={(e) => handleChange("address", e.target.value)}
                   disabled={isRegistering}
-                  className="pl-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                  className="pl-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                   required
                 />
               </div>
             </div>
 
             {/* 2-Column Grid for Password & Confirm Password */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Password */}
               <div className="space-y-1">
                 <Label htmlFor="reg-password" className="text-xs font-semibold text-slate-700">
                   Password
                 </Label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="h-4 w-4" />
                   </div>
                   <Input
@@ -300,14 +307,14 @@ export function RegisterForm() {
                     value={formData.password}
                     onChange={(e) => handleChange("password", e.target.value)}
                     disabled={isRegistering}
-                    className="pl-9 pr-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                    className="pl-10 pr-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -325,19 +332,32 @@ export function RegisterForm() {
                   Confirm Password
                 </Label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="h-4 w-4" />
                   </div>
                   <Input
                     id="confirmPassword"
-                    type={showPassword ? "text" : "password"}
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={(e) => handleChange("confirmPassword", e.target.value)}
                     disabled={isRegistering}
-                    className="pl-9 text-xs h-9.5 border-slate-300 focus-visible:ring-indigo-600 rounded-sm"
+                    className="pl-10 pr-10 text-xs h-10 border-slate-300 focus-visible:ring-2 focus-visible:ring-indigo-600/20 focus-visible:border-indigo-600 rounded-xl"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    tabIndex={-1}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -347,35 +367,47 @@ export function RegisterForm() {
               <Checkbox
                 id="agreeTerms"
                 checked={agreeTerms}
-                onCheckedChange={(checked) => setAgreeTerms(!!checked)}
-                className="mt-0.5"
+                onCheckedChange={(checked) => {
+                  setAgreeTerms(!!checked);
+                  if (validationError) setValidationError(null);
+                }}
+                className="mt-0.5 rounded-md"
               />
-              <label
-                htmlFor="agreeTerms"
-                className="text-xs text-slate-600 select-none cursor-pointer leading-tight"
-              >
-                I agree to the{" "}
-                <span className="text-indigo-600 font-medium hover:underline">
-                  Warehouse Terms & Conditions of Service
-                </span>{" "}
-                of WMS Nusantara.
-              </label>
+              <div className="text-xs text-slate-600 leading-tight select-none">
+                <label htmlFor="agreeTerms" className="cursor-pointer">
+                  I agree to the{" "}
+                </label>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsTermsModalOpen(true);
+                  }}
+                  className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline cursor-pointer inline-block"
+                >
+                  Terms & Conditions of Service
+                </button>
+                <label htmlFor="agreeTerms" className="cursor-pointer">
+                  {" "}of WMS Nusantara.
+                </label>
+              </div>
             </div>
 
             {/* Submit Action CTA */}
             <Button
               type="submit"
               disabled={isRegistering}
-              className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-sm shadow-sm transition-all flex items-center justify-center gap-2 mt-2"
+              className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isRegistering ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Registering Customer Account...</span>
+                  <span>Creating Customer Account...</span>
                 </>
               ) : (
                 <>
-                  <span>Register Customer Account</span>
+                  <span>Create Customer Account</span>
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -384,14 +416,14 @@ export function RegisterForm() {
         )}
 
         {/* Link back to Login */}
-        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+        <div className="mt-5 pt-4 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
             Already have an account?{" "}
             <Link
               href="/login"
               className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
             >
-              Sign in to Operations Portal
+              Sign In
             </Link>
           </p>
         </div>
@@ -399,11 +431,22 @@ export function RegisterForm() {
 
       {/* Enterprise Security Compliance Footer */}
       <div className="mt-6 text-center text-slate-400 flex items-center justify-center gap-1.5 text-[11px]">
-        <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
+        <ShieldCheck className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
         <span>
-          256-bit End-to-End Encryption • Multi-Role Authenticated WMS Access • v1.0.0
+          256-bit SSL Encryption • Multi-Role Authenticated WMS Access • v1.0.0
         </span>
       </div>
+
+      {/* Terms & Conditions Modal Dialog */}
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        isAccepted={agreeTerms}
+        onClose={() => setIsTermsModalOpen(false)}
+        onAccept={() => {
+          setAgreeTerms(true);
+          if (validationError) setValidationError(null);
+        }}
+      />
     </div>
   );
 }

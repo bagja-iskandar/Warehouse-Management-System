@@ -1,7 +1,14 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserStatus } from '@prisma/client';
+import { UserRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
@@ -12,8 +19,10 @@ import {
   RefreshTokenResponseDto,
   UserProfileDto,
 } from './dto/auth-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -77,6 +86,64 @@ export class AuthService {
       address: user.address,
       status: user.status,
       createdAt: user.createdAt.toISOString(),
+    };
+
+    return {
+      ...tokens,
+      user: userProfile,
+    };
+  }
+
+  /**
+   * Mendaftarkan akun customer baru, meng-hash password, dan langsung menerbitkan JWT tokens.
+   */
+  async registerCustomer(dto: RegisterCustomerDto): Promise<LoginResponseDto> {
+    const emailNormalized = dto.email.toLowerCase().trim();
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: emailNormalized },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email perusahaan sudah terdaftar dalam sistem');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const newUser = await this.prisma.user.create({
+      data: {
+        name: dto.name.trim(),
+        email: emailNormalized,
+        passwordHash,
+        phone: dto.phone.trim(),
+        companyName: dto.companyName.trim(),
+        address: dto.address.trim(),
+        role: UserRole.CUSTOMER,
+        status: UserStatus.ACTIVE,
+      },
+    });
+
+    // Generate token pair
+    const tokens = await this.generateTokens({
+      sub: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    });
+
+    // Simpan hash refresh token ke database
+    await this.saveRefreshToken(newUser.id, tokens.refreshToken);
+
+    const userProfile: UserProfileDto = {
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      phone: newUser.phone,
+      avatarUrl: newUser.avatarUrl,
+      companyName: newUser.companyName,
+      address: newUser.address,
+      status: newUser.status,
+      createdAt: newUser.createdAt.toISOString(),
     };
 
     return {
@@ -204,6 +271,91 @@ export class AuthService {
       address: user.address,
       status: user.status,
       createdAt: user.createdAt.toISOString(),
+    };
+  }
+
+  /**
+   * Mengubah password pengguna, memverifikasi password lama, dan merevoke refresh token aktif.
+   */
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Pengguna tidak ditemukan atau sesi tidak valid');
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Password saat ini tidak valid');
+    }
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('Password baru tidak boleh sama dengan password lama');
+    }
+
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    // Revoke seluruh active refresh tokens untuk keamanan sesi
+    await this.prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        isRevoked: false,
+      },
+      data: { isRevoked: true },
+    });
+
+    return {
+      success: true,
+      message: 'Password berhasil diperbarui',
+    };
+  }
+
+  /**
+   * Mengatur ulang password secara langsung melalui email terdaftar (Direct Password Reset).
+   */
+  async resetPassword(dto: { email: string; newPassword: string }): Promise<{ success: boolean; message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase().trim() },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Akun dengan email tersebut tidak ditemukan dalam sistem');
+    }
+
+    if (user.status === UserStatus.SUSPENDED) {
+      throw new UnauthorizedException('Akun pengguna sedang disuspend. Hubungi administrator.');
+    }
+
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newPasswordHash },
+    });
+
+    // Revoke seluruh active refresh tokens untuk keamanan sesi
+    await this.prisma.refreshToken.updateMany({
+      where: {
+        userId: user.id,
+        isRevoked: false,
+      },
+      data: { isRevoked: true },
+    });
+
+    return {
+      success: true,
+      message: 'Password berhasil diatur ulang. Silakan masuk menggunakan password baru Anda.',
     };
   }
 

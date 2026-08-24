@@ -50,4 +50,20 @@ export class UpdateOrderStatusDto {
   @IsOptional()
   @IsString()
   rescheduledTime?: string;
+
+  @ApiPropertyOptional({
+    example: 'Kondisi barang baik dan segel utuh',
+    description: 'Catatan konfirmasi atau status pengiriman',
+  })
+  @IsOptional()
+  @IsString()
+  note?: string;
+
+  @ApiPropertyOptional({
+    example: 'Gudang Utama Cakung Hub',
+    description: 'Lokasi checkpoint terkini',
+  })
+  @IsOptional()
+  @IsString()
+  location?: string;
 }

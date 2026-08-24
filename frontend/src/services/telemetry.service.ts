@@ -2,7 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import { TelemetryLog, TelemetryMonitoringData } from "@/types";
 
 export interface ITelemetryService {
-  getMonitoringSnapshot(): Promise<TelemetryMonitoringData>;
+  getMonitoringSnapshot(warehouseId?: string): Promise<TelemetryMonitoringData>;
   getTelemetryLogs(params?: {
     warehouseId?: string;
     vehicleId?: string;
@@ -21,10 +21,11 @@ export interface ITelemetryService {
  * Backend REST API Implementation (Live NestJS + PostgreSQL)
  */
 export class HttpTelemetryService implements ITelemetryService {
-  async getMonitoringSnapshot(): Promise<TelemetryMonitoringData> {
-    const res = await apiClient<TelemetryMonitoringData>(
-      "/telemetry/monitoring"
-    );
+  async getMonitoringSnapshot(warehouseId?: string): Promise<TelemetryMonitoringData> {
+    const url = warehouseId
+      ? `/telemetry/monitoring?warehouseId=${encodeURIComponent(warehouseId)}`
+      : "/telemetry/monitoring";
+    const res = await apiClient<TelemetryMonitoringData>(url);
     return res;
   }
 

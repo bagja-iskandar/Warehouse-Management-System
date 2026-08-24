@@ -20,6 +20,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  PageContainer,
+  PageHeader,
+  MetricCard,
+  SectionCard,
+  EmptyState,
+} from "@/components/dashboard";
 import { useVehicles } from "@/hooks/use-logistics";
 
 interface FleetVehicle {
@@ -159,74 +166,92 @@ export default function FleetManagementPage() {
   const reeferCount = activeFleet.filter((v) => v.hasReefer).length;
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Logistics Fleet & Vehicle Management
-            </h1>
-            <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
-              Fleet Center
-            </Badge>
+    <PageContainer>
+      {/* 1. Page Header */}
+      <PageHeader
+        breadcrumb="WMS Admin > Vehicle Fleet"
+        title="Logistics Fleet & Vehicle Management"
+        subtitle="Refrigerated truck fleet (Reefer), box trucks, periodic roadworthiness tests (KIR), and driver dispatch."
+        badgeText="Fleet Center"
+        badgeColor="bg-amber-500 text-slate-950"
+        actions={
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/logistics">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
+                <Truck className="h-4 w-4" />
+                <span>Dispatch Queue</span>
+              </Button>
+            </Link>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Refrigerated truck fleet (Reefer), box trucks, periodic roadworthiness tests (KIR), and driver dispatch.
-          </p>
-        </div>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>Export Fleet Data</span>
-          </Button>
-
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
-            <Plus className="h-4 w-4" />
-            <span>Add New Vehicle</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* 4 KPI Cards */}
+      {/* 2. 4 Metric KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Active Fleet</span>
-          <p className="text-2xl font-extrabold text-slate-900">{FLEET_DATA.length} Units</p>
-          <p className="text-[11px] text-slate-400">Operational trucks & vans</p>
-        </div>
+        <MetricCard
+          label="Total Active Fleet"
+          value={`${activeFleet.length} Units`}
+          icon={Truck}
+          theme="indigo"
+          subtext={
+            <span className="text-[11px] text-slate-500 font-mono">
+              Operational logistics trucks & vans
+            </span>
+          }
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Reefer Fleet (Cold)</span>
-          <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-sky-600">{reeferCount} Units</p>
+        <MetricCard
+          label="Reefer Fleet (Cold Box)"
+          value={`${reeferCount} Units`}
+          icon={Thermometer}
+          theme="sky"
+          badge={
             <Badge variant="success" className="text-[10px]">Sub-zero Temp</Badge>
-          </div>
-          <p className="text-[11px] text-slate-400 font-mono">Equipped with telemetry sensors</p>
-        </div>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-500 font-mono">
+              Equipped with telematics sensors
+            </span>
+          }
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Cargo Capacity</span>
-          <p className="text-2xl font-extrabold text-indigo-600">{totalCapacityM3} m³</p>
-          <p className="text-[11px] text-slate-400">Simultaneous payload volume</p>
-        </div>
+        <MetricCard
+          label="Total Cargo Capacity"
+          value={`${totalCapacityM3} m³`}
+          icon={Boxes}
+          theme="amber"
+          subtext={
+            <span className="text-[11px] text-slate-500">
+              Simultaneous payload volume
+            </span>
+          }
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Roadworthiness (KIR) & Service</span>
-          <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-            <CheckCircle2 className="h-4 w-4" />
-            <span>All KIR Tests Passed</span>
-          </div>
-          <p className="text-[11px] text-slate-400">100% Roadworthy Operations</p>
-        </div>
+        <MetricCard
+          label="Roadworthiness (KIR)"
+          value="100% Passed"
+          icon={ShieldCheck}
+          theme="emerald"
+          badge={
+            <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
+              Certified
+            </Badge>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-500">
+              Periodic safety inspection certified
+            </span>
+          }
+        />
       </div>
 
-      {/* Main Table Card & Filters */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
+      {/* 3. Main Fleet Registry Table & Filters */}
+      <SectionCard
+        title="Fleet Vehicle Registry & Telematics Status"
+        subtitle="Manage fleet units, cold chain box temperatures, and active driver assignments"
+        icon={Truck}
+      >
+        <div className="space-y-4">
         {/* Controls Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
@@ -238,7 +263,7 @@ export default function FleetManagementPage() {
                   : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              All Types ({FLEET_DATA.length})
+              All Types ({activeFleet.length})
             </button>
             <button
               onClick={() => setTypeFilter("REEFER_TRUCK")}
@@ -418,7 +443,8 @@ export default function FleetManagementPage() {
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+        </div>
+      </SectionCard>
+    </PageContainer>
   );
 }

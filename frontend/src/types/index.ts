@@ -5,3 +5,4 @@ export * from "./logistics.types";
 export * from "./billing.types";
 export * from "./notification.types";
 export * from "./telemetry.types";
+export * from "./analytics.types";

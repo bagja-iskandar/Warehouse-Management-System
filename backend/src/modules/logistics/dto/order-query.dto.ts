@@ -45,4 +45,12 @@ export class OrderQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   driverId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter order berdasarkan fasilitas gudang penyimpanan barang',
+    example: 'wh-jkt-central',
+  })
+  @IsOptional()
+  @IsString()
+  warehouseId?: string;
 }

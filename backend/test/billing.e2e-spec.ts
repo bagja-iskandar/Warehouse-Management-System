@@ -90,7 +90,7 @@ describe('Billing & Penalty Module (e2e)', () => {
 
     it('should allow Admin to view all invoices from PostgreSQL', async () => {
       const response = await request(app.getHttpServer())
-        .get('/api/v1/billing/invoices')
+        .get('/api/v1/billing/invoices?limit=100')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .expect(200);
 
@@ -183,11 +183,11 @@ describe('Billing & Penalty Module (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.status).toBe('PENDING_VERIFICATION');
+      expect(response.body.data.status).toBe('PENDING_PAYMENT');
       expect(response.body.data.paymentProofUrl).toBeDefined();
     });
 
-    it('should reject duplicate payment submission when invoice is PENDING_VERIFICATION', async () => {
+    it('should reject duplicate payment submission when invoice is PENDING_PAYMENT', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/billing/invoices/inv-001/pay')
         .set('Authorization', `Bearer ${customer1AccessToken}`)
@@ -199,7 +199,7 @@ describe('Billing & Penalty Module (e2e)', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('verifikasi');
+      expect(response.body.message).toContain('review');
     });
 
     it('should reject Customer attempting to verify payment with 403 Forbidden', async () => {

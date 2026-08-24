@@ -4,12 +4,29 @@ Platform tata kelola operasional pergudangan modern terintegrasi dengan arsitekt
 
 ---
 
-## Struktur Monorepo
+## 🔐 Kredensial Login Akun (Semua Role)
+
+Semua akun terdaftar di database PostgreSQL `wms_db` menggunakan password default: **`Password123!`**.
+
+| Role / Peran | Email / Username | Password | Nama Pengguna / Instansi | Redirect Portal |
+| :--- | :--- | :--- | :--- | :--- |
+| **Warehouse Administrator** | `admin@wms.id` | `Password123!` | Budi Santoso (PT Logistik Prima Nusantara) | `/admin/dashboard` |
+| **Corporate Customer (Cold Storage)** | `customer@freshfoods.id` | `Password123!` | Siti Rahma (CV Fresh Frozen Nusantara) | `/customer/dashboard` |
+| **Corporate Customer (Standard Dry)** | `michael@megafurniture.co.id` | `Password123!` | Michael Tan (PT Mega Furniture Indo) | `/customer/dashboard` |
+| **Logistics Fleet Driver (Cakung)** | `driver@wms.id` | `Password123!` | Agus Pratama (Armada Reefer Cakung) | `/driver/dashboard` |
+| **Logistics Fleet Driver (Bandung)** | `dedi.driver@wms.id` | `Password123!` | Dedi Kurniawan (Armada Bandung) | `/driver/dashboard` |
+
+> [!NOTE]
+> Setelah login pada `/login`, sistem secara otomatis mengidentifikasi role dari token JWT dan mengarahkan pengguna ke dashboard operasional yang sesuai tanpa perlu memilih role manual.
+
+---
+
+## 📁 Struktur Monorepo
 
 ```text
 Warehouse/
 ├── frontend/             # Next.js 15 Web Application (Admin, Customer, Driver)
-├── backend/              # Standalone Backend Service & API (PostgreSQL Gateway)
+├── backend/              # NestJS + Prisma ORM + PostgreSQL Service & REST API
 ├── docs/                 # Dokumentasi Sistem (SRS, API Contract, Architecture)
 ├── Project-Context/      # Panduan Konteks, Roadmap, dan Handoff Specification
 └── Skills/               # Developer Skill References
@@ -17,40 +34,63 @@ Warehouse/
 
 ---
 
-## Panduan Menjalankan Frontend
+## 🚀 Panduan Menjalankan Aplikasi
 
-### Prasyarat
-- Node.js v18.18+ atau v20+
-- npm v9+
-
-### Langkah Menjalankan
-1. Masuk ke direktori frontend:
-   ```bash
-   cd frontend
-   ```
-2. Jalankan development server:
-   ```bash
-   npm run dev
-   ```
-3. Buka browser pada alamat:
-   - [http://localhost:3000](http://localhost:3000)
-
-### Perintah Pengujian Frontend
+### 1. Menjalankan Backend (NestJS + PostgreSQL)
 ```bash
-# Validasi TypeScript
-npm run type-check
+cd backend
 
-# Linting Kode
-npm run lint
+# Install dependencies jika belum
+npm install
 
-# Build Produksi
-npm run build
+# Menjalankan database migration & seeder (jika diperlukan)
+npx prisma db push
+npx prisma db seed
+
+# Menjalankan NestJS dev server (Port 5000)
+npm run start:dev
+```
+- **API Base URL:** [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
+- **Swagger Documentation:** [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+
+### 2. Menjalankan Frontend (Next.js 15)
+```bash
+cd frontend
+
+# Install dependencies jika belum
+npm install
+
+# Menjalankan Next.js dev server (Port 3000)
+npm run dev
+```
+- **Web Application URL:** [http://localhost:3000](http://localhost:3000)
+- **Login Portal:** [http://localhost:3000/login](http://localhost:3000/login)
+- **Customer Registration:** [http://localhost:3000/register](http://localhost:3000/register)
+- **Password Recovery:** [http://localhost:3000/forgot-password](http://localhost:3000/forgot-password)
+
+---
+
+## 🧪 Perintah Pengujian
+
+### Backend
+```bash
+cd backend
+npm run test        # Unit testing (Jest)
+npm run test:e2e    # E2E testing
+```
+
+### Frontend
+```bash
+cd frontend
+npm run type-check  # Validasi TypeScript
+npm run lint        # Linting ESLint
+npm run build       # Production bundle build
 ```
 
 ---
 
-## Status Arsitektur Saat Ini
-- **Frontend:** `STABLE / READY` (100% Selesai & Audited)
-- **Backend:** `PLACEHOLDER ONLY / NOT STARTED`
-- **Database PostgreSQL:** `NOT IMPLEMENTED`
-- **REST API Endpoints:** `NOT IMPLEMENTED`
+## 🏗️ Status Arsitektur Sistem
+- **Frontend (Next.js 15):** `STABLE / READY` (Enterprise UI, Zustand, TanStack Query)
+- **Backend (NestJS):** `STABLE / READY` (JWT Auth, Role Guards, Module Services)
+- **Database (PostgreSQL & Prisma):** `STABLE / CONNECTED` (Port 5433 / `wms_db`)
+- **REST API Endpoints:** `STABLE / ACTIVE` (Prefix `/api/v1`)

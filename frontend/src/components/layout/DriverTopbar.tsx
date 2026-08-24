@@ -25,7 +25,7 @@ export function DriverTopbar({
   onOpenMobileMenu,
   onOpenSearch,
   onOpenNotifications,
-  unreadNotificationsCount = 1,
+  unreadNotificationsCount = 0,
 }: DriverTopbarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -42,7 +42,7 @@ export function DriverTopbar({
   };
 
   return (
-    <header className="w-full h-16 bg-white border border-slate-200/90 rounded-2xl px-4 sm:px-6 flex items-center justify-between shadow-sm">
+    <header className="sticky top-4 z-40 w-full h-16 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl px-4 sm:px-6 flex items-center justify-between shadow-md shadow-slate-200/60 transition-all duration-200">
       {/* Left: Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3">
         <button
@@ -62,18 +62,21 @@ export function DriverTopbar({
       </div>
 
       {/* Center: Command Search Bar Trigger (Cmd + K) */}
-      <div className="hidden md:flex flex-1 max-w-md mx-6">
+      <div className="flex-1 max-w-sm lg:max-w-md mx-2 sm:mx-4 lg:mx-6 min-w-0">
         <button
           type="button"
           onClick={onOpenSearch}
-          className="w-full h-9 px-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 text-slate-400 hover:text-slate-600 flex items-center justify-between text-xs transition-all shadow-inner"
+          className="w-full h-9 px-3.5 rounded-xl bg-slate-100/80 hover:bg-slate-100 border border-slate-200/80 hover:border-slate-300 text-slate-500 hover:text-slate-700 flex items-center justify-between text-xs transition-all shadow-xs group cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            <Search className="h-3.5 w-3.5 text-slate-400" />
-            <span>Search delivery order #, vehicle plate, or drop-off address...</span>
+          <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
+            <Search className="h-3.5 w-3.5 text-slate-400 group-hover:text-amber-600 transition-colors flex-shrink-0" />
+            <span className="truncate whitespace-nowrap text-slate-500 group-hover:text-slate-800">
+              Quick search tasks, routes, manifest...
+            </span>
           </div>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded-md text-slate-500 shadow-sm">
-            ⌘ K
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-white border border-slate-200 rounded-md text-slate-500 shadow-xs flex-shrink-0 whitespace-nowrap ml-2">
+            <span>⌘</span>
+            <span>K</span>
           </kbd>
         </button>
       </div>

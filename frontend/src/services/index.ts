@@ -4,3 +4,6 @@ export * from "./goods.service";
 export * from "./logistics.service";
 export * from "./billing.service";
 export * from "./telemetry.service";
+export * from "./analytics.service";
+export * from "./notification.service";
+export * from "./customer.service";

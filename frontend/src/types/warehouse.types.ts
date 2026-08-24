@@ -13,6 +13,19 @@ export interface StorageSlot {
   humidityPercent?: number;
   status: SlotStatus;
   currentGoodsIds: string[];
+  storedGoods?: Array<{
+    id: string;
+    barcode: string;
+    name: string;
+    quantity: number;
+    unit: string;
+    volumeM3: number;
+    weightKg: number;
+    category: string;
+    customerName: string;
+    customerCompany?: string | null;
+    storageStartDate?: string | null;
+  }>;
 }
 
 export interface Warehouse {

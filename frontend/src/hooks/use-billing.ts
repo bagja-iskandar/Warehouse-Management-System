@@ -6,6 +6,7 @@ export const billingKeys = {
   all: ["billing"] as const,
   invoices: (customerId?: string) =>
     [...billingKeys.all, "invoices", { customerId }] as const,
+  pendingPayments: () => [...billingKeys.all, "pending-payments"] as const,
   invoice: (id: string) => [...billingKeys.all, "invoice", id] as const,
 };
 
@@ -13,7 +14,19 @@ export function useInvoices(customerId?: string) {
   return useQuery({
     queryKey: billingKeys.invoices(customerId),
     queryFn: () => billingService.getInvoices(customerId),
-    staleTime: 1000 * 60 * 3,
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 60,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+export function usePendingPayments() {
+  return useQuery({
+    queryKey: billingKeys.pendingPayments(),
+    queryFn: () => billingService.getPendingPayments(),
+    staleTime: 1000 * 20,
+    refetchInterval: 1000 * 20,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -54,6 +67,9 @@ export function usePayInvoice() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }
@@ -65,14 +81,19 @@ export function useVerifyPayment() {
     mutationFn: ({
       invoiceId,
       action,
+      rejectionReason,
       note,
     }: {
       invoiceId: string;
       action: "VERIFY" | "REJECT";
+      rejectionReason?: string;
       note?: string;
-    }) => billingService.verifyPayment(invoiceId, action, note),
+    }) => billingService.verifyPayment(invoiceId, action, rejectionReason, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

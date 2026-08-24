@@ -11,7 +11,10 @@ export interface UserProfile {
   address?: string;
   createdAt: string;
   status: "ACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION";
+  driverLicenseNumber?: string;
 }
+
+export type User = UserProfile;
 
 export interface AuthState {
   user: UserProfile | null;

@@ -29,6 +29,16 @@ export interface Vehicle {
   locationCity: string;
 }
 
+export interface DeliveryOrderItem {
+  id?: string;
+  goodsId?: string;
+  name?: string;
+  barcode?: string;
+  quantity: number;
+  unit?: string;
+  requiresColdStorage?: boolean;
+}
+
 export interface DeliveryOrder {
   id: string;
   orderNumber: string; // e.g. "ORD-2026-092"
@@ -38,6 +48,8 @@ export interface DeliveryOrder {
   customerPhone: string;
   goodsItemIds: string[];
   goodsSummary: string; // e.g. "2x Frozen Salmon Box, 1x Frozen Beef"
+  items?: DeliveryOrderItem[];
+  totalPackages?: number;
   totalVolumeM3: number;
   totalWeightKg: number;
   requiresReefer: boolean;
@@ -67,6 +79,8 @@ export interface DeliveryOrder {
   rescheduledTime?: string;
 
   proofOfDeliveryUrl?: string;
+  recipientName?: string;
+  recipientSignature?: string;
   confirmedByCustomer?: boolean;
   confirmedByDriver?: boolean;
   confirmedByAdmin?: boolean;

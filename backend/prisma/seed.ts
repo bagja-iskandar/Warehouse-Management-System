@@ -161,6 +161,30 @@ async function main() {
     },
   });
 
+  const zoneBandungCold = await prisma.storageZone.create({
+    data: {
+      id: 'zone-bdg-cold',
+      warehouseId: whBandung.id,
+      name: 'Zona Cold Storage Gedebage',
+      type: StorageZoneType.COLD_STORAGE,
+      capacityM3: 1200.0,
+      usedM3: 600.0,
+      targetTempMin: -25.0,
+      targetTempMax: -18.0,
+    },
+  });
+
+  const zoneBandungStd = await prisma.storageZone.create({
+    data: {
+      id: 'zone-bdg-std',
+      warehouseId: whBandung.id,
+      name: 'Zona Standar Gedebage',
+      type: StorageZoneType.STANDARD,
+      capacityM3: 1800.0,
+      usedM3: 800.0,
+    },
+  });
+
   // 5. Seed Storage Slots
   console.log('📦 Seeding Storage Slots...');
   const slotC01 = await prisma.storageSlot.create({
@@ -246,6 +270,64 @@ async function main() {
       capacityM3: 200.0,
       usedM3: 120.0,
       status: SlotStatus.OCCUPIED,
+    },
+  });
+
+  const slotBdgC01 = await prisma.storageSlot.create({
+    data: {
+      id: 'slot-bdg-c01',
+      warehouseId: whBandung.id,
+      zoneId: zoneBandungCold.id,
+      code: 'COLD-B01',
+      zone: StorageZoneType.COLD_STORAGE,
+      capacityM3: 100.0,
+      usedM3: 80.0,
+      temperatureCelsius: -19.2,
+      humidityPercent: 82.0,
+      status: SlotStatus.OCCUPIED,
+    },
+  });
+
+  const slotBdgC02 = await prisma.storageSlot.create({
+    data: {
+      id: 'slot-bdg-c02',
+      warehouseId: whBandung.id,
+      zoneId: zoneBandungCold.id,
+      code: 'COLD-B02',
+      zone: StorageZoneType.COLD_STORAGE,
+      capacityM3: 100.0,
+      usedM3: 0.0,
+      temperatureCelsius: -20.5,
+      humidityPercent: 80.0,
+      status: SlotStatus.AVAILABLE,
+    },
+  });
+
+  const slotBdgS01 = await prisma.storageSlot.create({
+    data: {
+      id: 'slot-bdg-s01',
+      warehouseId: whBandung.id,
+      zoneId: zoneBandungStd.id,
+      code: 'RAK-B01',
+      zone: StorageZoneType.STANDARD,
+      capacityM3: 200.0,
+      usedM3: 150.0,
+      temperatureCelsius: 23.5,
+      humidityPercent: 58.0,
+      status: SlotStatus.OCCUPIED,
+    },
+  });
+
+  const slotBdgS02 = await prisma.storageSlot.create({
+    data: {
+      id: 'slot-bdg-s02',
+      warehouseId: whBandung.id,
+      zoneId: zoneBandungStd.id,
+      code: 'RAK-B02',
+      zone: StorageZoneType.STANDARD,
+      capacityM3: 200.0,
+      usedM3: 0.0,
+      status: SlotStatus.AVAILABLE,
     },
   });
 
@@ -483,6 +565,89 @@ async function main() {
     },
   });
 
+  const goodsBdg01 = await prisma.goodsItem.create({
+    data: {
+      id: 'brg-bdg-001',
+      barcode: 'BRG-2026-FROZEN-005',
+      customerId: customer1.id,
+      warehouseId: whBandung.id,
+      slotId: slotBdgC01.id,
+      name: 'Susu Pasteurisasi Segar Lembang 1L',
+      category: GoodsCategory.COLD_FOOD,
+      description: 'Susu sapi murni pasteurisasi dingin dari peternakan Lembang.',
+      lengthCm: 100.0,
+      widthCm: 80.0,
+      heightCm: 100.0,
+      volumeM3: 0.8,
+      weightKg: 200.0,
+      quantity: 40,
+      unit: 'Koli Karton',
+      requiresColdStorage: true,
+      targetTempMin: -22.0,
+      targetTempMax: -18.0,
+      currentTemp: -19.2,
+      storageStartDate: new Date('2026-08-10T08:00:00Z'),
+      monthlyRentalFee: 2000000.0,
+      status: GoodsStorageStatus.STORED,
+      imageUrl: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&auto=format&fit=crop&q=80',
+      qrCodeData: 'WMS://ITEM/brg-bdg-001?code=BRG-2026-FROZEN-005',
+      history: {
+        create: [
+          {
+            id: 'hist-bdg-01',
+            status: GoodsStorageStatus.STORED,
+            title: 'Susu Pasteurisasi Masuk Cold Storage Gedebage',
+            description: 'Barang diterima dan disimpan di Slot COLD-B01 dengan suhu -19.2 C.',
+            actorName: 'Rian Nugraha',
+            actorRole: 'Admin',
+            location: 'Slot COLD-B01, Gedebage Hub',
+            timestamp: new Date('2026-08-10T08:00:00Z'),
+          },
+        ],
+      },
+    },
+  });
+
+  const goodsBdg02 = await prisma.goodsItem.create({
+    data: {
+      id: 'brg-bdg-002',
+      barcode: 'BRG-2026-TEXT-006',
+      customerId: customer1.id,
+      warehouseId: whBandung.id,
+      slotId: slotBdgS01.id,
+      name: 'Kain Tekstil Katun Premium Majalaya',
+      category: GoodsCategory.TEXTILE,
+      description: 'Gulungan kain katun ekspor produksi sentra tekstil Majalaya.',
+      lengthCm: 150.0,
+      widthCm: 100.0,
+      heightCm: 100.0,
+      volumeM3: 1.5,
+      weightKg: 300.0,
+      quantity: 15,
+      unit: 'Roll Pallet',
+      requiresColdStorage: false,
+      storageStartDate: new Date('2026-08-12T10:00:00Z'),
+      monthlyRentalFee: 1500000.0,
+      status: GoodsStorageStatus.STORED,
+      imageUrl: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=400&auto=format&fit=crop&q=80',
+      qrCodeData: 'WMS://ITEM/brg-bdg-002?code=BRG-2026-TEXT-006',
+      history: {
+        create: [
+          {
+            id: 'hist-bdg-02',
+            status: GoodsStorageStatus.STORED,
+            title: 'Tekstil Majalaya Disimpan di Rak Standar',
+            description: 'Ditempatkan di Slot RAK-B01 Gudang Gedebage.',
+            actorName: 'Rian Nugraha',
+            actorRole: 'Admin',
+            location: 'Slot RAK-B01',
+            timestamp: new Date('2026-08-12T10:00:00Z'),
+          },
+        ],
+      },
+    },
+  });
+
   // 8. Seed Delivery Orders
   console.log('📑 Seeding Delivery Orders & Order Items...');
   const order01 = await prisma.deliveryOrder.create({
@@ -549,6 +714,42 @@ async function main() {
             id: 'item-ord-02',
             goodsId: goods01.id,
             quantity: 30,
+          },
+        ],
+      },
+    },
+  });
+
+  const orderBdg01 = await prisma.deliveryOrder.create({
+    data: {
+      id: 'ord-bdg-001',
+      orderNumber: 'ORD-2026-0818-BDG01',
+      type: OrderType.DELIVERY,
+      customerId: customer1.id,
+      driverId: driver2.id,
+      vehicleId: veh01.id,
+      goodsSummary: '40 Koli Susu Pasteurisasi Lembang',
+      totalVolumeM3: 0.8,
+      totalWeightKg: 200.0,
+      requiresReefer: true,
+      originAddress: 'Gudang Distribusi Gedebage Cold Hub, COLD-B01',
+      originCity: 'Bandung',
+      destinationAddress: 'Supermarket Buah Segar Dago, Jl. Ir. H. Juanda No. 120',
+      destinationCity: 'Bandung',
+      scheduledDate: new Date('2026-08-18'),
+      scheduledTimeSlot: '10:00 - 13:00',
+      status: OrderStatus.IN_TRANSIT,
+      estimatedDurationMins: 30,
+      distanceKm: 14.5,
+      confirmedByCustomer: false,
+      confirmedByDriver: true,
+      confirmedByAdmin: true,
+      orderItems: {
+        create: [
+          {
+            id: 'item-ord-bdg-01',
+            goodsId: goodsBdg01.id,
+            quantity: 40,
           },
         ],
       },
@@ -653,6 +854,13 @@ async function main() {
         humidityPercent: 84.0,
         isAnomaly: false,
         recordedAt: new Date('2026-08-16T13:00:00Z'),
+      },
+      {
+        slotId: slotBdgC01.id,
+        temperatureCelsius: -19.2,
+        humidityPercent: 82.0,
+        isAnomaly: false,
+        recordedAt: new Date('2026-08-16T14:00:00Z'),
       },
       {
         vehicleId: veh01.id,

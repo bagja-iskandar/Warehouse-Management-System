@@ -3,9 +3,38 @@ import { GoodsItem, CreateGoodsInput } from "@/types";
 import { calculateVolumeM3, generateBarcodeId } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
 
+export interface GoodsMutationItem {
+  id: string;
+  goodsId: string;
+  sku: string;
+  itemName: string;
+  quantityKoli: number;
+  volumeM3: number;
+  slotCode: string;
+  status: string;
+  type: "INBOUND" | "OUTBOUND" | "TRANSFER";
+  title: string;
+  description: string;
+  actorName: string;
+  actorRole: string;
+  location?: string;
+  timestamp: string;
+}
+
 export interface IGoodsService {
-  getGoods(customerId?: string): Promise<GoodsItem[]>;
+  getGoods(
+    customerIdOrOptions?:
+      | string
+      | {
+          customerId?: string;
+          warehouseId?: string;
+          sortBy?: string;
+          sortOrder?: "asc" | "desc";
+        },
+    warehouseId?: string
+  ): Promise<GoodsItem[]>;
   getGoodsById(id: string): Promise<GoodsItem | null>;
+  getMutations(customerId?: string): Promise<GoodsMutationItem[]>;
   createGoods(
     input: CreateGoodsInput,
     customerId: string,
@@ -17,16 +46,38 @@ export interface IGoodsService {
     note?: string,
     slotId?: string
   ): Promise<GoodsItem>;
+  transferSlot(
+    id: string,
+    targetSlotId: string,
+    reason: string,
+    note?: string
+  ): Promise<GoodsItem>;
 }
 
 /**
  * Backend REST API Implementation (Live NestJS + PostgreSQL)
  */
 export class HttpGoodsService implements IGoodsService {
-  async getGoods(customerId?: string): Promise<GoodsItem[]> {
+  async getGoods(
+    customerIdOrOptions?:
+      | string
+      | {
+          customerId?: string;
+          warehouseId?: string;
+          sortBy?: string;
+          sortOrder?: "asc" | "desc";
+        },
+    warehouseIdArg?: string
+  ): Promise<GoodsItem[]> {
     const params: Record<string, any> = { limit: 100 };
-    if (customerId) {
-      params.customerId = customerId;
+    if (typeof customerIdOrOptions === "object" && customerIdOrOptions !== null) {
+      if (customerIdOrOptions.customerId) params.customerId = customerIdOrOptions.customerId;
+      if (customerIdOrOptions.warehouseId) params.warehouseId = customerIdOrOptions.warehouseId;
+      if (customerIdOrOptions.sortBy) params.sortBy = customerIdOrOptions.sortBy;
+      if (customerIdOrOptions.sortOrder) params.sortOrder = customerIdOrOptions.sortOrder;
+    } else {
+      if (customerIdOrOptions) params.customerId = customerIdOrOptions;
+      if (warehouseIdArg) params.warehouseId = warehouseIdArg;
     }
 
     const res = await apiClient<{ items: any[]; totalItems: number }>("/goods", {
@@ -45,6 +96,17 @@ export class HttpGoodsService implements IGoodsService {
       return this.mapBackendGoodsToFrontend(item);
     } catch (err) {
       return null;
+    }
+  }
+
+  async getMutations(customerId?: string): Promise<GoodsMutationItem[]> {
+    try {
+      const params: Record<string, any> = {};
+      if (customerId) params.customerId = customerId;
+      const res = await apiClient<GoodsMutationItem[]>("/goods/mutations", { params });
+      return res || [];
+    } catch {
+      return [];
     }
   }
 
@@ -104,17 +166,37 @@ export class HttpGoodsService implements IGoodsService {
     return this.mapBackendGoodsToFrontend(res);
   }
 
+  async transferSlot(
+    id: string,
+    targetSlotId: string,
+    reason: string,
+    note?: string
+  ): Promise<GoodsItem> {
+    const payload = {
+      targetSlotId,
+      reason,
+      note,
+    };
+
+    const res = await apiClient<any>(`/goods/${id}/transfer-slot`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    return this.mapBackendGoodsToFrontend(res);
+  }
+
   private mapBackendGoodsToFrontend(raw: any): GoodsItem {
     return {
       id: raw.id,
       barcode: raw.barcode,
       customerId: raw.customerId,
       customerName: raw.customerName || raw.customer?.name || "Customer",
-      warehouseId: raw.warehouseId || raw.warehouse?.id || "wh-jkt-central",
+      warehouseId: raw.warehouseId || raw.warehouse?.id || "",
       warehouseName:
         raw.warehouseName ||
         raw.warehouse?.name ||
-        "Cakung Logistics Central Hub",
+        "Warehouse Hub",
       slotId: raw.slotId || raw.slot?.id,
       slotCode: raw.slotCode || raw.slot?.code,
       name: raw.name,
@@ -162,12 +244,22 @@ export class HttpGoodsService implements IGoodsService {
  * In-Memory Mock Implementation (Local Development & Offline Testing)
  */
 export class MockGoodsService implements IGoodsService {
-  async getGoods(customerId?: string): Promise<GoodsItem[]> {
+  async getGoods(
+    customerIdOrOptions?: string | { customerId?: string; warehouseId?: string }
+  ): Promise<GoodsItem[]> {
+    const customerId =
+      typeof customerIdOrOptions === "string"
+        ? customerIdOrOptions
+        : customerIdOrOptions?.customerId;
     return mockDb.getGoods(customerId);
   }
 
   async getGoodsById(id: string): Promise<GoodsItem | null> {
     return mockDb.getGoodsById(id);
+  }
+
+  async getMutations(_customerId?: string): Promise<GoodsMutationItem[]> {
+    return [];
   }
 
   async createGoods(
@@ -237,6 +329,15 @@ export class MockGoodsService implements IGoodsService {
     _slotId?: string
   ): Promise<GoodsItem> {
     return mockDb.updateGoodsStatus(id, status, note);
+  }
+
+  async transferSlot(
+    id: string,
+    targetSlotId: string,
+    reason: string,
+    note?: string
+  ): Promise<GoodsItem> {
+    return mockDb.updateGoodsStatus(id, "STORED", `${reason} - ${note || ""}`);
   }
 }
 

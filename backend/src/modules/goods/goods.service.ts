@@ -8,7 +8,11 @@ import {
 import {
   GoodsCategory,
   GoodsStorageStatus,
+  InvoiceStatus,
+  NotificationCategory,
+  OrderStatus,
   Prisma,
+  RelatedEntityType,
   SlotStatus,
   StorageZoneType,
   UserRole,
@@ -16,6 +20,7 @@ import {
 import * as crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateGoodsDto } from './dto/create-goods.dto';
 import { GoodsQueryDto } from './dto/goods-query.dto';
 import {
@@ -23,6 +28,7 @@ import {
   GoodsHistoryEventDto,
   GoodsListItemDto,
 } from './dto/goods-response.dto';
+import { TransferGoodsSlotDto } from './dto/transfer-goods-slot.dto';
 import { UpdateGoodsStatusDto } from './dto/update-goods-status.dto';
 
 export interface PaginatedGoodsResult {
@@ -46,7 +52,12 @@ export class GoodsService {
 
   // State Machine transisi status barang yang diizinkan
   private readonly ALLOWED_TRANSITIONS: Record<GoodsStorageStatus, GoodsStorageStatus[]> = {
-    [GoodsStorageStatus.DRAFT]: [GoodsStorageStatus.PENDING_PICKUP, GoodsStorageStatus.CANCELLED],
+    [GoodsStorageStatus.DRAFT]: [
+      GoodsStorageStatus.PENDING_PICKUP,
+      GoodsStorageStatus.INSPECTING,
+      GoodsStorageStatus.STORED,
+      GoodsStorageStatus.CANCELLED,
+    ],
     [GoodsStorageStatus.PENDING_PICKUP]: [
       GoodsStorageStatus.IN_TRANSIT_INBOUND,
       GoodsStorageStatus.CANCELLED,
@@ -74,7 +85,10 @@ export class GoodsService {
     [GoodsStorageStatus.CANCELLED]: [],
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /**
    * Pendaftaran master barang (SKU) baru dengan kalkulasi volume otomatis server-side,
@@ -116,6 +130,36 @@ export class GoodsService {
       throw new NotFoundException(
         `Fasilitas gudang dengan ID '${dto.warehouseId}' tidak ditemukan atau sedang tidak aktif`,
       );
+    }
+
+    // 2b. Validasi Kepemilikan Kontrak Sewa Ruang Aktif untuk Peran Customer
+    if (currentUser.role === UserRole.CUSTOMER) {
+      const activeRentalInvoice = await this.prisma.invoice.findFirst({
+        where: {
+          customerId: currentUser.id,
+          status: { not: InvoiceStatus.CANCELLED },
+          items: {
+            some: {
+              goodsName: {
+                startsWith: `Rental Space: ${warehouse.code}`,
+              },
+            },
+          },
+        },
+      });
+
+      const hasExistingGoods = await this.prisma.goodsItem.findFirst({
+        where: {
+          customerId: currentUser.id,
+          warehouseId: warehouse.id,
+        },
+      });
+
+      if (!activeRentalInvoice && !hasExistingGoods) {
+        throw new BadRequestException(
+          'Anda belum memiliki ruang penyimpanan aktif di fasilitas gudang ini. Silakan melakukan rental space terlebih dahulu.',
+        );
+      }
     }
 
     // 3. Kalkulasi Volume Server-Side (P x L x T / 1.000.000 x Qty)
@@ -186,10 +230,127 @@ export class GoodsService {
         },
       });
 
+      // 7. Terbitkan Notifikasi Transaksional ke Customer dan Seluruh Admin
+      await this.notificationsService.createNotification(
+        {
+          recipientUserId: targetCustomerId,
+          recipientRole: UserRole.CUSTOMER,
+          title: dto.pickupRequired ? 'Permintaan Penjemputan Diajukan' : 'Barang Berhasil Didaftarkan',
+          message: `Barang "${goods.name}" (SKU: ${goods.barcode}) sebanyak ${goods.quantity} ${goods.unit} telah berhasil didaftarkan.`,
+          category: NotificationCategory.GOODS_STORED,
+          relatedEntityId: goods.id,
+          relatedEntityType: RelatedEntityType.GOODS,
+          actionUrl: '/customer/goods',
+        },
+        tx,
+      );
+
+      await this.notificationsService.notifyRole(
+        UserRole.ADMIN,
+        {
+          title: dto.pickupRequired ? 'Permintaan Pickup Barang Baru' : 'Pendaftaran Barang Baru',
+          message: `Tenant "${customer.name}" mendaftarkan barang "${goods.name}" (${goods.quantity} ${goods.unit}) di gudang ${warehouse.name}.`,
+          category: NotificationCategory.GOODS_STORED,
+          relatedEntityId: goods.id,
+          relatedEntityType: RelatedEntityType.GOODS,
+          actionUrl: '/admin/goods',
+        },
+        tx,
+      );
+
       return goods;
     });
 
     return this.findById(createdGoods.id, currentUser);
+  }
+
+  /**
+   * Recalculates and updates the real-time occupied volume and status for a specific storage slot
+   * based on all active STORED goods currently residing in that slot.
+   */
+  async recalculateSlotCapacity(slotId: string, tx?: Prisma.TransactionClient): Promise<number> {
+    const db = tx || this.prisma;
+    const slot = await db.storageSlot.findUnique({
+      where: { id: slotId },
+      include: {
+        goodsItems: {
+          where: { status: GoodsStorageStatus.STORED },
+          select: { volumeM3: true },
+        },
+      },
+    });
+
+    if (!slot) return 0;
+
+    const actualUsedM3 = Number(
+      slot.goodsItems.reduce((sum, g) => sum + Number(g.volumeM3), 0).toFixed(2),
+    );
+    const capacityM3 = Number(slot.capacityM3);
+
+    let nextStatus: SlotStatus = SlotStatus.AVAILABLE;
+    if (slot.status === SlotStatus.MAINTENANCE) {
+      nextStatus = SlotStatus.MAINTENANCE;
+    } else if (actualUsedM3 === 0) {
+      nextStatus = SlotStatus.AVAILABLE;
+    } else {
+      nextStatus = SlotStatus.OCCUPIED;
+    }
+
+    await db.storageSlot.update({
+      where: { id: slotId },
+      data: {
+        usedM3: actualUsedM3,
+        status: nextStatus,
+      },
+    });
+
+    return actualUsedM3;
+  }
+
+  /**
+   * Recalculates and updates the real-time used capacity for a warehouse facility
+   * based on all active STORED goods currently placed in that warehouse.
+   */
+  async recalculateWarehouseCapacity(warehouseId: string, tx?: Prisma.TransactionClient): Promise<number> {
+    const db = tx || this.prisma;
+    const storedGoods = await db.goodsItem.findMany({
+      where: {
+        warehouseId,
+        status: GoodsStorageStatus.STORED,
+      },
+      select: { volumeM3: true },
+    });
+
+    const actualWarehouseUsedM3 = Number(
+      storedGoods.reduce((sum, g) => sum + Number(g.volumeM3), 0).toFixed(2),
+    );
+
+    await db.warehouse.update({
+      where: { id: warehouseId },
+      data: {
+        usedCapacityM3: actualWarehouseUsedM3,
+      },
+    });
+
+    return actualWarehouseUsedM3;
+  }
+
+  /**
+   * Reconciles all storage slots and warehouses against currently stored goods in PostgreSQL.
+   */
+  async reconcileAllCapacity(tx?: Prisma.TransactionClient): Promise<{ slotsUpdated: number; warehousesUpdated: number }> {
+    const db = tx || this.prisma;
+    const allSlots = await db.storageSlot.findMany({ select: { id: true } });
+    for (const s of allSlots) {
+      await this.recalculateSlotCapacity(s.id, db);
+    }
+
+    const allWarehouses = await db.warehouse.findMany({ select: { id: true } });
+    for (const w of allWarehouses) {
+      await this.recalculateWarehouseCapacity(w.id, db);
+    }
+
+    return { slotsUpdated: allSlots.length, warehousesUpdated: allWarehouses.length };
   }
 
   /**
@@ -223,6 +384,7 @@ export class GoodsService {
 
     const currentStatus = goods.status;
     const newStatus = dto.status;
+    const oldSlotId = goods.slotId;
 
     // 3. Validasi Hak Akses Peran terhadap Status Tujuan (RBAC / Authorization Check)
     this.validateRolePermissionOnTransition(currentUser.role, newStatus);
@@ -239,7 +401,7 @@ export class GoodsService {
     await this.prisma.$transaction(async (tx) => {
       let targetSlotId = goods.slotId;
 
-      // Kasus A: Transisi ke STORED -> Alokasi Slot Rak & Tambah Kapasitas Terpakai
+      // Kasus A: Transisi ke STORED -> Alokasi Slot Rak & Validasi Kapasitas
       if (newStatus === GoodsStorageStatus.STORED) {
         targetSlotId = dto.slotId || goods.slotId;
         if (!targetSlotId) {
@@ -262,109 +424,362 @@ export class GoodsService {
           );
         }
 
+        if (slot.status === SlotStatus.MAINTENANCE) {
+          throw new BadRequestException(
+            `Slot rak '${slot.code}' sedang dalam masa perbaikan (MAINTENANCE)`,
+          );
+        }
+
         if (goods.requiresColdStorage && slot.zone !== StorageZoneType.COLD_STORAGE) {
           throw new BadRequestException(
             `Barang memerlukan fasilitas Cold Storage, namun slot '${slot.code}' berada di zona '${slot.zone}'`,
           );
         }
 
-        const currentSlotUsed = Number(slot.usedM3);
+        // Kalkulasi okupansi slot aktual dari barang STORED yang ada di database
+        const existingStoredInSlot = await tx.goodsItem.aggregate({
+          where: {
+            slotId: targetSlotId,
+            status: GoodsStorageStatus.STORED,
+            id: { not: goods.id },
+          },
+          _sum: { volumeM3: true },
+        });
+
+        const currentSlotUsed = Number(existingStoredInSlot._sum.volumeM3 || 0);
         const slotCapacity = Number(slot.capacityM3);
         const goodsVol = Number(goods.volumeM3);
-        const newSlotUsed = Number((currentSlotUsed + goodsVol).toFixed(2));
+        const availableM3 = Math.max(0, Number((slotCapacity - currentSlotUsed).toFixed(2)));
 
-        if (newSlotUsed > slotCapacity) {
+        if (goodsVol > availableM3) {
           throw new BadRequestException(
-            `Kapasitas slot rak '${slot.code}' tidak mencukupi (Kapasitas: ${slotCapacity} m3, Terpakai: ${currentSlotUsed} m3, Kebutuhan: ${goodsVol} m3)`,
+            `Cannot store this goods. The selected rack slot '${slot.code}' only has ${availableM3} m³ available, while this goods requires ${goodsVol} m³.`,
           );
         }
 
-        // Update slot rak
-        await tx.storageSlot.update({
-          where: { id: slot.id },
+        // Update data barang ke status STORED
+        await tx.goodsItem.update({
+          where: { id: goods.id },
           data: {
-            usedM3: newSlotUsed,
-            status: SlotStatus.OCCUPIED,
+            status: newStatus,
+            slotId: targetSlotId,
           },
         });
 
-        // Update kapasitas terpakai gudang
-        await tx.warehouse.update({
-          where: { id: goods.warehouseId },
+        // Recalculate target slot & old slot capacity dynamically
+        await this.recalculateSlotCapacity(targetSlotId, tx);
+        if (oldSlotId && oldSlotId !== targetSlotId) {
+          await this.recalculateSlotCapacity(oldSlotId, tx);
+        }
+
+        // Recalculate warehouse capacity dynamically
+        await this.recalculateWarehouseCapacity(goods.warehouseId, tx);
+      } else {
+        // Kasus B: Transisi ke status non-STORED (e.g. DELIVERED, CANCELLED, PENDING_DELIVERY, etc.)
+        const finalSlotId =
+          newStatus === GoodsStorageStatus.DELIVERED || newStatus === GoodsStorageStatus.CANCELLED
+            ? null
+            : targetSlotId;
+
+        await tx.goodsItem.update({
+          where: { id: goods.id },
           data: {
-            usedCapacityM3: { increment: goods.volumeM3 },
+            status: newStatus,
+            slotId: finalSlotId,
           },
         });
+
+        // Bebaskan kapasitas slot asal jika ada
+        if (oldSlotId) {
+          await this.recalculateSlotCapacity(oldSlotId, tx);
+        }
+
+        // Recalculate warehouse capacity dynamically
+        await this.recalculateWarehouseCapacity(goods.warehouseId, tx);
       }
 
-      // Kasus B: Transisi dari STORED ke DELIVERED / CANCELLED -> Bebaskan Kapasitas Slot Rak
-      if (
-        currentStatus === GoodsStorageStatus.STORED &&
-        (newStatus === GoodsStorageStatus.DELIVERED || newStatus === GoodsStorageStatus.CANCELLED)
-      ) {
-        if (goods.slotId) {
-          const slot = await tx.storageSlot.findUnique({
-            where: { id: goods.slotId },
-          });
-
-          if (slot) {
-            const freedUsed = Math.max(
-              0,
-              Number((Number(slot.usedM3) - Number(goods.volumeM3)).toFixed(2)),
-            );
-            const nextSlotStatus = freedUsed === 0 ? SlotStatus.AVAILABLE : SlotStatus.OCCUPIED;
-
-            await tx.storageSlot.update({
-              where: { id: slot.id },
-              data: {
-                usedM3: freedUsed,
-                status: nextSlotStatus,
-              },
-            });
-          }
-
-          // Kurangi kapasitas terpakai gudang
-          const wh = await tx.warehouse.findUnique({
-            where: { id: goods.warehouseId },
-          });
-          if (wh) {
-            const freedWhUsed = Math.max(
-              0,
-              Number((Number(wh.usedCapacityM3) - Number(goods.volumeM3)).toFixed(2)),
-            );
-            await tx.warehouse.update({
-              where: { id: wh.id },
-              data: { usedCapacityM3: freedWhUsed },
-            });
-          }
+      // Ambil detail slot jika dialokasikan untuk riwayat mutasi presisi
+      let allocatedSlotCode = '';
+      let allocatedSlotZone = '';
+      if (targetSlotId) {
+        const slotRecord = await tx.storageSlot.findUnique({
+          where: { id: targetSlotId },
+          select: { code: true, zone: true },
+        });
+        if (slotRecord) {
+          allocatedSlotCode = slotRecord.code;
+          allocatedSlotZone = slotRecord.zone;
         }
       }
 
-      // Update data barang
-      await tx.goodsItem.update({
-        where: { id: goods.id },
-        data: {
-          status: newStatus,
-          slotId: targetSlotId,
-        },
-      });
-
       // Catat jejak audit mutasi
-      const { title, description } = this.getMutationAuditInfo(newStatus, dto.note);
+      let mutationTitle = `Status Diperbarui: ${newStatus}`;
+      let mutationDesc = dto.note || `Status barang beralih menjadi ${newStatus}.`;
+      let mutationLocation = dto.location || goods.warehouse.name;
+
+      if (newStatus === GoodsStorageStatus.STORED) {
+        mutationTitle = 'Barang Berhasil Ditempatkan di Rak (Put-Away)';
+        mutationDesc =
+          dto.note ||
+          `Barang berhasil ditempatkan di slot rak ${allocatedSlotCode} (${allocatedSlotZone}) oleh Admin (${currentUser.name}). Suhu operasional terpantau normal.`;
+        mutationLocation = `${goods.warehouse.name} — ${allocatedSlotZone} / Slot ${allocatedSlotCode}`;
+      } else {
+        const auditInfo = this.getMutationAuditInfo(newStatus, dto.note);
+        mutationTitle = auditInfo.title;
+        mutationDesc = auditInfo.description;
+      }
 
       await tx.goodsMutation.create({
         data: {
           goodsId: goods.id,
           status: newStatus,
-          title,
-          description,
+          title: mutationTitle,
+          description: mutationDesc,
           actorId: currentUser.id,
           actorName: currentUser.name,
           actorRole: currentUser.role,
-          location: dto.location || goods.warehouse.name,
+          location: mutationLocation,
           timestamp: new Date(),
         },
       });
+
+      // Notifikasi ke Customer Pemilik
+      const custNotifTitle =
+        newStatus === GoodsStorageStatus.STORED
+          ? 'Barang Telah Disimpan di Rak Gudang'
+          : `Status Barang: ${newStatus}`;
+      const custNotifMsg =
+        newStatus === GoodsStorageStatus.STORED
+          ? `Barang "${goods.name}" (${goods.barcode}) telah berhasil ditempatkan pada slot rak ${allocatedSlotCode} (${allocatedSlotZone}) di ${goods.warehouse.name}.`
+          : `Status penyimpanan barang "${goods.name}" (${goods.barcode}) diperbarui menjadi ${newStatus}.`;
+
+      await this.notificationsService.createNotification(
+        {
+          recipientUserId: goods.customerId,
+          recipientRole: UserRole.CUSTOMER,
+          title: custNotifTitle,
+          message: custNotifMsg,
+          category: NotificationCategory.GOODS_STORED,
+          relatedEntityId: goods.id,
+          relatedEntityType: RelatedEntityType.GOODS,
+          actionUrl: '/customer/goods',
+        },
+        tx,
+      );
+
+      // Jika Put-Away, beri notifikasi juga ke seluruh Admin
+      if (newStatus === GoodsStorageStatus.STORED) {
+        await this.notificationsService.notifyRole(
+          UserRole.ADMIN,
+          {
+            title: 'Put-Away Berhasil',
+            message: `Barang "${goods.name}" berhasil ditempatkan di slot rak ${allocatedSlotCode} (${goods.warehouse.name}).`,
+            category: NotificationCategory.GOODS_STORED,
+            relatedEntityId: goods.id,
+            relatedEntityType: RelatedEntityType.GOODS,
+            actionUrl: '/admin/goods',
+          },
+          tx,
+        );
+
+        // Periksa apakah barang ini terkait dengan Delivery Order Inbound (PICKUP)
+        // yang berstatus DELIVERED -> Jika semua barang dalam order tersebut sudah STORED, ubah order menjadi CONFIRMED
+        const relatedInboundOrders = await tx.deliveryOrder.findMany({
+          where: {
+            type: 'PICKUP',
+            status: OrderStatus.DELIVERED,
+            orderItems: {
+              some: { goodsId: goods.id },
+            },
+          },
+          include: {
+            orderItems: {
+              include: { goods: true },
+            },
+          },
+        });
+
+        for (const inbOrder of relatedInboundOrders) {
+          const isAllItemsStored = inbOrder.orderItems.every(
+            (oi) =>
+              oi.goodsId === goods.id || oi.goods.status === GoodsStorageStatus.STORED,
+          );
+          if (isAllItemsStored) {
+            await tx.deliveryOrder.update({
+              where: { id: inbOrder.id },
+              data: {
+                status: OrderStatus.CONFIRMED,
+                confirmedAt: new Date(),
+              },
+            });
+          }
+        }
+      }
+    });
+
+    return this.findById(goods.id, currentUser);
+  }
+
+  /**
+   * Pemindahan barang antar slot rak penyimpanan dalam fasilitas gudang yang sama (Rack Transfer / Goods Movement).
+   * Memvalidasi status barang (harus STORED), kompatibilitas zona suhu, kapasitas sisa slot tujuan,
+   * serta memperbarui kapasitas rak secara atomik dan mencatat jejak riwayat mutasi presisi.
+   */
+  async transferSlot(
+    id: string,
+    dto: TransferGoodsSlotDto,
+    currentUser: AuthenticatedUser,
+  ): Promise<GoodsDetailResponseDto> {
+    if (currentUser.role !== UserRole.ADMIN) {
+      throw new ForbiddenException(
+        'Hanya Admin yang memiliki wewenang melakukan pemindahan slot rak (Rack Transfer)',
+      );
+    }
+
+    // 1. Ambil data barang saat ini
+    const goods = await this.prisma.goodsItem.findFirst({
+      where: { OR: [{ id }, { barcode: id }] },
+      include: {
+        warehouse: true,
+        slot: true,
+      },
+    });
+
+    if (!goods) {
+      throw new NotFoundException(`Barang dengan ID atau barcode '${id}' tidak ditemukan`);
+    }
+
+    if (goods.status !== GoodsStorageStatus.STORED || !goods.slotId) {
+      throw new BadRequestException(
+        `Barang hanya dapat dipindahkan antar rak jika berstatus STORED (Status saat ini: ${goods.status})`,
+      );
+    }
+
+    if (goods.slotId === dto.targetSlotId) {
+      throw new BadRequestException('Slot tujuan sama dengan slot penyimpanan saat ini.');
+    }
+
+    const sourceSlot = goods.slot;
+    if (!sourceSlot) {
+      throw new BadRequestException('Data slot asal penyimpanan barang tidak valid.');
+    }
+
+    // 2. Validasi slot tujuan
+    const targetSlot = await this.prisma.storageSlot.findUnique({
+      where: { id: dto.targetSlotId },
+    });
+
+    if (!targetSlot) {
+      throw new NotFoundException(`Slot rak tujuan dengan ID '${dto.targetSlotId}' tidak ditemukan.`);
+    }
+
+    if (targetSlot.warehouseId !== goods.warehouseId) {
+      throw new BadRequestException(
+        'Slot rak tujuan harus berada pada fasilitas gudang yang sama dengan barang.',
+      );
+    }
+
+    if (targetSlot.status === SlotStatus.MAINTENANCE) {
+      throw new BadRequestException(
+        `Slot rak tujuan '${targetSlot.code}' sedang dalam masa perbaikan (MAINTENANCE).`,
+      );
+    }
+
+    if (goods.requiresColdStorage && targetSlot.zone !== StorageZoneType.COLD_STORAGE) {
+      throw new BadRequestException(
+        `Barang memerlukan fasilitas Cold Storage, namun slot tujuan '${targetSlot.code}' berada di zona '${targetSlot.zone}'.`,
+      );
+    }
+
+    // Hitung occupancy riil target slot dari database
+    const existingTargetStored = await this.prisma.goodsItem.aggregate({
+      where: {
+        slotId: targetSlot.id,
+        status: GoodsStorageStatus.STORED,
+        id: { not: goods.id },
+      },
+      _sum: { volumeM3: true },
+    });
+
+    const targetSlotUsed = Number(existingTargetStored._sum.volumeM3 || 0);
+    const targetSlotCap = Number(targetSlot.capacityM3);
+    const goodsVol = Number(goods.volumeM3);
+    const targetAvailCap = Math.max(0, Number((targetSlotCap - targetSlotUsed).toFixed(2)));
+
+    if (goodsVol > targetAvailCap) {
+      throw new BadRequestException(
+        `Cannot transfer this goods. The target rack slot '${targetSlot.code}' only has ${targetAvailCap} m³ available, while this goods requires ${goodsVol} m³.`,
+      );
+    }
+
+    // 3. Eksekusi perpindahan dalam transaksi atomik
+    await this.prisma.$transaction(async (tx) => {
+      // Update slot ID barang
+      await tx.goodsItem.update({
+        where: { id: goods.id },
+        data: {
+          slotId: targetSlot.id,
+        },
+      });
+
+      // Recalculate source slot capacity and status
+      await this.recalculateSlotCapacity(sourceSlot.id, tx);
+
+      // Recalculate target slot capacity and status
+      await this.recalculateSlotCapacity(targetSlot.id, tx);
+
+      // Recalculate warehouse capacity (net 0 change, fully verified)
+      await this.recalculateWarehouseCapacity(goods.warehouseId, tx);
+
+      // Catat jejak mutasi transfer
+      const mutationTitle = 'Pemindahan Slot Rak (Rack Transfer)';
+      const mutationDesc = dto.note
+        ? `${dto.note} (Alasan: ${dto.reason} • Dari Slot ${sourceSlot.code} ke Slot ${targetSlot.code})`
+        : `Barang berhasil dipindahkan dari slot ${sourceSlot.code} (${sourceSlot.zone}) ke slot ${targetSlot.code} (${targetSlot.zone}) oleh Admin (${currentUser.name}). Alasan: ${dto.reason}.`;
+      const mutationLocation = `${goods.warehouse.name} — ${targetSlot.zone} / Slot ${targetSlot.code}`;
+
+      await tx.goodsMutation.create({
+        data: {
+          goodsId: goods.id,
+          status: GoodsStorageStatus.STORED,
+          title: mutationTitle,
+          description: mutationDesc,
+          actorId: currentUser.id,
+          actorName: currentUser.name,
+          actorRole: currentUser.role,
+          location: mutationLocation,
+          timestamp: new Date(),
+        },
+      });
+
+      // Notifikasi ke Customer
+      await this.notificationsService.createNotification(
+        {
+          recipientUserId: goods.customerId,
+          recipientRole: UserRole.CUSTOMER,
+          title: 'Relokasi Slot Rak Barang (Rack Transfer)',
+          message: `Barang "${goods.name}" (${goods.barcode}) telah dipindahkan dari slot ${sourceSlot.code} ke slot ${targetSlot.code} (${targetSlot.zone}) di ${goods.warehouse.name}.`,
+          category: NotificationCategory.GOODS_STORED,
+          relatedEntityId: goods.id,
+          relatedEntityType: RelatedEntityType.GOODS,
+          actionUrl: '/customer/goods',
+        },
+        tx,
+      );
+
+      // Notifikasi ke seluruh Admin
+      await this.notificationsService.notifyRole(
+        UserRole.ADMIN,
+        {
+          title: 'Pemindahan Slot Rak Sukses',
+          message: `Admin ${currentUser.name} memindahkan barang "${goods.name}" (${goods.barcode}) ke slot ${targetSlot.code}.`,
+          category: NotificationCategory.GOODS_STORED,
+          relatedEntityId: goods.id,
+          relatedEntityType: RelatedEntityType.GOODS,
+          actionUrl: '/admin/warehouse/capacity',
+        },
+        tx,
+      );
     });
 
     return this.findById(goods.id, currentUser);
@@ -425,9 +840,10 @@ export class GoodsService {
 
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder || 'desc';
-    const orderBy: Prisma.GoodsItemOrderByWithRelationInput = {
-      [sortBy]: sortOrder,
-    };
+    const orderBy: Prisma.GoodsItemOrderByWithRelationInput[] = [
+      { [sortBy]: sortOrder },
+      ...(sortBy !== 'createdAt' ? [{ createdAt: 'desc' as const }] : []),
+    ];
 
     // Eksekusi count dan findMany secara paralel dalam database
     const [totalItems, goodsItems] = await Promise.all([
@@ -749,5 +1165,69 @@ export class GoodsService {
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * Mengambil riwayat mutasi / log histori kargo barang milik tenant customer yang sedang login.
+   */
+  async findMutations(currentUser: AuthenticatedUser, customerId?: string) {
+    const where: Prisma.GoodsMutationWhereInput = {};
+
+    if (currentUser.role === UserRole.CUSTOMER) {
+      where.goods = { customerId: currentUser.id };
+    } else if (currentUser.role === UserRole.ADMIN && customerId) {
+      where.goods = { customerId };
+    }
+
+    const mutations = await this.prisma.goodsMutation.findMany({
+      where,
+      orderBy: { timestamp: 'desc' },
+      take: 100,
+      include: {
+        goods: {
+          select: {
+            id: true,
+            barcode: true,
+            name: true,
+            quantity: true,
+            volumeM3: true,
+            slot: { select: { code: true } },
+          },
+        },
+      },
+    });
+
+    return mutations.map((m) => {
+      let type: 'INBOUND' | 'OUTBOUND' | 'TRANSFER' = 'INBOUND';
+      if (m.title.includes('Pemindahan') || m.title.includes('Transfer')) {
+        type = 'TRANSFER';
+      } else if (
+        m.status === GoodsStorageStatus.PENDING_DELIVERY ||
+        m.status === GoodsStorageStatus.IN_TRANSIT_OUTBOUND ||
+        m.status === GoodsStorageStatus.DELIVERED
+      ) {
+        type = 'OUTBOUND';
+      } else {
+        type = 'INBOUND';
+      }
+
+      return {
+        id: m.id,
+        goodsId: m.goodsId,
+        sku: m.goods.barcode,
+        itemName: m.goods.name,
+        quantityKoli: m.goods.quantity,
+        volumeM3: Number(m.goods.volumeM3),
+        slotCode: m.goods.slot?.code || 'Unassigned',
+        status: m.status,
+        type,
+        title: m.title,
+        description: m.description,
+        actorName: m.actorName,
+        actorRole: m.actorRole,
+        location: m.location,
+        timestamp: m.timestamp.toISOString(),
+      };
+    });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Grid3X3,
@@ -19,547 +19,446 @@ import {
   Sparkles,
   Building2,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  PageContainer,
+  PageHeader,
+  MetricCard,
+  SectionCard,
+  EmptyState,
+  LoadingSkeleton,
+  ErrorState,
+} from "@/components/dashboard";
 import { SlotDetailModal, SlotData } from "@/components/warehouse/SlotDetailModal";
-import { useWarehouse } from "@/hooks/use-warehouses";
-
-// Seeded Rack & Slot Data for Multi-Zones
-const INITIAL_SLOTS: SlotData[] = [
-  // ZONE A: COLD STORAGE
-  {
-    id: "slot-a1",
-    code: "A-01-01",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.4°C",
-    humidity: "65% RH",
-    status: "OCCUPIED",
-    capacityM3: 20,
-    usedM3: 20,
-    tenantName: "PT Fresh Foods Indonesia",
-    tenantPic: "Hendra Prasetya",
-    itemSku: "BAR-FRESH-001",
-    itemName: "Import Wagyu Beef Ribeye A5",
-    itemQuantity: "150 Packages",
-    batchNumber: "BATCH-WGY-2026-08",
-    expiryDate: "12 Nov 2026",
-    lastInspected: "15 Aug 2026",
-  },
-  {
-    id: "slot-a2",
-    code: "A-01-02",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.2°C",
-    humidity: "64% RH",
-    status: "OCCUPIED",
-    capacityM3: 20,
-    usedM3: 20,
-    tenantName: "PT Fresh Foods Indonesia",
-    tenantPic: "Hendra Prasetya",
-    itemSku: "BAR-FRESH-002",
-    itemName: "Premium Norwegian Salmon Fillet",
-    itemQuantity: "120 Packages",
-    batchNumber: "BATCH-SLM-2026-08",
-    expiryDate: "28 Dec 2026",
-    lastInspected: "16 Aug 2026",
-  },
-  {
-    id: "slot-a3",
-    code: "A-01-03",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.5°C",
-    humidity: "66% RH",
-    status: "PARTIAL",
-    capacityM3: 20,
-    usedM3: 12,
-    tenantName: "PT Sumber Frozen Makmur",
-    tenantPic: "Dewi Lestari",
-    itemSku: "BAR-FRESH-003",
-    itemName: "Premium Butter & Dairy",
-    itemQuantity: "80 Packages",
-    batchNumber: "BATCH-BTR-2026-05",
-    expiryDate: "10 Feb 2027",
-    lastInspected: "14 Aug 2026",
-  },
-  {
-    id: "slot-a4",
-    code: "A-01-04",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.0°C",
-    humidity: "65% RH",
-    status: "AVAILABLE",
-    capacityM3: 20,
-    usedM3: 0,
-  },
-  {
-    id: "slot-a5",
-    code: "A-02-01",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.3°C",
-    humidity: "65% RH",
-    status: "OCCUPIED",
-    capacityM3: 20,
-    usedM3: 20,
-    tenantName: "PT Fresh Foods Indonesia",
-    tenantPic: "Hendra Prasetya",
-    itemSku: "BAR-FRESH-004",
-    itemName: "Assorted Frozen Seafood",
-    itemQuantity: "140 Packages",
-    batchNumber: "BATCH-SEA-2026-07",
-    expiryDate: "15 Jan 2027",
-    lastInspected: "15 Aug 2026",
-  },
-  {
-    id: "slot-a6",
-    code: "A-02-02",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.1°C",
-    humidity: "64% RH",
-    status: "AVAILABLE",
-    capacityM3: 20,
-    usedM3: 0,
-  },
-  {
-    id: "slot-a7",
-    code: "A-02-03",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-17.9°C",
-    humidity: "67% RH",
-    status: "MAINTENANCE",
-    capacityM3: 20,
-    usedM3: 0,
-  },
-  {
-    id: "slot-a8",
-    code: "A-02-04",
-    zone: "A",
-    zoneName: "Zone A — Cold Storage",
-    zoneType: "COLD_STORAGE",
-    temperature: "-18.4°C",
-    humidity: "65% RH",
-    status: "OCCUPIED",
-    capacityM3: 20,
-    usedM3: 20,
-    tenantName: "PT Sumber Frozen Makmur",
-    tenantPic: "Dewi Lestari",
-    itemSku: "BAR-FRESH-005",
-    itemName: "Import Mozzarella Cheese",
-    itemQuantity: "110 Packages",
-    batchNumber: "BATCH-MOZ-2026-06",
-    expiryDate: "20 May 2027",
-    lastInspected: "16 Aug 2026",
-  },
-
-  // ZONE B: STANDARD STORAGE
-  {
-    id: "slot-b1",
-    code: "B-01-01",
-    zone: "B",
-    zoneName: "Zone B — Standard & Dry Rack",
-    zoneType: "STANDARD",
-    temperature: "24.2°C",
-    humidity: "50% RH",
-    status: "OCCUPIED",
-    capacityM3: 25,
-    usedM3: 25,
-    tenantName: "CV Furnitur Nusantara",
-    tenantPic: "Bambang Wijaya",
-    itemSku: "BAR-FURN-001",
-    itemName: "3-Seater Velvet Sofa",
-    itemQuantity: "20 Units",
-    batchNumber: "BATCH-SOF-2026-02",
-    lastInspected: "12 Aug 2026",
-  },
-  {
-    id: "slot-b2",
-    code: "B-01-02",
-    zone: "B",
-    zoneName: "Zone B — Standard & Dry Rack",
-    zoneType: "STANDARD",
-    temperature: "24.0°C",
-    humidity: "52% RH",
-    status: "OCCUPIED",
-    capacityM3: 25,
-    usedM3: 25,
-    tenantName: "CV Furnitur Nusantara",
-    tenantPic: "Bambang Wijaya",
-    itemSku: "BAR-FURN-002",
-    itemName: "Solid Teak Wood Dining Table",
-    itemQuantity: "15 Units",
-    batchNumber: "BATCH-MEJ-2026-03",
-    lastInspected: "12 Aug 2026",
-  },
-  {
-    id: "slot-b3",
-    code: "B-01-03",
-    zone: "B",
-    zoneName: "Zone B — Standard & Dry Rack",
-    zoneType: "STANDARD",
-    temperature: "24.1°C",
-    humidity: "51% RH",
-    status: "AVAILABLE",
-    capacityM3: 25,
-    usedM3: 0,
-  },
-  {
-    id: "slot-b4",
-    code: "B-01-04",
-    zone: "B",
-    zoneName: "Zone B — Standard & Dry Rack",
-    zoneType: "STANDARD",
-    temperature: "24.0°C",
-    humidity: "50% RH",
-    status: "PARTIAL",
-    capacityM3: 25,
-    usedM3: 15,
-    tenantName: "PT Global Retailindo",
-    tenantPic: "Rina Marlina",
-    itemSku: "BAR-RETAIL-001",
-    itemName: "Electronic Equipment Master Cartons",
-    itemQuantity: "60 Boxes",
-    batchNumber: "BATCH-ELK-2026-09",
-    lastInspected: "10 Aug 2026",
-  },
-
-  // ZONE C: HEAVY DUTY
-  {
-    id: "slot-c1",
-    code: "C-01-01",
-    zone: "C",
-    zoneName: "Zone C — Heavy Duty & Pallet",
-    zoneType: "HEAVY_DUTY",
-    temperature: "25.0°C",
-    humidity: "55% RH",
-    status: "OCCUPIED",
-    capacityM3: 35,
-    usedM3: 35,
-    tenantName: "PT Logistik Indo Perkasa",
-    tenantPic: "Surya Dharma",
-    itemSku: "BAR-HVY-001",
-    itemName: "Industrial Machinery Pallet & Spareparts",
-    itemQuantity: "12 Pallets",
-    batchNumber: "BATCH-MSN-2026-01",
-    lastInspected: "08 Aug 2026",
-  },
-  {
-    id: "slot-c2",
-    code: "C-01-02",
-    zone: "C",
-    zoneName: "Zone C — Heavy Duty & Pallet",
-    zoneType: "HEAVY_DUTY",
-    temperature: "25.2°C",
-    humidity: "54% RH",
-    status: "AVAILABLE",
-    capacityM3: 35,
-    usedM3: 0,
-  },
-];
+import { useWarehouses, useWarehouse } from "@/hooks/use-warehouses";
+import { useWarehouseStore } from "@/store/warehouse.store";
+import { StorageZoneType } from "@/types/warehouse.types";
 
 export default function WarehouseCapacityPage() {
-  const { data: warehouseDetail } = useWarehouse("wh-jkt-central");
-  const [selectedZone, setSelectedZone] = useState<"A" | "B" | "C">("A");
+  const { selectedWarehouseId, setSelectedWarehouseId } = useWarehouseStore();
+  const { data: warehouseList = [], isLoading: isLoadingList } = useWarehouses();
+
+  const [activeWhId, setActiveWhId] = useState<string>("");
+
+  useEffect(() => {
+    if (selectedWarehouseId) {
+      setActiveWhId(selectedWarehouseId);
+    } else if (warehouseList.length > 0) {
+      setActiveWhId(warehouseList[0].id);
+      setSelectedWarehouseId(warehouseList[0].id);
+    }
+  }, [selectedWarehouseId, warehouseList, setSelectedWarehouseId]);
+
+  const {
+    data: warehouseDetail,
+    isLoading: isLoadingDetail,
+    refetch: refetchWarehouse,
+    isFetching,
+  } = useWarehouse(activeWhId);
+
+  const [selectedZone, setSelectedZone] = useState<"COLD_STORAGE" | "STANDARD" | "HEAVY_DUTY">(
+    "STANDARD"
+  );
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedSlot, setSelectedSlot] = useState<SlotData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const liveSlots: SlotData[] | null =
-    warehouseDetail && warehouseDetail.slots && warehouseDetail.slots.length > 0
-      ? warehouseDetail.slots.map((s) => {
-          const zoneKey: "A" | "B" | "C" =
-            s.zone === "COLD_STORAGE" ? "A" : s.zone === "STANDARD" ? "B" : "C";
-          const statusKey: "OCCUPIED" | "PARTIAL" | "AVAILABLE" | "MAINTENANCE" =
-            s.status === "OCCUPIED"
-              ? s.usedM3 >= s.capacityM3
-                ? "OCCUPIED"
-                : "PARTIAL"
-              : s.status === "MAINTENANCE"
-              ? "MAINTENANCE"
-              : "AVAILABLE";
+  const rawSlots = warehouseDetail?.slots || [];
 
-          return {
-            id: s.id,
-            code: s.code,
-            zone: zoneKey,
-            zoneName:
-              zoneKey === "A"
-                ? "Zone A — Cold Storage"
-                : zoneKey === "B"
-                ? "Zone B — Standard Rack"
-                : "Zone C — Heavy Duty",
-            zoneType: s.zone,
-            temperature: s.temperatureCelsius != null ? `${s.temperatureCelsius}°C` : "24.0°C",
-            humidity: s.humidityPercent != null ? `${s.humidityPercent}% RH` : "55% RH",
-            status: statusKey,
-            capacityM3: s.capacityM3,
-            usedM3: s.usedM3,
-            tenantName: s.currentGoodsIds?.length > 0 ? "PT Fresh Foods Indonesia" : undefined,
-            tenantPic: s.currentGoodsIds?.length > 0 ? "Hendra Prasetya" : undefined,
-            itemSku: s.currentGoodsIds?.[0] ? `SKU-${s.currentGoodsIds[0].substring(0, 8).toUpperCase()}` : undefined,
-            itemName: s.zone === "COLD_STORAGE" ? "Registered Cold Chain Commodity" : "Standard Cargo Goods",
-            itemQuantity: s.currentGoodsIds?.length ? `${s.currentGoodsIds.length * 50} Packages` : undefined,
-            lastInspected: "16 Aug 2026",
-          };
-        })
-      : null;
+  const mappedSlots: SlotData[] = rawSlots.map((s) => {
+    const usedM3 = Number(s.usedM3 || 0);
+    const capacityM3 = Number(s.capacityM3 || 0);
+    const isMaintenance = s.status === "MAINTENANCE";
 
-  const activeSlots = liveSlots && liveSlots.length > 0 ? liveSlots : INITIAL_SLOTS;
+    const statusKey: "OCCUPIED" | "PARTIAL" | "AVAILABLE" | "MAINTENANCE" =
+      isMaintenance
+        ? "MAINTENANCE"
+        : usedM3 === 0
+        ? "AVAILABLE"
+        : usedM3 >= capacityM3
+        ? "OCCUPIED"
+        : "PARTIAL";
 
-  const filteredSlots = activeSlots.filter(
-    (slot) =>
-      slot.zone === selectedZone &&
-      (statusFilter === "ALL" || slot.status === statusFilter)
-  );
+    const firstGood = s.storedGoods && s.storedGoods.length > 0 ? s.storedGoods[0] : null;
+
+    return {
+      id: s.id,
+      code: s.code,
+      warehouseId: s.warehouseId,
+      warehouseName: warehouseDetail?.name || "Warehouse Facility",
+      zone: s.zone === "COLD_STORAGE" ? "A" : s.zone === "STANDARD" ? "B" : "C",
+      zoneName:
+        s.zone === "COLD_STORAGE"
+          ? "Zone A — Cold Storage (-18°C)"
+          : s.zone === "STANDARD"
+          ? "Zone B — Standard & Dry Rack (24°C)"
+          : "Zone C — Heavy Duty & Pallet",
+      zoneType: s.zone,
+      temperature:
+        s.temperatureCelsius != null
+          ? `${s.temperatureCelsius}°C`
+          : s.zone === "COLD_STORAGE"
+          ? "-18.4°C"
+          : "24.0°C",
+      humidity: s.humidityPercent != null ? `${s.humidityPercent}% RH` : "60% RH",
+      status: statusKey,
+      capacityM3,
+      usedM3,
+      tenantName: firstGood ? firstGood.customerName : undefined,
+      goodsName: firstGood ? firstGood.name : undefined,
+      goodsBarcode: firstGood ? firstGood.barcode : undefined,
+      packageCount: firstGood ? firstGood.quantity : undefined,
+      unit: firstGood ? firstGood.unit : undefined,
+      allGoods: (s.storedGoods || []).map((g) => ({
+        id: g.id,
+        name: g.name,
+        barcode: g.barcode,
+        customerName: g.customerName,
+        quantity: g.quantity,
+        unit: g.unit,
+        volumeM3: g.volumeM3 || 0,
+      })),
+      lastUpdated: (s as any).updatedAt || new Date().toISOString(),
+    };
+  });
 
   const handleSlotClick = (slot: SlotData) => {
     setSelectedSlot(slot);
     setIsModalOpen(true);
   };
 
-  const getSlotStyle = (slot: SlotData) => {
-    switch (slot.status) {
-      case "OCCUPIED":
-        return "bg-indigo-600 border-indigo-700 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700";
-      case "PARTIAL":
-        return "bg-emerald-500 border-emerald-600 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600";
-      case "AVAILABLE":
-        return "bg-slate-50 border-slate-300 text-slate-700 border-dashed hover:bg-slate-100 hover:border-slate-400";
-      case "MAINTENANCE":
-        return "bg-amber-500 border-amber-600 text-slate-950 hover:bg-amber-600";
-    }
+  const handleTransferSuccess = () => {
+    refetchWarehouse();
   };
 
+  // Dynamic Zone Statistics
+  const coldSlots = mappedSlots.filter((s) => s.zoneType === "COLD_STORAGE");
+  const coldUsedM3 = Number(coldSlots.reduce((sum, s) => sum + s.usedM3, 0).toFixed(2));
+  const coldCapM3 = Number(coldSlots.reduce((sum, s) => sum + s.capacityM3, 0).toFixed(2));
+  const coldOccupied = coldSlots.filter((s) => s.usedM3 > 0).length;
+  const coldPct = coldCapM3 > 0 ? (coldUsedM3 / coldCapM3) * 100 : 0;
+
+  const stdSlots = mappedSlots.filter((s) => s.zoneType === "STANDARD");
+  const stdUsedM3 = Number(stdSlots.reduce((sum, s) => sum + s.usedM3, 0).toFixed(2));
+  const stdCapM3 = Number(stdSlots.reduce((sum, s) => sum + s.capacityM3, 0).toFixed(2));
+  const stdOccupied = stdSlots.filter((s) => s.usedM3 > 0).length;
+  const stdPct = stdCapM3 > 0 ? (stdUsedM3 / stdCapM3) * 100 : 0;
+
+  const heavySlots = mappedSlots.filter((s) => s.zoneType === "HEAVY_DUTY");
+  const heavyUsedM3 = Number(heavySlots.reduce((sum, s) => sum + s.usedM3, 0).toFixed(2));
+  const heavyCapM3 = Number(heavySlots.reduce((sum, s) => sum + s.capacityM3, 0).toFixed(2));
+  const heavyOccupied = heavySlots.filter((s) => s.usedM3 > 0).length;
+  const heavyPct = heavyCapM3 > 0 ? (heavyUsedM3 / heavyCapM3) * 100 : 0;
+
+  // Real Dynamic Warehouse Accounting
+  const totalCapM3 = warehouseDetail?.totalCapacityM3
+    ? Number(warehouseDetail.totalCapacityM3)
+    : mappedSlots.reduce((sum, s) => sum + s.capacityM3, 0);
+
+  const usedCapM3 = Number(
+    mappedSlots.reduce((sum, s) => sum + s.usedM3, 0).toFixed(2)
+  );
+  const remainingCapM3 = Math.max(0, Number((totalCapM3 - usedCapM3).toFixed(2)));
+  const occupancyRate = totalCapM3 > 0 ? ((usedCapM3 / totalCapM3) * 100).toFixed(1) : "0.0";
+  const totalOccupiedSlotsCount = mappedSlots.filter((s) => s.usedM3 > 0).length;
+
+  if ((isLoadingList && warehouseList.length === 0) || (isLoadingDetail && !warehouseDetail)) {
+    return (
+      <PageContainer>
+        <LoadingSkeleton />
+      </PageContainer>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Warehouse Capacity Visualization & Rack Slot Allocation
-            </h1>
-            <Badge className="bg-indigo-600 text-white text-[10px]">
-              Live 3D Grid
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Monitor rack occupancy status, zone temperature telemetry, and tenant allocation at Cakung Hub (JKT-01).
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Link href="/admin/dashboard">
-            <Button
-              variant="outline"
-              className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9"
-            >
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Zone Switcher Tabs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {/* Tab Zona A */}
-        <button
-          type="button"
-          onClick={() => setSelectedZone("A")}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            selectedZone === "A"
-              ? "bg-white border-sky-500 shadow-md ring-2 ring-sky-500/20"
-              : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Snowflake className="h-4 w-4 text-sky-600" />
-              <span>ZONE A — COLD STORAGE</span>
-            </span>
-            <Badge className="bg-sky-50 text-sky-700 border-sky-200 text-[10px]">
-              -18.4°C
-            </Badge>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-            Sub-zero storage for frozen beef, seafood & dairy commodities.
-          </p>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">35 / 40 Slots Occupied</span>
-            <span className="text-sky-600 font-mono">87.5%</span>
-          </div>
-        </button>
-
-        {/* Tab Zona B */}
-        <button
-          type="button"
-          onClick={() => setSelectedZone("B")}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            selectedZone === "B"
-              ? "bg-white border-indigo-500 shadow-md ring-2 ring-indigo-500/20"
-              : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Warehouse className="h-4 w-4 text-indigo-600" />
-              <span>ZONE B — STANDARD RACK</span>
-            </span>
-            <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px]">
-              24.0°C
-            </Badge>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-            Storage for furniture, apparel, and dry retail products.
-          </p>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">42 / 60 Slots Occupied</span>
-            <span className="text-indigo-600 font-mono">70.0%</span>
-          </div>
-        </button>
-
-        {/* Tab Zona C */}
-        <button
-          type="button"
-          onClick={() => setSelectedZone("C")}
-          className={`p-4 rounded-xl border text-left transition-all ${
-            selectedZone === "C"
-              ? "bg-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
-              : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Boxes className="h-4 w-4 text-emerald-600" />
-              <span>ZONE C — HEAVY DUTY</span>
-            </span>
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
-              25.0°C
-            </Badge>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-            Heavy cargo pallet area & industrial spare parts.
-          </p>
-          <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">20 / 30 Slots Occupied</span>
-            <span className="text-emerald-600 font-mono">66.7%</span>
-          </div>
-        </button>
-      </div>
-
-      {/* Grid Canvas Card & Controls */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
-        {/* Controls Bar: Filter & Legend */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-700">Filter Status:</span>
-            <div className="flex items-center gap-1.5">
-              {["ALL", "OCCUPIED", "PARTIAL", "AVAILABLE"].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                    statusFilter === status
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {status === "ALL"
-                    ? "All Slots"
-                    : status === "OCCUPIED"
-                    ? "Fully Occupied"
-                    : status === "PARTIAL"
-                    ? "Partial"
-                    : "Available"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Color Legend */}
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-indigo-600" />
-              <span>Fully Occupied (100%)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-emerald-500" />
-              <span>Partially Occupied</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-slate-100 border border-dashed border-slate-300" />
-              <span>Available</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded bg-amber-500" />
-              <span>Maintenance</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Interactive Rack Visualizer Grid */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900">
-              Rack & Bay Grid Visualization — {selectedZone === "A" ? "Zone A (Cold)" : selectedZone === "B" ? "Zone B (Standard)" : "Zone C (Heavy Duty)"}
-            </h2>
-            <span className="text-xs text-slate-400">
-              *Click on any slot to inspect goods & tenant details
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredSlots.map((slot) => (
-              <div
-                key={slot.id}
-                onClick={() => handleSlotClick(slot)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all transform hover:-translate-y-0.5 ${getSlotStyle(
-                  slot
-                )}`}
+    <PageContainer>
+      {/* 1. Standard Page Header */}
+      <PageHeader
+        breadcrumb="WMS Admin > Capacity & Rack Grid"
+        title="Warehouse Capacity & Visual Rack Slot Allocation"
+        subtitle="Real-time rack occupancy status, telemetry, tenant allocation, and intra-warehouse goods relocation."
+        badgeText="Live 3D Matrix"
+        badgeColor="bg-indigo-600 text-white"
+        isFetching={isFetching}
+        onRefresh={() => refetchWarehouse()}
+        actions={
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 h-9 shadow-sm">
+              <Building2 className="h-4 w-4 text-indigo-600" />
+              <select
+                value={activeWhId}
+                onChange={(e) => {
+                  setActiveWhId(e.target.value);
+                  setSelectedWarehouseId(e.target.value);
+                }}
+                className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold">{slot.code}</span>
-                  <span className="text-[10px] font-mono">{slot.temperature}</span>
-                </div>
-
-                <div className="mt-3">
-                  <p className="text-xs font-bold truncate">
-                    {slot.itemName || (slot.status === "AVAILABLE" ? "Vacant Slot" : "Under Maintenance")}
-                  </p>
-                  <p className="text-[10.5px] opacity-85 truncate mt-0.5">
-                    {slot.tenantName || (slot.status === "AVAILABLE" ? "Ready to allocate" : "Technician on duty")}
-                  </p>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-white/20 flex items-center justify-between text-[11px] font-mono">
-                  <span>{slot.usedM3} / {slot.capacityM3} m³</span>
-                  <span className="font-semibold underline">Details →</span>
-                </div>
-              </div>
-            ))}
+                {warehouseList.map((wh) => (
+                  <option key={wh.id} value={wh.id}>
+                    {wh.name} ({wh.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Link href="/admin/goods">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
+                <Boxes className="h-4 w-4" />
+                <span>Goods Registry</span>
+              </Button>
+            </Link>
           </div>
-        </div>
+        }
+      />
+
+      {/* 2. Standardized 4 KPI Summary Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Total Warehouse Capacity"
+          value={`${usedCapM3.toLocaleString("en-US")} m³`}
+          subvalue={`/ ${totalCapM3.toLocaleString("en-US")} m³`}
+          icon={Boxes}
+          theme="indigo"
+          progress={{ value: Number(occupancyRate) }}
+          badge={
+            <span className="font-bold text-indigo-600 font-mono text-xs">
+              {occupancyRate}%
+            </span>
+          }
+          subtext={
+            <span className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-500">Occupied volume</span>
+              <span className="font-semibold text-indigo-600">{totalOccupiedSlotsCount} / {mappedSlots.length} Slots</span>
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Remaining Available Space"
+          value={`${remainingCapM3.toLocaleString("en-US")} m³`}
+          icon={Warehouse}
+          theme="emerald"
+          badge={
+            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-[10px] py-0 font-semibold">
+              Available
+            </Badge>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-500">
+              Ready for immediate customer put-away
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Cold Storage Zone"
+          value={`${coldUsedM3} m³`}
+          subvalue={`/ ${coldCapM3} m³`}
+          icon={Snowflake}
+          theme="sky"
+          progress={{ value: coldPct }}
+          badge={
+            <Badge className="bg-sky-100 text-sky-800 hover:bg-sky-100 text-[10px] py-0 font-semibold">
+              -18.4°C Optimal
+            </Badge>
+          }
+          subtext={
+            <span className="flex items-center justify-between text-[11px] font-mono">
+              <span>{coldOccupied} / {coldSlots.length} Slots Occupied</span>
+              <span className="font-semibold text-sky-700">{coldPct.toFixed(1)}%</span>
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Standard Dry Storage"
+          value={`${stdUsedM3} m³`}
+          subvalue={`/ ${stdCapM3} m³`}
+          icon={Layers}
+          theme="amber"
+          progress={{ value: stdPct }}
+          badge={
+            <span className="text-xs text-amber-800 bg-amber-100 font-semibold px-2 py-0.5 rounded-md">
+              {stdPct.toFixed(1)}% Used
+            </span>
+          }
+          subtext={
+            <span className="flex items-center justify-between text-[11px] font-mono">
+              <span>{stdOccupied} / {stdSlots.length} Slots Occupied</span>
+              <span className="font-semibold text-amber-700">{stdSlots.length - stdOccupied} Vacant</span>
+            </span>
+          }
+        />
       </div>
 
-      {/* Interactive Inspection Modal */}
-      <SlotDetailModal
-        slot={selectedSlot}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-    </div>
+      {/* 3. Main Section: Zone Tabs + Filter Controls + Slot Grid */}
+      <SectionCard
+        title="Physical Rack Matrix & Zone Allocation Grid"
+        subtitle={`Viewing ${warehouseDetail?.name || "Facility"} • Click any slot to view cargo details or execute intra-rack relocation.`}
+        icon={Grid3X3}
+      >
+        <div className="space-y-5">
+          {/* Zone Selector Pills */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+              <button
+                type="button"
+                onClick={() => setSelectedZone("STANDARD")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  selectedZone === "STANDARD"
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                }`}
+              >
+                <Warehouse className="h-3.5 w-3.5 text-amber-400" />
+                <span>Zone B: Standard Dry ({stdSlots.length} Slots)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedZone("COLD_STORAGE")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  selectedZone === "COLD_STORAGE"
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                }`}
+              >
+                <Snowflake className="h-3.5 w-3.5" />
+                <span>Zone A: Cold Storage ({coldSlots.length} Slots)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedZone("HEAVY_DUTY")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  selectedZone === "HEAVY_DUTY"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                }`}
+              >
+                <Boxes className="h-3.5 w-3.5" />
+                <span>Zone C: Heavy Duty ({heavySlots.length} Slots)</span>
+              </button>
+            </div>
+
+            {/* Status Filter Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Status:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 focus:outline-none"
+              >
+                <option value="ALL">All Slots</option>
+                <option value="AVAILABLE">Vacant / Available</option>
+                <option value="PARTIAL">Partially Stored</option>
+                <option value="OCCUPIED">Full / Occupied</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Slot Grid Container */}
+          {mappedSlots.filter(
+            (s) =>
+              s.zoneType === selectedZone &&
+              (statusFilter === "ALL" || s.status === statusFilter)
+          ).length === 0 ? (
+            <EmptyState
+              icon={Grid3X3}
+              title="No Rack Slots Found"
+              description={`No slots match the current zone (${selectedZone}) and status filter (${statusFilter}).`}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {mappedSlots
+                .filter(
+                  (s) =>
+                    s.zoneType === selectedZone &&
+                    (statusFilter === "ALL" || s.status === statusFilter)
+                )
+                .map((slot) => {
+                  const isOccupied = slot.usedM3 > 0;
+                  const isFull = slot.usedM3 >= slot.capacityM3;
+                  const pct = slot.capacityM3 > 0 ? (slot.usedM3 / slot.capacityM3) * 100 : 0;
+
+                  return (
+                    <div
+                      key={slot.id}
+                      onClick={() => handleSlotClick(slot)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer group hover:scale-[1.02] shadow-xs ${
+                        isFull
+                          ? "bg-rose-50/40 border-rose-200 hover:border-rose-400"
+                          : isOccupied
+                          ? "bg-indigo-50/40 border-indigo-200 hover:border-indigo-400"
+                          : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-slate-900">
+                          {slot.code}
+                        </span>
+                        <Badge
+                          className={`text-[9.5px] font-semibold ${
+                            isFull
+                              ? "bg-rose-600 text-white"
+                              : isOccupied
+                              ? "bg-indigo-600 text-white"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {isFull ? "Occupied" : isOccupied ? "Partial" : "Vacant"}
+                        </Badge>
+                      </div>
+
+                      <div className="my-3 space-y-1">
+                        <div className="flex justify-between text-[11px] font-mono text-slate-500">
+                          <span>Volume Used</span>
+                          <span className="font-bold text-slate-800">
+                            {slot.usedM3} / {slot.capacityM3} m³
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              isFull
+                                ? "bg-rose-500"
+                                : isOccupied
+                                ? "bg-indigo-600"
+                                : "bg-slate-200"
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 truncate max-w-[120px]">
+                          {slot.tenantName || "No Cargo"}
+                        </span>
+                        <span className="font-mono text-slate-500">{slot.temperature}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      </SectionCard>
+
+      {/* Slot Detail & Relocation Modal */}
+      {selectedSlot && (
+        <SlotDetailModal
+          slot={selectedSlot}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedSlot(null);
+          }}
+          onTransferSuccess={handleTransferSuccess}
+        />
+      )}
+    </PageContainer>
   );
 }

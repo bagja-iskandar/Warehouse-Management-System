@@ -13,9 +13,17 @@ import {
   Search,
   Filter,
   Download,
+  Boxes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  PageContainer,
+  PageHeader,
+  MetricCard,
+  SectionCard,
+  EmptyState,
+} from "@/components/dashboard";
 
 interface DriverTripHistory {
   id: string;
@@ -79,132 +87,188 @@ export default function DriverDeliveryHistoryPage() {
       t.itemsSummary.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalDeliveredKoli = DRIVER_TRIPS.reduce((acc, t) => acc + t.totalKoli, 0);
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              My Delivery Trip History
-            </h1>
-            <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
-              Driver Log
+    <PageContainer>
+      {/* 1. Page Header */}
+      <PageHeader
+        breadcrumb="Driver Workstation > Delivery History"
+        title="My Delivery Trip History"
+        subtitle="Historical log of all successfully delivered orders along with customer satisfaction ratings."
+        badgeText="Driver Log"
+        badgeColor="bg-amber-500 text-slate-950"
+        actions={
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export History (CSV)</span>
+            </Button>
+          </div>
+        }
+      />
+
+      {/* 2. 4 Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          label="Total Completed Trips"
+          value={`${DRIVER_TRIPS.length} Trips`}
+          icon={Truck}
+          theme="emerald"
+          badge={
+            <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
+              100% POD
             </Badge>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Historical log of all successfully delivered orders along with customer satisfaction ratings.
-          </p>
-        </div>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-400">
+              Verified customer signatures
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Average Driver Rating"
+          value="4.96 / 5.0"
+          icon={Star}
+          theme="amber"
+          badge={
+            <Badge className="bg-amber-100 text-amber-900 border-amber-200 text-[10px] py-0">
+              Top Rated
+            </Badge>
+          }
+          subtext={
+            <span className="text-[11px] text-amber-700 font-medium">
+              Based on customer reviews
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Total Cargo Delivered"
+          value={`${totalDeliveredKoli} Packages`}
+          icon={Boxes}
+          theme="indigo"
+          subtext={
+            <span className="text-[11px] text-slate-400">
+              Physical units handled
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="On-Time Delivery Rate"
+          value="98.5%"
+          icon={CheckCircle2}
+          theme="sky"
+          subtext={
+            <span className="text-[11px] text-slate-400">
+              Fleet schedule adherence
+            </span>
+          }
+        />
       </div>
 
-      {/* 3 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Completed Deliveries</span>
-          <p className="text-2xl font-extrabold text-slate-900">142 Trips</p>
-          <p className="text-[11px] text-slate-400">100% Digital POD Verified</p>
-        </div>
+      {/* 3. Main History Table Card */}
+      <SectionCard
+        title="Completed Delivery Manifests & Ratings"
+        subtitle="Search previous shipments, review drop-off locations, and check customer satisfaction feedback"
+        icon={History}
+      >
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="relative w-full sm:w-80">
+              <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search DO #, recipient, cargo..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
+              />
+            </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Average Service Rating</span>
-          <div className="flex items-center gap-1.5">
-            <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-            <span className="text-2xl font-extrabold text-slate-900">4.95 / 5.0</span>
+            <span className="text-xs font-semibold text-slate-500">
+              Showing {filteredTrips.length} completed manifests
+            </span>
           </div>
-          <p className="text-[11px] text-emerald-600 font-semibold">99.2% On-Time Delivery Rate</p>
-        </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Cargo Delivered</span>
-          <p className="text-2xl font-extrabold text-indigo-600">12,450 Packages</p>
-          <p className="text-[11px] text-slate-400">Reefer Truck Fleet B 9821 TKN</p>
-        </div>
-      </div>
-
-      {/* Trips Table Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-900">
-            Completed Deliveries Directory
-          </h2>
-
-          <div className="relative w-full sm:w-72">
-            <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search DO number, recipient, or cargo..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"
+          {filteredTrips.length === 0 ? (
+            <EmptyState
+              icon={Truck}
+              title="No Delivery Trips Found"
+              description="No historical delivery trips match your search query."
             />
-          </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
+                    <th className="py-3 px-3">Order Number & Vehicle</th>
+                    <th className="py-3 px-3">Recipient & Destination</th>
+                    <th className="py-3 px-3">Cargo Summary</th>
+                    <th className="py-3 px-3">Completion Time</th>
+                    <th className="py-3 px-3">Customer Rating</th>
+                    <th className="py-3 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredTrips.map((trip) => (
+                    <tr key={trip.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-3">
+                        <span className="font-mono font-bold text-indigo-600 block text-xs">
+                          {trip.doNumber}
+                        </span>
+                        <span className="text-[10.5px] text-slate-400 font-mono">
+                          {trip.vehiclePlate}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        <span className="font-bold text-slate-900 block leading-tight">
+                          {trip.recipientName}
+                        </span>
+                        <span className="text-[10.5px] text-slate-400 block mt-0.5 max-w-[200px] truncate">
+                          {trip.recipientAddress}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        <span className="text-slate-800 font-medium block">
+                          {trip.itemsSummary}
+                        </span>
+                        <span className="text-[10.5px] text-slate-400">
+                          Total: {trip.totalKoli} Packages
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        <span className="font-mono text-slate-700">{trip.deliveryDate}</span>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-1 font-bold text-slate-900">
+                          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                          <span>{trip.customerRating}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-3">
+                        <Badge variant="success" className="text-[10.5px]">
+                          Completed (POD)
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">DO No.</th>
-                <th className="py-3 px-3">Destination & Recipient</th>
-                <th className="py-3 px-3">Cargo Summary</th>
-                <th className="py-3 px-3">Completion Time</th>
-                <th className="py-3 px-3">Customer Rating</th>
-                <th className="py-3 px-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredTrips.map((trip) => (
-                <tr key={trip.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-3">
-                    <span className="font-mono font-bold text-indigo-600 block text-xs">
-                      {trip.doNumber}
-                    </span>
-                    <span className="text-[10.5px] text-slate-400 font-mono">
-                      {trip.vehiclePlate}
-                    </span>
-                  </td>
-
-                  <td className="py-3.5 px-3">
-                    <span className="font-bold text-slate-900 block leading-tight">
-                      {trip.recipientName}
-                    </span>
-                    <span className="text-[10.5px] text-slate-400 block mt-0.5 max-w-[200px] truncate">
-                      {trip.recipientAddress}
-                    </span>
-                  </td>
-
-                  <td className="py-3.5 px-3">
-                    <span className="text-slate-800 font-medium block">
-                      {trip.itemsSummary}
-                    </span>
-                    <span className="text-[10.5px] text-slate-400">
-                      Total: {trip.totalKoli} Packages
-                    </span>
-                  </td>
-
-                  <td className="py-3.5 px-3">
-                    <span className="font-mono text-slate-700">{trip.deliveryDate}</span>
-                  </td>
-
-                  <td className="py-3.5 px-3">
-                    <div className="flex items-center gap-1 font-bold text-slate-900">
-                      <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                      <span>{trip.customerRating}</span>
-                    </div>
-                  </td>
-
-                  <td className="py-3.5 px-3">
-                    <Badge variant="success" className="text-[10.5px]">
-                      Completed (POD)
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+      </SectionCard>
+    </PageContainer>
   );
 }

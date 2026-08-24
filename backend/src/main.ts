@@ -43,7 +43,10 @@ async function bootstrap() {
         !origin ||
         nodeEnv === 'development' ||
         corsOrigin.includes('*') ||
-        corsOrigin.split(',').map((o) => o.trim()).includes(origin) ||
+        corsOrigin
+          .split(',')
+          .map((o) => o.trim())
+          .includes(origin) ||
         /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
       ) {
         callback(null, true);

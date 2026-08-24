@@ -25,6 +25,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  PageContainer,
+  PageHeader,
+  MetricCard,
+  SectionCard,
+  FilterBar,
+  EmptyState,
+} from "@/components/dashboard";
 import { useWarehouses } from "@/hooks/use-warehouses";
 
 interface HubFacility {
@@ -89,7 +97,7 @@ const HUBS_DATA: HubFacility[] = [
 ];
 
 export default function WarehouseOverviewPage() {
-  const { data: liveWarehouses } = useWarehouses();
+  const { data: liveWarehouses, isFetching, refetch } = useWarehouses();
   const [selectedTab, setSelectedTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -138,407 +146,242 @@ export default function WarehouseOverviewPage() {
   const totalUsedSum = activeHubs.reduce((acc, h) => acc + h.usedCapacityM3, 0);
   const totalSlotsSum = activeHubs.reduce((acc, h) => acc + h.totalSlots, 0);
   const totalOccupiedSlotsSum = activeHubs.reduce((acc, h) => acc + h.occupiedSlots, 0);
+  const totalAvailableSpace = Math.max(0, totalCapacitySum - totalUsedSum);
+  const totalAvailableSlots = Math.max(0, totalSlotsSum - totalOccupiedSlotsSum);
+
+  const totalStandardCap = activeHubs.reduce((acc, h) => acc + h.standardCapacityM3, 0);
+  const totalStandardUsed = activeHubs.reduce((acc, h) => acc + h.standardUsedM3, 0);
+  const totalStandardVacant = Math.max(0, totalStandardCap - totalStandardUsed);
+
+  const totalColdCap = activeHubs.reduce((acc, h) => acc + h.coldCapacityM3, 0);
+  const totalColdUsed = activeHubs.reduce((acc, h) => acc + h.coldUsedM3, 0);
+  const totalColdVacant = Math.max(0, totalColdCap - totalColdUsed);
+
+  const utilizationRate = totalCapacitySum > 0 ? (totalUsedSum / totalCapacitySum) * 100 : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Facility Overview & Warehouse Network
-            </h1>
-            <Badge className="bg-indigo-600 text-white text-[10px]">
-              Multi-Hub Network
-            </Badge>
+    <PageContainer>
+      {/* 1. Page Header */}
+      <PageHeader
+        breadcrumb="WMS Admin > Multi-Hub Overview"
+        title="Facility Overview & Warehouse Network"
+        subtitle="Monitor physical capacity utilization, cold & standard storage zone allocations, and multi-hub operational health."
+        badgeText="Multi-Hub Network"
+        badgeColor="bg-indigo-600 text-white"
+        isFetching={isFetching}
+        onRefresh={() => refetch()}
+        actions={
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/warehouse/capacity">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
+                <Grid3X3 className="h-4 w-4" />
+                <span>Rack Visualizer</span>
+              </Button>
+            </Link>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Monitor physical capacity utilization, cold & standard storage zone allocations, and multi-hub operational health.
-          </p>
-        </div>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>Export Capacity Report</span>
-          </Button>
-
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
-            <Plus className="h-4 w-4" />
-            <span>Add Warehouse Facility</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Filter Tabs & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-2">
-        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-          <button
-            onClick={() => setSelectedTab("ALL")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-              selectedTab === "ALL"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-            }`}
-          >
-            All Facilities (2 Hubs)
-          </button>
-          <button
-            onClick={() => setSelectedTab("CKG")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-              selectedTab === "CKG"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-            }`}
-          >
-            Cakung Central Hub (WH-CKG-01)
-          </button>
-          <button
-            onClick={() => setSelectedTab("BDG")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-              selectedTab === "BDG"
-                ? "bg-slate-900 text-white shadow-sm"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-            }`}
-          >
-            Gedebage Bandung Hub (WH-BDG-01)
-          </button>
-        </div>
-
-        <div className="relative w-full sm:w-64">
-          <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search warehouse hub or location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-8.5 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600"
-          />
-        </div>
-      </div>
-
-      {/* 4 KPI Cards */}
+      {/* 2. 4 Metric KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Total Physical Capacity */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
-              Total Network Capacity
+        <MetricCard
+          label="Total Network Capacity"
+          value={`${totalUsedSum.toLocaleString("en-US")} m³`}
+          subvalue={`/ ${totalCapacitySum.toLocaleString("en-US")} m³`}
+          icon={Boxes}
+          theme="indigo"
+          progress={{ value: utilizationRate }}
+          badge={
+            <span className="font-bold text-indigo-600 font-mono text-xs">
+              {utilizationRate.toFixed(1)}%
             </span>
-            <div className="h-8.5 w-8.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Boxes className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div>
-            <span className="text-2xl font-extrabold text-slate-900">
-              {totalCapacitySum.toLocaleString("en-US")} m³
+          }
+          subtext={
+            <span className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-500">Occupied volume</span>
+              <span className="font-semibold text-emerald-600">{totalAvailableSpace.toLocaleString("en-US")} m³ Available</span>
             </span>
-            <span className="text-xs text-slate-400 ml-1.5 font-mono">Total</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">
-              {totalUsedSum.toLocaleString("en-US")} m³ Occupied
-            </span>
-            <span className="font-bold text-indigo-600 font-mono">
-              {((totalUsedSum / totalCapacitySum) * 100).toFixed(1)}%
-            </span>
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-indigo-600 h-2 rounded-full"
-              style={{ width: `${(totalUsedSum / totalCapacitySum) * 100}%` }}
-            />
-          </div>
-        </div>
+          }
+        />
 
-        {/* KPI 2: Available Space */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
-              Available Space
-            </span>
-            <div className="h-8.5 w-8.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Warehouse className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div>
-            <span className="text-2xl font-extrabold text-slate-900">
-              {(totalCapacitySum - totalUsedSum).toLocaleString("en-US")} m³
-            </span>
-            <span className="text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold ml-1.5">
-              Vacant
-            </span>
-          </div>
-          <div className="space-y-1 text-[11px] text-slate-500 pt-1">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Standard Storage:
-              </span>
-              <span className="font-bold text-slate-700">2,750 m³</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-sky-500" />
-                Cold Storage:
-              </span>
-              <span className="font-bold text-slate-700">700 m³</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 3: Total Rack Slots */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
-              Total Physical Rack Slots
-            </span>
-            <div className="h-8.5 w-8.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Grid3X3 className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div>
-            <span className="text-2xl font-extrabold text-slate-900">
-              {totalSlotsSum} Slots
-            </span>
-          </div>
-          <div className="text-xs text-slate-600 flex items-center gap-2 font-medium">
-            <span className="text-indigo-600 font-bold">{totalOccupiedSlotsSum} Occupied</span>
-            <span>•</span>
-            <span className="text-emerald-600 font-bold">
-              {totalSlotsSum - totalOccupiedSlotsSum - 1} Available
-            </span>
-            <span>•</span>
-            <span className="text-amber-600 font-bold">1 Maint</span>
-          </div>
-        </div>
-
-        {/* KPI 4: Hub Operational Status */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
-              Hub Operational Health
-            </span>
-            <div className="h-8.5 w-8.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Activity className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-extrabold text-emerald-600">2 Hubs</span>
-            <Badge variant="success" className="text-[10px]">
-              Normal Active
+        <MetricCard
+          label="Available Rack Slots"
+          value={`${totalAvailableSlots} Slots`}
+          subvalue={`/ ${totalSlotsSum}`}
+          icon={Warehouse}
+          theme="emerald"
+          badge={
+            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 text-[10px] py-0 font-semibold">
+              Available
             </Badge>
-          </div>
-          <div className="space-y-1 text-[11px] text-slate-500 pt-1">
-            <div className="flex items-center gap-1.5 text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>0 Sensor Temp Alerts</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-600 font-medium">
-              <ShieldCheck className="h-3.5 w-3.5 text-indigo-600" />
-              <span>99.8% Hub Network Uptime</span>
-            </div>
-          </div>
-        </div>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-500">
+              Across {activeHubs.length} operational warehouse hubs
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Cold Storage Network"
+          value={`${totalColdUsed} m³`}
+          subvalue={`/ ${totalColdCap} m³`}
+          icon={Snowflake}
+          theme="sky"
+          progress={{ value: totalColdCap > 0 ? (totalColdUsed / totalColdCap) * 100 : 0 }}
+          badge={
+            <Badge className="bg-sky-100 text-sky-800 hover:bg-sky-100 text-[10px] py-0 font-semibold">
+              -18.4°C Optimal
+            </Badge>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-500 font-mono">
+              Vacant: {totalColdVacant} m³ cold storage space
+            </span>
+          }
+        />
+
+        <MetricCard
+          label="Standard Dry Storage"
+          value={`${totalStandardUsed} m³`}
+          subvalue={`/ ${totalStandardCap} m³`}
+          icon={Layers}
+          theme="amber"
+          progress={{ value: totalStandardCap > 0 ? (totalStandardUsed / totalStandardCap) * 100 : 0 }}
+          badge={
+            <span className="text-xs text-amber-800 bg-amber-100 font-semibold px-2 py-0.5 rounded-md">
+              {totalStandardCap > 0 ? ((totalStandardUsed / totalStandardCap) * 100).toFixed(0) : 0}% Used
+            </span>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-500 font-mono">
+              Vacant: {totalStandardVacant} m³ standard space
+            </span>
+          }
+        />
       </div>
 
-      {/* Main Grid: Hub Facilities Detail List & Telemetry Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Hub Facility Cards (8 Columns) */}
-        <div className="lg:col-span-8 space-y-4">
-          <h2 className="text-sm font-bold text-slate-900">
-            Warehouse Facilities & Zone Utilization
-          </h2>
+      {/* 3. Filter Bar & Facility Tabs */}
+      <FilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search facility name, code, or city..."
+      >
+        <button
+          onClick={() => setSelectedTab("ALL")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            selectedTab === "ALL"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          All Facilities ({activeHubs.length})
+        </button>
+        <button
+          onClick={() => setSelectedTab("CKG")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            selectedTab === "CKG"
+              ? "bg-indigo-600 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Jakarta Hub (Cakung)
+        </button>
+        <button
+          onClick={() => setSelectedTab("BDG")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            selectedTab === "BDG"
+              ? "bg-sky-600 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Bandung Hub (Gedebage)
+        </button>
+      </FilterBar>
 
-          <div className="space-y-4">
-            {filteredHubs.map((hub) => {
-              const usedPercentage = ((hub.usedCapacityM3 / hub.totalCapacityM3) * 100).toFixed(1);
-              const coldPercentage = ((hub.coldUsedM3 / hub.coldCapacityM3) * 100).toFixed(1);
-              const stdPercentage = ((hub.standardUsedM3 / hub.standardCapacityM3) * 100).toFixed(1);
-
-              return (
-                <div
-                  key={hub.id}
-                  className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5 hover:border-slate-300 transition-colors"
-                >
-                  {/* Hub Card Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                    <div>
-                      <div className="flex items-center gap-2.5">
-                        <h3 className="text-sm font-bold text-slate-900">
-                          {hub.name}
-                        </h3>
-                        <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                          {hub.code}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Normal Operations
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{hub.location}</span>
-                        <span>•</span>
-                        <User className="h-3.5 w-3.5 text-slate-400" />
-                        <span>PIC: {hub.picName}</span>
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Link href="/admin/warehouse/capacity">
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm h-8.5 px-3 flex items-center gap-1.5">
-                          <Grid3X3 className="h-3.5 w-3.5" />
-                          <span>Rack Visualizer</span>
-                        </Button>
-                      </Link>
-                    </div>
+      {/* 4. Main Section: Facility Hub Cards Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filteredHubs.map((hub) => {
+          const hubUtil = hub.totalCapacityM3 > 0 ? (hub.usedCapacityM3 / hub.totalCapacityM3) * 100 : 0;
+          return (
+            <SectionCard
+              key={hub.id}
+              title={hub.name}
+              subtitle={hub.location}
+              icon={Building2}
+              badge={
+                <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-mono font-semibold">
+                  {hub.code}
+                </Badge>
+              }
+              headerAction={
+                <Link href="/admin/warehouse/capacity">
+                  <Button variant="ghost" size="sm" className="text-xs text-indigo-600 font-semibold h-8 px-2 hover:bg-indigo-50">
+                    Slot Matrix →
+                  </Button>
+                </Link>
+              }
+            >
+              <div className="space-y-4">
+                {/* Total Capacity Bar */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-semibold text-slate-700">Total Volumetric Usage</span>
+                    <span className="font-bold text-slate-900 font-mono">
+                      {hub.usedCapacityM3} / {hub.totalCapacityM3} m³ ({hubUtil.toFixed(1)}%)
+                    </span>
                   </div>
-
-                  {/* Capacity & Zone Breakdown */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Total Capacity Progress */}
-                    <div className="p-4 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-slate-600">Total Physical Capacity</span>
-                        <span className="font-bold text-slate-900">
-                          {hub.usedCapacityM3.toLocaleString("en-US")} / {hub.totalCapacityM3.toLocaleString("en-US")} m³ ({usedPercentage}%)
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full"
-                          style={{ width: `${usedPercentage}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                        <span>Active Tenants: {hub.activeTenantsCount} Companies</span>
-                        <span>Slots: {hub.occupiedSlots} / {hub.totalSlots} Occupied</span>
-                      </div>
-                    </div>
-
-                    {/* Zone Breakdown Stats */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {/* Cold Zone */}
-                      <div className="p-3 bg-sky-50/60 border border-sky-100 rounded-xl space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-sky-900 flex items-center gap-1">
-                            <Snowflake className="h-3 w-3 text-sky-600" />
-                            <span>Cold Storage</span>
-                          </span>
-                          <span className="text-[10px] font-mono font-bold text-sky-700 bg-sky-100 px-1.5 py-0.2 rounded">
-                            {hub.coldTemp}
-                          </span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-900">
-                          {hub.coldUsedM3} / {hub.coldCapacityM3} m³
-                        </p>
-                        <p className="text-[10.5px] text-sky-700 font-medium">
-                          {coldPercentage}% Occupied
-                        </p>
-                      </div>
-
-                      {/* Standard Zone */}
-                      <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-xl space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-emerald-900 flex items-center gap-1">
-                            <Warehouse className="h-3 w-3 text-emerald-600" />
-                            <span>Standard</span>
-                          </span>
-                          <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
-                            {hub.standardTemp}
-                          </span>
-                        </div>
-                        <p className="text-xs font-bold text-slate-900">
-                          {hub.standardUsedM3} / {hub.standardCapacityM3} m³
-                        </p>
-                        <p className="text-[10.5px] text-emerald-700 font-medium">
-                          {stdPercentage}% Occupied
-                        </p>
-                      </div>
-                    </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.max(0, hubUtil))}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                    <span>{hub.occupiedSlots} / {hub.totalSlots} Rack Slots Occupied</span>
+                    <span className="text-emerald-700 font-semibold">{hub.totalCapacityM3 - hub.usedCapacityM3} m³ Available</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Right: Hub Monitoring & Maintenance Schedule (4 Columns) */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Live Telemetry Health Monitor Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-bold text-slate-900">
-                Network Sensor Monitoring
-              </h2>
-              <span className="text-[10.5px] text-emerald-600 font-bold flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Stream
-              </span>
-            </div>
+                {/* Storage Zones Breakdown */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-sky-50/60 border border-sky-100 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sky-950 flex items-center gap-1.5">
+                        <Snowflake className="h-3.5 w-3.5 text-sky-600" />
+                        Cold Storage
+                      </span>
+                      <span className="font-mono text-sky-800 text-[11px] font-bold">{hub.coldTemp}</span>
+                    </div>
+                    <p className="text-[11px] text-sky-700 font-mono mt-1">
+                      {hub.coldUsedM3} / {hub.coldCapacityM3} m³
+                    </p>
+                  </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                <div className="flex items-center justify-between font-bold text-slate-900">
-                  <span>Cakung Hub (JKT-01)</span>
-                  <span className="text-sky-600 font-mono">-18.4°C</span>
+                  <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-100 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-amber-950 flex items-center gap-1.5">
+                        <Warehouse className="h-3.5 w-3.5 text-amber-600" />
+                        Standard Storage
+                      </span>
+                      <span className="font-mono text-amber-800 text-[11px] font-bold">{hub.standardTemp}</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700 font-mono mt-1">
+                      {hub.standardUsedM3} / {hub.standardCapacityM3} m³
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Sensor Nodes: SN-CKG-001 (Cold A) & SN-CKG-002 (Std B)
-                </p>
-              </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                <div className="flex items-center justify-between font-bold text-slate-900">
-                  <span>Gedebage Hub (BDG-01)</span>
-                  <span className="text-sky-600 font-mono">-20.1°C</span>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Sensor Nodes: SN-BDG-001 (Cold A) & SN-BDG-002 (Std B)
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Facility Audit Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-bold text-slate-900">
-                Audit & Maintenance Schedule
-              </h2>
-              <Badge variant="outline" className="text-[10px]">
-                Q3 2026
-              </Badge>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="flex items-start gap-2.5">
-                <div className="p-1 rounded bg-indigo-50 text-indigo-600 mt-0.5">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-800">Cold Storage Temperature Sensor Calibration</p>
-                  <p className="text-[11px] text-slate-500">Cakung Hub • Scheduled: Aug 20, 2026</p>
+                {/* PIC Info */}
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 text-slate-500">
+                  <span>Manager PIC: {hub.picName}</span>
+                  <span className="text-indigo-600 font-semibold">{hub.activeTenantsCount} Active Tenants</span>
                 </div>
               </div>
-
-              <div className="flex items-start gap-2.5">
-                <div className="p-1 rounded bg-amber-50 text-amber-600 mt-0.5">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-800">Rack Structure Inspection Slot A-02-03</p>
-                  <p className="text-[11px] text-slate-500">Under Maintenance • PT ColdTech Technicians</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </SectionCard>
+          );
+        })}
       </div>
-    </div>
+    </PageContainer>
   );
 }

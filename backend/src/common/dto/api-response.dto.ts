@@ -61,6 +61,9 @@ export class ApiErrorResponseDto {
   })
   errors?: ValidationErrorDetailDto[];
 
+  @ApiPropertyOptional({ example: 'CONFLICT', description: 'Standard business error code' })
+  code?: string;
+
   @ApiProperty({ type: ResponseMetaDto, description: 'Response metadata' })
   meta: ResponseMetaDto;
 

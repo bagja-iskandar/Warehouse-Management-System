@@ -19,7 +19,11 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { BillingService } from './billing.service';
 import { InvoiceQueryDto } from './dto/invoice-query.dto';
-import { InvoiceDetailResponseDto, InvoiceListItemDto } from './dto/invoice-response.dto';
+import {
+  InvoiceDetailResponseDto,
+  InvoiceListItemDto,
+  PaymentResponseDto,
+} from './dto/invoice-response.dto';
 import { PayInvoiceDto } from './dto/pay-invoice.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 
@@ -35,7 +39,7 @@ export class BillingController {
   @ApiOperation({
     summary: 'Mendapatkan Daftar Faktur Tagihan Bulanan (Invoices)',
     description:
-      'Mengambil daftar faktur tagihan sewa kubikasi gudang dengan paginasi, filter status (UNPAID, PAID, OVERDUE), kalkulasi denda 5%/minggu otomatis, dan isolasi tenant.',
+      'Mengambil daftar faktur tagihan sewa kubikasi gudang dengan paginasi, filter status (UNPAID, PENDING_PAYMENT, PAID, OVERDUE), kalkulasi denda 5%/minggu otomatis, dan isolasi tenant.',
   })
   @ApiResponse({
     status: 200,
@@ -56,6 +60,29 @@ export class BillingController {
         totalItems: result.meta.totalItems,
         totalPages: result.meta.totalPages,
       },
+    };
+  }
+
+  @Get('payments/pending')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mendapatkan Antrean Pembayaran Menunggu Verifikasi (Admin Only)',
+    description:
+      'Mengambil seluruh transaksi pembayaran customer dengan status UNDER_REVIEW yang menunggu verifikasi admin.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Daftar pembayaran menunggu verifikasi berhasil diambil',
+    type: [PaymentResponseDto],
+  })
+  async getPendingPayments(
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: PaymentResponseDto[] }> {
+    const data = await this.billingService.getPendingPayments(currentUser);
+    return {
+      message: 'Daftar pembayaran menunggu verifikasi berhasil diambil',
+      data,
     };
   }
 
@@ -96,7 +123,7 @@ export class BillingController {
   @ApiOperation({
     summary: 'Menyerahkan Bukti Pembayaran Tagihan Faktur (Payment Submission)',
     description:
-      'Mengirimkan bukti transfer (MinIO/S3), metode pembayaran (VA/Transfer/QRIS), dan nominal pembayaran. Status faktur akan berubah menjadi PENDING_VERIFICATION.',
+      'Mengirimkan bukti transfer (MinIO/S3), metode pembayaran (VA/Transfer/QRIS), dan nominal pembayaran. Status faktur akan berubah menjadi PENDING_PAYMENT dan payment status UNDER_REVIEW.',
   })
   @ApiParam({
     name: 'id',
@@ -130,7 +157,7 @@ export class BillingController {
   @ApiOperation({
     summary: 'Verifikasi Pembayaran Faktur Tagihan oleh Admin (Admin Only)',
     description:
-      'Admin memverifikasi bukti transfer pembayaran. Jika disetujui (VERIFY), status berubah menjadi PAID. Jika ditolak (REJECT), status kembali ke UNPAID/OVERDUE.',
+      'Admin memverifikasi bukti transfer pembayaran. Jika disetujui (VERIFY), status berubah menjadi PAID dan receipt number diterbitkan. Jika ditolak (REJECT), status kembali ke UNPAID/OVERDUE disertai alasan.',
   })
   @ApiParam({
     name: 'id',

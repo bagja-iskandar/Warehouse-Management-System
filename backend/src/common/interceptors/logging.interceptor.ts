@@ -13,7 +13,14 @@ export class LoggingInterceptor implements NestInterceptor {
     const response = ctx.getResponse<Response>();
 
     const { method, url } = request;
-    const correlationId = request.headers['x-correlation-id'] || 'none';
+    const correlationId =
+      ((request.headers['x-request-id'] ||
+        request.headers['x-correlation-id']) as string | undefined) ||
+      `wms_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+
+    // Set correlation ID header in response
+    response.setHeader('x-request-id', correlationId);
+
     const startTime = Date.now();
 
     return next.handle().pipe(

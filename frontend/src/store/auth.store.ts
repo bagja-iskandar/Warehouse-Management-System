@@ -8,6 +8,8 @@ interface AuthStoreState {
   user: UserProfile | null;
   isAuthenticated: boolean;
   token: string | null;
+  hasHydrated: boolean;
+  setHasHydrated: (hydrated: boolean) => void;
   setUser: (user: UserProfile | null, token?: string) => void;
   setRole: (role: UserRole) => void;
   logout: () => void;
@@ -19,6 +21,8 @@ export const useAuthStore = create<AuthStoreState>()(
       user: null,
       isAuthenticated: false,
       token: null,
+      hasHydrated: false,
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
       setUser: (user, token) =>
         set({
           user,
@@ -38,6 +42,9 @@ export const useAuthStore = create<AuthStoreState>()(
     }),
     {
       name: "wms-auth-storage",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

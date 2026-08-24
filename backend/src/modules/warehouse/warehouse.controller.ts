@@ -1,13 +1,28 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
+import { RentWarehouseSpaceDto } from './dto/rent-warehouse.dto';
 import { WarehouseQueryDto } from './dto/warehouse-query.dto';
 import { WarehouseDetailResponseDto, WarehouseListItemDto } from './dto/warehouse-response.dto';
-import { WarehouseService } from './warehouse.service';
+import { RentalBookingResult, WarehouseService } from './warehouse.service';
 
 @ApiTags('Warehouses')
 @ApiBearerAuth('JWT-auth')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('warehouses')
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
@@ -34,6 +49,60 @@ export class WarehouseController {
     const data = await this.warehouseService.findAll(query);
     return {
       message: 'Daftar fasilitas gudang berhasil diambil',
+      data,
+    };
+  }
+
+  @Get('customer/active')
+  @Roles('CUSTOMER', 'ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mendapatkan Daftar Fasilitas Gudang Aktif Milik Customer',
+    description:
+      'Mengambil daftar gudang yang memiliki relasi sewa aktif atau penempatan barang milik Customer yang sedang login.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Daftar fasilitas gudang aktif customer berhasil diambil',
+    type: [WarehouseListItemDto],
+  })
+  async getCustomerWarehouses(
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: WarehouseListItemDto[] }> {
+    const data = await this.warehouseService.getCustomerWarehouses(currentUser);
+    return {
+      message: 'Daftar fasilitas gudang aktif pelanggan berhasil diambil',
+      data,
+    };
+  }
+
+  @Post('rent')
+  @Roles('CUSTOMER', 'ADMIN')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Pemesanan Sewa Ruang Gudang (Self-Service Rental Booking)',
+    description:
+      'Menyimpan permohonan sewa ruang gudang (Cold Storage / Standard), menerbitkan faktur tagihan invoice real di PostgreSQL, dan mengirim notifikasi.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Pemesanan sewa ruang gudang berhasil dicatat dan invoice diterbitkan',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validasi data sewa tidak valid',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Fasilitas gudang tidak ditemukan',
+  })
+  async rentSpace(
+    @Body() dto: RentWarehouseSpaceDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: RentalBookingResult }> {
+    const data = await this.warehouseService.rentSpace(dto, currentUser);
+    return {
+      message: 'Permohonan sewa ruang gudang berhasil diproses dan invoice diterbitkan',
       data,
     };
   }

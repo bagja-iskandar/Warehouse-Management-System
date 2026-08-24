@@ -9,11 +9,14 @@ import { envValidationSchema } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { WarehouseModule } from './modules/warehouse/warehouse.module';
 import { GoodsModule } from './modules/goods/goods.module';
 import { LogisticsModule } from './modules/logistics/logistics.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { TelemetryModule } from './modules/telemetry/telemetry.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -78,12 +81,17 @@ import { TelemetryModule } from './modules/telemetry/telemetry.module';
     // Authentication & RBAC Module
     AuthModule,
 
+    // Users & Profiles Module (Phase QA-01)
+    UsersModule,
+
     // Core Business Modules (Phase 11)
     WarehouseModule,
     GoodsModule,
     LogisticsModule,
     BillingModule,
     TelemetryModule,
+    AnalyticsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

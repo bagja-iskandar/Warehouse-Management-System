@@ -10,9 +10,12 @@ import {
   RefreshTokenResponseDto,
   UserProfileDto,
 } from './dto/auth-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RegisterCustomerDto } from './dto/register-customer.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthenticatedUser } from './interfaces/jwt-payload.interface';
 
 @ApiTags('Authentication')
@@ -41,6 +44,37 @@ export class AuthController {
     const result = await this.authService.login(loginDto);
     return {
       message: 'Login berhasil',
+      data: result,
+    };
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Registrasi Akun Customer Baru (Customer Onboarding)',
+    description:
+      'Mendaftarkan profil customer perusahaan baru, menyimpan password terenkripsi, dan langsung menerbitkan JWT Access Token dan Refresh Token.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Registrasi berhasil dan token diterbitkan',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validasi form gagal atau data tidak lengkap',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Email perusahaan sudah terdaftar dalam sistem',
+  })
+  async register(
+    @Body() registerDto: RegisterCustomerDto,
+  ): Promise<{ message: string; data: LoginResponseDto }> {
+    const result = await this.authService.registerCustomer(registerDto);
+    return {
+      message: 'Registrasi customer berhasil',
       data: result,
     };
   }
@@ -124,6 +158,64 @@ export class AuthController {
     return {
       message: 'Profil pengguna berhasil diambil',
       data: profile,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Mengubah Password Pengguna Terotentikasi (Change Password)',
+    description:
+      'Memverifikasi password saat ini dan memperbarui dengan password baru. Merevoke seluruh refresh token aktif untuk keamanan sesi.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password berhasil diperbarui',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Password baru sama dengan password lama atau validasi gagal',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Password saat ini tidak valid atau token tidak valid',
+  })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string; data: { success: boolean; message: string } }> {
+    const result = await this.authService.changePassword(userId, changePasswordDto);
+    return {
+      message: result.message,
+      data: result,
+    };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Atur Ulang Password Pengguna (Direct Password Reset)',
+    description:
+      'Mengatur ulang kata sandi pengguna terdaftar secara langsung melalui email terverifikasi.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password berhasil diatur ulang',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Email tidak ditemukan dalam sistem',
+  })
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string; data: { success: boolean; message: string } }> {
+    const result = await this.authService.resetPassword(resetPasswordDto);
+    return {
+      message: result.message,
+      data: result,
     };
   }
 }

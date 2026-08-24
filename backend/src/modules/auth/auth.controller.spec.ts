@@ -47,6 +47,11 @@ describe('AuthController', () => {
               message: 'Sesi berhasil diakhiri dan token telah dicabut',
             }),
             getProfile: jest.fn().mockResolvedValue(mockUserProfile),
+            registerCustomer: jest.fn().mockResolvedValue(mockLoginResponse),
+            changePassword: jest.fn().mockResolvedValue({
+              success: true,
+              message: 'Password berhasil diperbarui',
+            }),
           },
         },
       ],
@@ -106,6 +111,35 @@ describe('AuthController', () => {
 
       expect(response.message).toBe('Profil pengguna berhasil diambil');
       expect(response.data.id).toBe('usr-admin-1');
+    });
+  });
+
+  describe('register', () => {
+    it('should return wrapped register response with 201 message', async () => {
+      const response = await controller.register({
+        name: 'Hendra Pratama',
+        email: 'hendra@freshfoods.id',
+        phone: '081299887766',
+        companyName: 'PT Fresh Foods Indonesia',
+        address: 'Jakarta Barat',
+        password: 'Password123!',
+      });
+
+      expect(response.message).toBe('Registrasi customer berhasil');
+      expect(response.data.accessToken).toBe('mock_access_token');
+      expect(response.data.user.email).toBe('admin@wms.id');
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should return success message on password change', async () => {
+      const response = await controller.changePassword('usr-admin-1', {
+        currentPassword: 'Password123!',
+        newPassword: 'NewPassword123!',
+      });
+
+      expect(response.message).toBe('Password berhasil diperbarui');
+      expect(response.data.success).toBe(true);
     });
   });
 });

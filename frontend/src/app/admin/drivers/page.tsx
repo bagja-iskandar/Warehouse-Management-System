@@ -21,6 +21,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  PageContainer,
+  PageHeader,
+  MetricCard,
+  SectionCard,
+  FilterBar,
+  EmptyState,
+} from "@/components/dashboard";
 
 interface DriverRecord {
   id: string;
@@ -109,238 +117,277 @@ export default function DriverManagementPage() {
     return matchStatus && matchSearch;
   });
 
-  const onDutyCount = DRIVERS_DATA.filter((d) => d.status === "ON_DUTY").length;
-  const availableCount = DRIVERS_DATA.filter((d) => d.status === "AVAILABLE").length;
+  const onDutyCount = filteredDrivers.filter((d) => d.status === "ON_DUTY").length;
+  const availableCount = filteredDrivers.filter((d) => d.status === "AVAILABLE").length;
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Driver & Fleet Personnel Management
-            </h1>
-            <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">
-              Fleet Drivers
-            </Badge>
+    <PageContainer>
+      {/* 1. Page Header */}
+      <PageHeader
+        breadcrumb="WMS Admin > Drivers & Couriers"
+        title="Driver & Fleet Personnel Management"
+        subtitle="List of logistics drivers, active Delivery Order (DO) assignments, driver license verification, and on-time performance."
+        badgeText="Fleet Drivers"
+        badgeColor="bg-amber-500 text-slate-950"
+        actions={
+          <div className="flex items-center gap-2.5">
+            <Link href="/admin/logistics">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
+                <Truck className="h-4 w-4" />
+                <span>Dispatch Queue</span>
+              </Button>
+            </Link>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            List of logistics drivers, active Delivery Order (DO) assignments, driver license verification, and on-time performance.
-          </p>
-        </div>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 flex items-center gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>Export Driver Data</span>
-          </Button>
-
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 h-9">
-            <Plus className="h-4 w-4" />
-            <span>Register New Driver</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* 4 KPI Cards */}
+      {/* 2. 4 Metric KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Total Registered Drivers</span>
-          <p className="text-2xl font-extrabold text-slate-900">{DRIVERS_DATA.length} Personnel</p>
-          <p className="text-[11px] text-slate-400">Verified SIM B1/B2/A Licenses</p>
-        </div>
+        <MetricCard
+          label="Total Registered Drivers"
+          value={`${filteredDrivers.length} Personnel`}
+          icon={Users}
+          theme="indigo"
+          subtext={
+            <span className="text-[11px] text-slate-400">
+              Verified SIM B1/B2/A Licenses
+            </span>
+          }
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">On-Duty Active Drivers</span>
-          <div className="flex items-center gap-2">
-            <p className="text-2xl font-extrabold text-amber-600">{onDutyCount} Drivers</p>
+        <MetricCard
+          label="On-Duty Active Drivers"
+          value={`${onDutyCount} Drivers`}
+          icon={Navigation}
+          theme="amber"
+          badge={
             <Badge variant="warning" className="text-[10px]">In-Transit</Badge>
-          </div>
-          <p className="text-[11px] text-slate-400">Carrying active delivery orders</p>
-        </div>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-400">
+              Carrying active delivery orders
+            </span>
+          }
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Standby in Pool</span>
-          <p className="text-2xl font-extrabold text-emerald-600">{availableCount} Drivers</p>
-          <p className="text-[11px] text-slate-400">Ready for new dispatch</p>
-        </div>
+        <MetricCard
+          label="Standby in Pool"
+          value={`${availableCount} Drivers`}
+          icon={Truck}
+          theme="emerald"
+          badge={
+            <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
+              Available
+            </Badge>
+          }
+          subtext={
+            <span className="text-[11px] text-slate-400">
+              Ready for immediate dispatch
+            </span>
+          }
+        />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <span className="text-xs font-semibold text-slate-500">Average Performance Rating</span>
-          <div className="flex items-center gap-1.5">
-            <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-            <span className="text-2xl font-extrabold text-slate-900">4.85 / 5.0</span>
-          </div>
-          <p className="text-[11px] text-emerald-600 font-semibold">98.4% On-time Delivery</p>
-        </div>
+        <MetricCard
+          label="Average Performance Rating"
+          value="4.85 / 5.0"
+          icon={Star}
+          theme="purple"
+          badge={
+            <Badge className="bg-purple-100 text-purple-800 text-[10px] font-semibold">
+              98.4% On-Time
+            </Badge>
+          }
+          subtext={
+            <span className="text-[11px] text-emerald-600 font-semibold">
+              Customer satisfaction score
+            </span>
+          }
+        />
       </div>
 
-      {/* Main Table Card & Filters */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-5">
-        {/* Controls Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-            <button
-              onClick={() => setStatusFilter("ALL")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === "ALL"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
-              }`}
-            >
-              All Drivers ({DRIVERS_DATA.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter("ON_DUTY")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === "ON_DUTY"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
-              }`}
-            >
-              On Duty
-            </button>
-            <button
-              onClick={() => setStatusFilter("AVAILABLE")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
-                statusFilter === "AVAILABLE"
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
-              }`}
-            >
-              Standby in Pool
-            </button>
+      {/* 3. Main Driver Directory Table & Filters */}
+      <SectionCard
+        title="Fleet Personnel Roster & Duty Status"
+        subtitle="Manage driver credentials, assigned vehicles, and delivery performance"
+        icon={Users}
+      >
+        <div className="space-y-4">
+          {/* Controls Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
+              <button
+                onClick={() => setStatusFilter("ALL")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                  statusFilter === "ALL"
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                }`}
+              >
+                All Drivers ({DRIVERS_DATA.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter("ON_DUTY")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                  statusFilter === "ON_DUTY"
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                }`}
+              >
+                On Duty ({DRIVERS_DATA.filter((d) => d.status === "ON_DUTY").length})
+              </button>
+              <button
+                onClick={() => setStatusFilter("AVAILABLE")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+                  statusFilter === "AVAILABLE"
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                }`}
+              >
+                Available ({DRIVERS_DATA.filter((d) => d.status === "AVAILABLE").length})
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search driver name, vehicle..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
+              />
+            </div>
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search driver name, truck plate, or phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:bg-white"
+          {/* Drivers Table */}
+          {filteredDrivers.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No Drivers Found"
+              description="No driver personnel match the selected filter."
             />
-          </div>
-        </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
+                    <th className="py-3 px-3">Driver Name & Contact</th>
+                    <th className="py-3 px-3">Driving License (SIM)</th>
+                    <th className="py-3 px-3">Assigned Vehicle</th>
+                    <th className="py-3 px-3">Operational Status</th>
+                    <th className="py-3 px-3">Last GPS Location</th>
+                    <th className="py-3 px-3">Trips & Rating</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredDrivers.map((driver) => (
+                    <tr
+                      key={driver.id}
+                      className="hover:bg-slate-50/80 transition-colors"
+                    >
+                      {/* Driver Name & Contact */}
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700">
+                            {driver.name.charAt(0)}
+                          </div>
+                          <div>
+                            <span className="font-bold text-slate-900 block leading-tight">
+                              {driver.name}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                              <Phone className="h-3 w-3" />
+                              <span>{driver.phone}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </td>
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3">Driver Name</th>
-                <th className="py-3 px-3">Contact & License</th>
-                <th className="py-3 px-3">Assigned Vehicle</th>
-                <th className="py-3 px-3">Current Status</th>
-                <th className="py-3 px-3">Location / Active Task</th>
-                <th className="py-3 px-3">Total Trips & Rating</th>
-                <th className="py-3 px-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredDrivers.map((driver) => (
-                <tr key={driver.id} className="hover:bg-slate-50/80 transition-colors">
-                  {/* Name */}
-                  <td className="py-3.5 px-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8.5 w-8.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-center flex-shrink-0 font-bold">
-                        {driver.name.charAt(0)}
-                      </div>
-                      <div>
-                        <span className="font-bold text-slate-900 block leading-tight">
-                          {driver.name}
+                      {/* SIM */}
+                      <td className="py-3.5 px-3">
+                        <span className="font-semibold text-slate-800 block">
+                          {driver.simType}
                         </span>
-                        <span className="text-[10.5px] text-slate-400">
-                          ID: {driver.id.toUpperCase()}
+                        <span className="text-[11px] text-slate-400">
+                          Valid until {driver.simExpiry}
                         </span>
-                      </div>
-                    </div>
-                  </td>
+                      </td>
 
-                  {/* Phone & SIM */}
-                  <td className="py-3.5 px-3">
-                    <span className="text-slate-800 font-mono block">
-                      {driver.phone}
-                    </span>
-                    <span className="text-[10.5px] text-slate-500 block">
-                      {driver.simType} • Valid until: {driver.simExpiry}
-                    </span>
-                  </td>
+                      {/* Vehicle */}
+                      <td className="py-3.5 px-3">
+                        <span className="font-medium text-slate-800 block">
+                          {driver.assignedVehicle}
+                        </span>
+                        <span className="font-mono text-[11px] text-indigo-600 font-bold">
+                          {driver.vehiclePlate}
+                        </span>
+                      </td>
 
-                  {/* Vehicle */}
-                  <td className="py-3.5 px-3">
-                    <span className="font-semibold text-slate-900 block">
-                      {driver.assignedVehicle}
-                    </span>
-                    <span className="font-mono text-xs font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded inline-block mt-0.5">
-                      {driver.vehiclePlate}
-                    </span>
-                  </td>
+                      {/* Status */}
+                      <td className="py-3.5 px-3">
+                        {driver.status === "ON_DUTY" && (
+                          <Badge variant="warning" className="text-[10px]">
+                            On Duty (In Transit)
+                          </Badge>
+                        )}
+                        {driver.status === "AVAILABLE" && (
+                          <Badge variant="success" className="text-[10px]">
+                            Available
+                          </Badge>
+                        )}
+                        {driver.status === "RESTING" && (
+                          <Badge className="bg-slate-200 text-slate-700 text-[10px]">
+                            Off-Duty / Rest
+                          </Badge>
+                        )}
+                      </td>
 
-                  {/* Status */}
-                  <td className="py-3.5 px-3">
-                    {driver.status === "ON_DUTY" ? (
-                      <Badge variant="warning" className="text-[10.5px]">
-                        On Duty
-                      </Badge>
-                    ) : driver.status === "AVAILABLE" ? (
-                      <Badge variant="success" className="text-[10.5px]">
-                        Standby Ready
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10.5px]">
-                        Resting
-                      </Badge>
-                    )}
-                  </td>
+                      {/* Location */}
+                      <td className="py-3.5 px-3 max-w-[200px]">
+                        <span className="text-slate-600 block truncate flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          <span>{driver.currentLocation}</span>
+                        </span>
+                        {driver.activeDeliveryOrder && (
+                          <span className="text-[10.5px] font-mono text-indigo-600 font-semibold block mt-0.5">
+                            Task: {driver.activeDeliveryOrder}
+                          </span>
+                        )}
+                      </td>
 
-                  {/* Location / Active DO */}
-                  <td className="py-3.5 px-3">
-                    <span className="text-slate-800 block text-[11.5px] flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-slate-400" />
-                      <span>{driver.currentLocation}</span>
-                    </span>
-                    {driver.activeDeliveryOrder && (
-                      <span className="text-[10.5px] text-indigo-600 font-mono font-bold block mt-0.5">
-                        Task: {driver.activeDeliveryOrder}
-                      </span>
-                    )}
-                  </td>
+                      {/* Trip & Rating */}
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-1 text-slate-900 font-bold">
+                          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                          <span>{driver.rating}</span>
+                          <span className="text-slate-400 font-normal ml-1">
+                            ({driver.completedTrips} trips)
+                          </span>
+                        </div>
+                      </td>
 
-                  {/* Trip & Rating */}
-                  <td className="py-3.5 px-3">
-                    <div className="flex items-center gap-1 text-slate-900 font-bold">
-                      <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                      <span>{driver.rating}</span>
-                      <span className="text-slate-400 font-normal ml-1">
-                        ({driver.completedTrips} trips)
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="py-3.5 px-3 text-right">
-                    <Link href="/admin/logistics">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 px-2.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
-                      >
-                        Dispatch →
-                      </Button>
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {/* Actions */}
+                      <td className="py-3.5 px-3 text-right">
+                        <Link href="/admin/logistics">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 px-2.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold"
+                          >
+                            Dispatch →
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+      </SectionCard>
+    </PageContainer>
   );
 }

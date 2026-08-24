@@ -10,7 +10,21 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
+
+export class CreateOrderItemDto {
+  @ApiProperty({ example: 'brg-001', description: 'ID Barang (GoodsItem)' })
+  @IsString()
+  @IsNotEmpty({ message: 'ID Barang wajib diisi' })
+  goodsId: string;
+
+  @ApiProperty({ example: 10, description: 'Jumlah kuantitas barang yang dikirim/dijemput' })
+  @Type(() => Number)
+  @IsNumber({}, { message: 'Kuantitas barang harus berupa angka' })
+  @Min(1, { message: 'Kuantitas barang minimal 1' })
+  quantity: number;
+}
 
 export class CreateDeliveryOrderDto {
   @ApiProperty({
@@ -31,6 +45,24 @@ export class CreateDeliveryOrderDto {
   @ArrayMinSize(1, { message: 'Minimal harus menyertakan 1 ID barang' })
   @IsString({ each: true })
   goodsItemIds: string[];
+
+  @ApiPropertyOptional({
+    description: 'Rincian item beserta jumlah kuantitas yang diminta (Opsional)',
+    type: [CreateOrderItemDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemDto)
+  items?: CreateOrderItemDto[];
+
+  @ApiPropertyOptional({
+    example: 'wh-jkt-central',
+    description: 'ID Fasilitas Gudang asal/tujuan',
+  })
+  @IsOptional()
+  @IsString()
+  warehouseId?: string;
 
   @ApiProperty({
     example: 'Kavling Cold Chain Sudirman Kav. 21, Jakarta Selatan',

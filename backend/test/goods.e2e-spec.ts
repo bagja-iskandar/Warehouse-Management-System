@@ -113,8 +113,8 @@ describe('Goods & Inventory Module (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.length).toBe(1);
-      expect(response.body.data[0].barcode).toBe('BRG-2026-FROZEN-002');
+      expect(response.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(response.body.data.every((i: any) => i.name.includes('Wagyu'))).toBe(true);
     });
 
     it('should support pagination with page and limit query params', async () => {

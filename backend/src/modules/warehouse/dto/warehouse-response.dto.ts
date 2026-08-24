@@ -71,6 +71,21 @@ export class StorageSlotResponseDto {
 
   @ApiProperty({ example: ['brg-001'], description: 'Daftar ID barang yang tersimpan di slot ini' })
   currentGoodsIds: string[];
+
+  @ApiPropertyOptional({ description: 'Daftar rincian barang yang tersimpan di slot ini' })
+  storedGoods?: Array<{
+    id: string;
+    barcode: string;
+    name: string;
+    quantity: number;
+    unit: string;
+    volumeM3: number;
+    weightKg: number;
+    category: string;
+    customerName: string;
+    customerCompany?: string | null;
+    storageStartDate?: string | null;
+  }>;
 }
 
 export class WarehouseListItemDto {

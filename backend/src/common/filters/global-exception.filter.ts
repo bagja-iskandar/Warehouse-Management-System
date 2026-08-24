@@ -18,16 +18,49 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const correlationId = (request.headers['x-correlation-id'] ||
-      request.headers['x-request-id']) as string | undefined;
+    const correlationId =
+      ((request.headers['x-request-id'] ||
+        request.headers['x-correlation-id']) as string | undefined) ||
+      `wms_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+
+    // Set correlation ID in outgoing response headers
+    response.setHeader('x-request-id', correlationId);
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error occurred';
+    let code = 'INTERNAL_SERVER_ERROR';
     let errors: ValidationErrorDetailDto[] | undefined = undefined;
 
+    // 1. Handle standard NestJS HttpExceptions
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
+
+      switch (statusCode) {
+        case HttpStatus.BAD_REQUEST:
+          code = 'BAD_REQUEST';
+          break;
+        case HttpStatus.UNAUTHORIZED:
+          code = 'UNAUTHORIZED';
+          break;
+        case HttpStatus.FORBIDDEN:
+          code = 'FORBIDDEN';
+          break;
+        case HttpStatus.NOT_FOUND:
+          code = 'NOT_FOUND';
+          break;
+        case HttpStatus.CONFLICT:
+          code = 'CONFLICT';
+          break;
+        case HttpStatus.UNPROCESSABLE_ENTITY:
+          code = 'UNPROCESSABLE_ENTITY';
+          break;
+        case HttpStatus.TOO_MANY_REQUESTS:
+          code = 'TOO_MANY_REQUESTS';
+          break;
+        default:
+          code = `HTTP_${statusCode}`;
+      }
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
@@ -37,11 +70,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         if (typeof resObj.message === 'string') {
           message = resObj.message;
         } else if (Array.isArray(resObj.message)) {
-          // Format validation errors from ValidationPipe
+          code = 'VALIDATION_FAILED';
           message = 'Validation failed';
           errors = resObj.message.map((msg: unknown) => {
             if (typeof msg === 'string') {
-              // Parse "field error description"
               const parts = msg.split(' ');
               return {
                 field: parts[0] || 'field',
@@ -55,26 +87,80 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           });
         }
 
-        // Keep clean message from exception
-        if (typeof resObj.message === 'string') {
-          message = resObj.message;
+        if (typeof resObj.error === 'string' && !errors) {
+          code = (resObj.error as string).toUpperCase().replace(/\s+/g, '_');
         }
       }
-    } else if (exception instanceof Error) {
+    }
+    // 2. Handle Prisma Client Known Request Errors
+    else if (
+      exception &&
+      typeof exception === 'object' &&
+      'code' in exception &&
+      typeof (exception as any).code === 'string' &&
+      (exception as any).code.startsWith('P')
+    ) {
+      const prismaCode = (exception as any).code;
+
+      switch (prismaCode) {
+        case 'P2002': {
+          statusCode = HttpStatus.CONFLICT;
+          code = 'DUPLICATE_RESOURCE_CONFLICT';
+          const target = (exception as any).meta?.target;
+          const targetField = Array.isArray(target) ? target.join(', ') : target;
+          message = targetField
+            ? `Data dengan ${targetField} tersebut sudah terdaftar dalam sistem.`
+            : 'Data dengan nilai unik tersebut sudah terdaftar dalam sistem.';
+          break;
+        }
+        case 'P2025': {
+          statusCode = HttpStatus.NOT_FOUND;
+          code = 'RESOURCE_NOT_FOUND';
+          message = 'Data yang diminta tidak ditemukan atau sudah dihapus dari sistem.';
+          break;
+        }
+        case 'P2003': {
+          statusCode = HttpStatus.BAD_REQUEST;
+          code = 'FOREIGN_KEY_CONSTRAINT_VIOLATION';
+          message = 'Operasi tidak dapat diproses karena ketergantungan relasi data.';
+          break;
+        }
+        case 'P2014': {
+          statusCode = HttpStatus.BAD_REQUEST;
+          code = 'REQUIRED_RELATION_VIOLATION';
+          message = 'Perubahan yang diminta melanggar relasi data wajib.';
+          break;
+        }
+        default: {
+          statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+          code = `PRISMA_${prismaCode}`;
+          message = 'Terjadi kendala pada penyimpanan database.';
+          break;
+        }
+      }
+
+      this.logger.warn(
+        `[${correlationId}] Prisma exception ${prismaCode} on ${request.method} ${request.url}: ${message}`,
+      );
+    }
+    // 3. Handle unhandled Error instances
+    else if (exception instanceof Error) {
       this.logger.error(
-        `Unhandled exception on ${request.method} ${request.url}: ${exception.message}`,
+        `[${correlationId}] Unhandled exception on ${request.method} ${request.url}: ${exception.message}`,
         exception.stack,
       );
 
-      // In development mode, provide error message; in production, keep generic
       if (process.env.NODE_ENV !== 'production') {
         message = exception.message || 'An unexpected internal error occurred';
+      } else {
+        message = 'Terjadi kesalahan pada server. Silakan hubungi administrator.';
       }
     }
 
     const errorResponse: ApiErrorResponseDto = {
       success: false,
       message,
+      code,
       data: null,
       ...(errors && errors.length > 0 ? { errors } : {}),
       meta: {

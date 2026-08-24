@@ -21,6 +21,7 @@ import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateDeliveryOrderDto } from './dto/create-order.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { DeliveryOrderDetailResponseDto, DeliveryOrderListItemDto } from './dto/order-response.dto';
+import { ReceiveInboundDto } from './dto/receive-inbound.dto';
 import { SubmitPodDto } from './dto/submit-pod.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { VehicleQueryDto } from './dto/vehicle-query.dto';
@@ -238,6 +239,36 @@ export class LogisticsController {
     const data = await this.logisticsService.submitPod(id, dto, currentUser);
     return {
       message: 'Bukti serah terima Digital POD berhasil diunggah',
+      data,
+    };
+  }
+
+  @Post('orders/:id/receive')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Menerima dan Memverifikasi Barang Inbound di Gudang (Admin Receiving)',
+    description:
+      'Memverifikasi kuantitas fisik (Received, Damaged, Missing) dan kondisi barang kargo yang tiba di loading dock. Mengalihkan status order menjadi DELIVERED dan status barang menjadi INSPECTING (Put-Away Pending).',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID unik UUID order atau Nomor Surat Jalan',
+    example: 'ord-01',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Penerimaan barang inbound berhasil diverifikasi',
+    type: DeliveryOrderDetailResponseDto,
+  })
+  async receiveInboundOrder(
+    @Param('id') id: string,
+    @Body() dto: ReceiveInboundDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: DeliveryOrderDetailResponseDto }> {
+    const data = await this.logisticsService.receiveInboundOrder(id, dto, currentUser);
+    return {
+      message: 'Penerimaan barang inbound berhasil diverifikasi',
       data,
     };
   }
