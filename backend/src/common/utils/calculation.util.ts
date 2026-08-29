@@ -23,6 +23,7 @@ export function calculateVolumeM3(
   if (!lengthCm || !widthCm || !heightCm) return 0;
   if (lengthCm <= 0 || widthCm <= 0 || heightCm <= 0) return 0;
   if (isNaN(lengthCm) || isNaN(widthCm) || isNaN(heightCm)) return 0;
+  if (!isFinite(lengthCm) || !isFinite(widthCm) || !isFinite(heightCm)) return 0;
 
   const volume = (lengthCm * widthCm * heightCm) / 1_000_000;
   return Number(volume.toFixed(decimals));
@@ -38,6 +39,7 @@ export function calculateTotalVolumeM3(
 ): number {
   if (!volumePerItemM3 || volumePerItemM3 <= 0 || quantity <= 0) return 0;
   if (isNaN(volumePerItemM3) || isNaN(quantity)) return 0;
+  if (!isFinite(volumePerItemM3) || !isFinite(quantity)) return 0;
 
   return Number((volumePerItemM3 * quantity).toFixed(decimals));
 }
@@ -47,7 +49,7 @@ export function calculateTotalVolumeM3(
  * Formula: weightKg / 1,000
  */
 export function kgToTon(weightKg: number, decimals = 2): number {
-  if (!weightKg || weightKg <= 0 || isNaN(weightKg)) return 0;
+  if (!weightKg || weightKg <= 0 || isNaN(weightKg) || !isFinite(weightKg)) return 0;
   return Number((weightKg / 1_000).toFixed(decimals));
 }
 
@@ -56,7 +58,7 @@ export function kgToTon(weightKg: number, decimals = 2): number {
  * Formula: weightTon * 1,000
  */
 export function tonToKg(weightTon: number, decimals = 1): number {
-  if (!weightTon || weightTon <= 0 || isNaN(weightTon)) return 0;
+  if (!weightTon || weightTon <= 0 || isNaN(weightTon) || !isFinite(weightTon)) return 0;
   return Number((weightTon * 1_000).toFixed(decimals));
 }
 

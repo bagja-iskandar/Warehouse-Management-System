@@ -46,6 +46,7 @@ export function calculateVolumeM3(
   if (!lengthCm || !widthCm || !heightCm) return 0;
   if (lengthCm <= 0 || widthCm <= 0 || heightCm <= 0) return 0;
   if (isNaN(lengthCm) || isNaN(widthCm) || isNaN(heightCm)) return 0;
+  if (!isFinite(lengthCm) || !isFinite(widthCm) || !isFinite(heightCm)) return 0;
   return Number(((lengthCm * widthCm * heightCm) / 1_000_000).toFixed(decimals));
 }
 
@@ -53,7 +54,7 @@ export function calculateVolumeM3(
  * Convert weight in kilograms (kg) to metric tons (ton).
  */
 export function kgToTon(weightKg: number, decimals = 2): number {
-  if (!weightKg || weightKg <= 0 || isNaN(weightKg)) return 0;
+  if (!weightKg || weightKg <= 0 || isNaN(weightKg) || !isFinite(weightKg)) return 0;
   return Number((weightKg / 1_000).toFixed(decimals));
 }
 
@@ -61,7 +62,7 @@ export function kgToTon(weightKg: number, decimals = 2): number {
  * Convert weight in metric tons (ton) to kilograms (kg).
  */
 export function tonToKg(weightTon: number, decimals = 1): number {
-  if (!weightTon || weightTon <= 0 || isNaN(weightTon)) return 0;
+  if (!weightTon || weightTon <= 0 || isNaN(weightTon) || !isFinite(weightTon)) return 0;
   return Number((weightTon * 1_000).toFixed(decimals));
 }
 
