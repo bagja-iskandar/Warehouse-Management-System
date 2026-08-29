@@ -138,7 +138,6 @@ export function useUpdateOrderStatus() {
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: logisticsKeys.vehicles() });
       queryClient.invalidateQueries({ queryKey: ["goods"] });
     },
   });
@@ -158,7 +157,6 @@ export function useAssignVehicle() {
       driverName?: string;
     }) => logisticsService.assignVehicle(vehicleId, driverId, driverName),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticsKeys.vehicles() });
       queryClient.invalidateQueries({ queryKey: logisticsKeys.all });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
@@ -209,7 +207,6 @@ export function useSubmitPod() {
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: logisticsKeys.vehicles() });
       queryClient.invalidateQueries({ queryKey: ["goods"] });
       queryClient.invalidateQueries({ queryKey: ["warehouses"] });
     },
@@ -238,9 +235,61 @@ export function useReceiveInboundOrder() {
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: logisticsKeys.vehicles() });
       queryClient.invalidateQueries({ queryKey: ["goods"] });
       queryClient.invalidateQueries({ queryKey: ["warehouses"] });
     },
   });
 }
+
+
+export function useOrderMessages(orderId: string) {
+  return useQuery({
+    queryKey: [...logisticsKeys.all, "order", orderId, "messages"] as const,
+    queryFn: () => logisticsService.getOrderMessages(orderId),
+    enabled: !!orderId,
+  });
+}
+
+export function useCreateOrderMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      payload,
+    }: {
+      orderId: string;
+      payload: import("@/types").CreateOrderMessagePayload;
+    }) => logisticsService.createOrderMessage(orderId, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: logisticsKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: [...logisticsKeys.all, "order", variables.orderId, "messages"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useMarkOrderMessageAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      messageId,
+    }: {
+      orderId: string;
+      messageId: string;
+    }) => logisticsService.markOrderMessageAsRead(orderId, messageId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: logisticsKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: [...logisticsKeys.all, "order", variables.orderId, "messages"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+    },
+  });
+}
+

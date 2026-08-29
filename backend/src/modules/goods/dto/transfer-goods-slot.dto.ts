@@ -1,30 +1,30 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class TransferGoodsSlotDto {
   @ApiProperty({
     example: 'slot-bdg-c02',
-    description: 'ID UUID slot rak tujuan penyimpanan baru di fasilitas gudang yang sama',
+    description: 'Target storage slot ID in the same warehouse facility',
   })
-  @IsNotEmpty({ message: 'ID slot rak tujuan (targetSlotId) wajib disertakan' })
-  @IsString({ message: 'ID slot rak tujuan wajib berupa string' })
+  @IsNotEmpty({ message: 'Target slot ID (targetSlotId) is required' })
+  @IsString({ message: 'Target slot ID must be a string' })
   targetSlotId: string;
 
   @ApiProperty({
-    example: 'Reorganisasi penataan kargo dingin dan optimalisasi kapasitas rak',
-    description: 'Alasan operasional dilakukannya pemindahan slot rak barang',
+    example: 'Cold cargo layout reorganization and rack capacity optimization',
+    description: 'Operational reason for transferring goods storage slot',
     minLength: 3,
   })
-  @IsNotEmpty({ message: 'Alasan pemindahan slot rak wajib diisi' })
-  @IsString({ message: 'Alasan pemindahan rak wajib berupa teks' })
-  @MinLength(3, { message: 'Alasan pemindahan minimal 3 karakter' })
+  @IsNotEmpty({ message: 'Transfer reason is required' })
+  @IsString({ message: 'Transfer reason must be text' })
+  @MinLength(3, { message: 'Transfer reason must be at least 3 characters' })
   reason: string;
 
   @ApiPropertyOptional({
-    example: 'Dipindahkan ke rak tingkat 2 nomor 02 untuk memudahkan akses forklift',
-    description: 'Catatan tambahan terkait penempatan fisik barang di slot baru',
+    example: 'Relocated to level 2 rack #02 for improved forklift access',
+    description: 'Additional notes regarding physical placement in new slot',
   })
   @IsOptional()
-  @IsString({ message: 'Catatan tambahan wajib berupa teks' })
+  @IsString({ message: 'Additional note must be text' })
   note?: string;
 }

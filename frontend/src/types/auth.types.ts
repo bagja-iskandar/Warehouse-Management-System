@@ -12,6 +12,8 @@ export interface UserProfile {
   createdAt: string;
   status: "ACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION";
   driverLicenseNumber?: string;
+  driverLicenseExpiry?: string;
+  activeOrdersCount?: number;
 }
 
 export type User = UserProfile;

@@ -61,7 +61,7 @@ describe('WarehouseController', () => {
     it('should return enveloped warehouse list with message', async () => {
       const response = await controller.findAll({});
 
-      expect(response.message).toBe('Daftar fasilitas gudang berhasil diambil');
+      expect(response.message).toBe('Warehouse facilities retrieved successfully');
       expect(response.data).toHaveLength(1);
       expect(response.data[0].id).toBe('wh-jkt-central');
     });
@@ -71,7 +71,7 @@ describe('WarehouseController', () => {
     it('should return enveloped warehouse detail with message', async () => {
       const response = await controller.findById('wh-jkt-central');
 
-      expect(response.message).toBe('Detail fasilitas gudang berhasil diambil');
+      expect(response.message).toBe('Warehouse facility detail retrieved successfully');
       expect(response.data.id).toBe('wh-jkt-central');
       expect(response.data.code).toBe('WH-CKG-01');
     });

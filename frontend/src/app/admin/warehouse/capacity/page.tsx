@@ -41,16 +41,15 @@ export default function WarehouseCapacityPage() {
   const { selectedWarehouseId, setSelectedWarehouseId } = useWarehouseStore();
   const { data: warehouseList = [], isLoading: isLoadingList } = useWarehouses();
 
-  const [activeWhId, setActiveWhId] = useState<string>("");
+  const activeWhId =
+    selectedWarehouseId || (warehouseList.length > 0 ? warehouseList[0].id : "");
 
   useEffect(() => {
-    if (selectedWarehouseId) {
-      setActiveWhId(selectedWarehouseId);
-    } else if (warehouseList.length > 0) {
-      setActiveWhId(warehouseList[0].id);
+    if (!selectedWarehouseId && warehouseList.length > 0) {
       setSelectedWarehouseId(warehouseList[0].id);
     }
   }, [selectedWarehouseId, warehouseList, setSelectedWarehouseId]);
+
 
   const {
     data: warehouseDetail,
@@ -71,18 +70,29 @@ export default function WarehouseCapacityPage() {
   const mappedSlots: SlotData[] = rawSlots.map((s) => {
     const usedM3 = Number(s.usedM3 || 0);
     const capacityM3 = Number(s.capacityM3 || 0);
+    const availableM3 = s.availableM3 != null ? Number(s.availableM3) : Math.max(0, Number((capacityM3 - usedM3).toFixed(2)));
+    const volPct = s.volumeUtilizationPercent != null ? Number(s.volumeUtilizationPercent) : capacityM3 > 0 ? Number(((usedM3 / capacityM3) * 100).toFixed(1)) : 0;
+
+    const maxWeightKg = s.maxWeightKg != null ? Number(s.maxWeightKg) : capacityM3 * 50;
+    const usedWeightKg = s.usedWeightKg != null ? Number(s.usedWeightKg) : (s.storedGoods || []).reduce((sum, g) => sum + (Number(g.weightKg) || 0), 0);
+    const availableWeightKg = s.availableWeightKg != null ? Number(s.availableWeightKg) : Math.max(0, Number((maxWeightKg - usedWeightKg).toFixed(1)));
+    const weightPct = s.weightUtilizationPercent != null ? Number(s.weightUtilizationPercent) : maxWeightKg > 0 ? Number(((usedWeightKg / maxWeightKg) * 100).toFixed(1)) : 0;
+
     const isMaintenance = s.status === "MAINTENANCE";
 
     const statusKey: "OCCUPIED" | "PARTIAL" | "AVAILABLE" | "MAINTENANCE" =
       isMaintenance
         ? "MAINTENANCE"
-        : usedM3 === 0
+        : usedM3 === 0 && usedWeightKg === 0
         ? "AVAILABLE"
-        : usedM3 >= capacityM3
+        : volPct >= 100 || weightPct >= 100
         ? "OCCUPIED"
         : "PARTIAL";
 
-    const firstGood = s.storedGoods && s.storedGoods.length > 0 ? s.storedGoods[0] : null;
+    const storedGoodsList = s.storedGoods || [];
+    const customerCount = s.customerCount ?? new Set(storedGoodsList.map((g) => g.customerId || g.customerName)).size;
+    const totalPackages = s.totalPackagesCount ?? storedGoodsList.reduce((sum, g) => sum + (g.quantity || 1), 0);
+    const firstGood = storedGoodsList.length > 0 ? storedGoodsList[0] : null;
 
     return {
       id: s.id,
@@ -107,20 +117,18 @@ export default function WarehouseCapacityPage() {
       status: statusKey,
       capacityM3,
       usedM3,
+      availableM3,
+      volumeUtilizationPercent: volPct,
+      maxWeightKg,
+      usedWeightKg,
+      availableWeightKg,
+      weightUtilizationPercent: weightPct,
+      capacityStatus: s.capacityStatus || (volPct >= 100 || weightPct >= 100 ? "Fully Saturated" : weightPct >= 85 ? "Near Weight Capacity" : volPct >= 85 ? "Near Volume Capacity" : usedM3 > 0 ? "Normal Load" : "Vacant"),
+      customerCount,
+      totalPackagesCount: totalPackages,
+      currentGoodsCount: storedGoodsList.length,
       tenantName: firstGood ? firstGood.customerName : undefined,
-      goodsName: firstGood ? firstGood.name : undefined,
-      goodsBarcode: firstGood ? firstGood.barcode : undefined,
-      packageCount: firstGood ? firstGood.quantity : undefined,
-      unit: firstGood ? firstGood.unit : undefined,
-      allGoods: (s.storedGoods || []).map((g) => ({
-        id: g.id,
-        name: g.name,
-        barcode: g.barcode,
-        customerName: g.customerName,
-        quantity: g.quantity,
-        unit: g.unit,
-        volumeM3: g.volumeM3 || 0,
-      })),
+      storedGoods: storedGoodsList,
       lastUpdated: (s as any).updatedAt || new Date().toISOString(),
     };
   });
@@ -191,9 +199,9 @@ export default function WarehouseCapacityPage() {
               <select
                 value={activeWhId}
                 onChange={(e) => {
-                  setActiveWhId(e.target.value);
                   setSelectedWarehouseId(e.target.value);
                 }}
+
                 className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
               >
                 {warehouseList.map((wh) => (
@@ -379,65 +387,118 @@ export default function WarehouseCapacityPage() {
                     (statusFilter === "ALL" || s.status === statusFilter)
                 )
                 .map((slot) => {
-                  const isOccupied = slot.usedM3 > 0;
-                  const isFull = slot.usedM3 >= slot.capacityM3;
-                  const pct = slot.capacityM3 > 0 ? (slot.usedM3 / slot.capacityM3) * 100 : 0;
+                  const volPct = slot.volumeUtilizationPercent ?? 0;
+                  const weightPct = slot.weightUtilizationPercent ?? 0;
+                  const isFull = volPct >= 100 || weightPct >= 100;
+                  const isOccupied = slot.usedM3 > 0 || (slot.usedWeightKg ?? 0) > 0;
+                  const isNearLimit = volPct >= 85 || weightPct >= 85;
+
+                  const customerCount = slot.customerCount ?? 0;
+                  const totalPkgs = slot.totalPackagesCount ?? 0;
+                  const skuCount = slot.currentGoodsCount ?? 0;
 
                   return (
                     <div
                       key={slot.id}
                       onClick={() => handleSlotClick(slot)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer group hover:scale-[1.02] shadow-xs ${
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer group hover:scale-[1.02] shadow-xs flex flex-col justify-between ${
                         isFull
                           ? "bg-rose-50/40 border-rose-200 hover:border-rose-400"
+                          : isNearLimit
+                          ? "bg-amber-50/40 border-amber-200 hover:border-amber-400"
                           : isOccupied
                           ? "bg-indigo-50/40 border-indigo-200 hover:border-indigo-400"
                           : "bg-white border-slate-200 hover:border-slate-300"
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-bold text-slate-900">
-                          {slot.code}
-                        </span>
-                        <Badge
-                          className={`text-[9.5px] font-semibold ${
-                            isFull
-                              ? "bg-rose-600 text-white"
-                              : isOccupied
-                              ? "bg-indigo-600 text-white"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {isFull ? "Occupied" : isOccupied ? "Partial" : "Vacant"}
-                        </Badge>
-                      </div>
-
-                      <div className="my-3 space-y-1">
-                        <div className="flex justify-between text-[11px] font-mono text-slate-500">
-                          <span>Volume Used</span>
-                          <span className="font-bold text-slate-800">
-                            {slot.usedM3} / {slot.capacityM3} m³
+                      <div>
+                        {/* Rack Header */}
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="font-mono text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                            {slot.code}
                           </span>
+                          <div className="flex items-center gap-1">
+                            <Badge
+                              className={`text-[9.5px] font-semibold ${
+                                isFull
+                                  ? "bg-rose-600 text-white"
+                                  : isOccupied
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {isFull ? "Occupied" : isOccupied ? "Partial" : "Vacant"}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                              isFull
-                                ? "bg-rose-500"
-                                : isOccupied
-                                ? "bg-indigo-600"
-                                : "bg-slate-200"
-                            }`}
-                            style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-                          />
+
+                        {/* Dual Progress: 1. Volume Capacity */}
+                        <div className="mt-3 space-y-1">
+                          <div className="flex justify-between text-[10.5px] font-mono text-slate-500">
+                            <span>Vol ({volPct}%)</span>
+                            <span className="font-bold text-slate-800">
+                              {slot.usedM3} / {slot.capacityM3} m³
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-1.5 rounded-full transition-all duration-300 ${
+                                volPct >= 100
+                                  ? "bg-rose-500"
+                                  : volPct >= 85
+                                  ? "bg-amber-500"
+                                  : isOccupied
+                                  ? "bg-indigo-600"
+                                  : "bg-slate-200"
+                              }`}
+                              style={{ width: `${Math.min(100, Math.max(0, volPct))}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Dual Progress: 2. Weight / Load Capacity */}
+                        <div className="mt-2 space-y-1">
+                          <div className="flex justify-between text-[10.5px] font-mono text-slate-500">
+                            <span>Load ({weightPct}%)</span>
+                            <span className="font-bold text-slate-800">
+                              {(slot.usedWeightKg ?? 0).toLocaleString("en-US")} / {(slot.maxWeightKg ?? slot.capacityM3 * 50).toLocaleString("en-US")} kg
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-1.5 rounded-full transition-all duration-300 ${
+                                weightPct >= 100
+                                  ? "bg-rose-500"
+                                  : weightPct >= 85
+                                  ? "bg-amber-500"
+                                  : isOccupied
+                                  ? "bg-amber-500"
+                                  : "bg-slate-200"
+                              }`}
+                              style={{ width: `${Math.min(100, Math.max(0, weightPct))}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-slate-100/80 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400 truncate max-w-[120px]">
-                          {slot.tenantName || "No Cargo"}
+                      {/* Multi-Tenant & Telemetry Footer */}
+                      <div className="pt-3 mt-3 border-t border-slate-100/80 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-600 font-medium truncate max-w-[150px]">
+                          {isOccupied ? (
+                            customerCount > 1 ? (
+                              <span className="font-bold text-indigo-700">
+                                {customerCount} Customers • {totalPkgs} Pkgs ({skuCount} SKUs)
+                              </span>
+                            ) : (
+                              <span>
+                                {customerCount === 1 ? "1 Customer" : "Stored"} • {totalPkgs} Pkgs ({skuCount} SKU)
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-slate-400">Vacant / Ready</span>
+                          )}
                         </span>
-                        <span className="font-mono text-slate-500">{slot.temperature}</span>
+                        <span className="font-mono text-slate-500 shrink-0">{slot.temperature}</span>
                       </div>
                     </div>
                   );
@@ -452,6 +513,7 @@ export default function WarehouseCapacityPage() {
         <SlotDetailModal
           slot={selectedSlot}
           isOpen={isModalOpen}
+          availableSlots={rawSlots}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedSlot(null);
@@ -462,3 +524,4 @@ export default function WarehouseCapacityPage() {
     </PageContainer>
   );
 }
+

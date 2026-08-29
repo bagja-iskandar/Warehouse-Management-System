@@ -97,7 +97,6 @@ export function useCreateGoods() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: goodsKeys.all });
       queryClient.invalidateQueries({ queryKey: warehouseKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["warehouses"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
     },
@@ -122,7 +121,6 @@ export function useUpdateGoodsStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: goodsKeys.all });
       queryClient.invalidateQueries({ queryKey: warehouseKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["warehouses"] });
       queryClient.invalidateQueries({ queryKey: ["logistics"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
@@ -149,10 +147,10 @@ export function useTransferGoodsSlot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: goodsKeys.all });
       queryClient.invalidateQueries({ queryKey: warehouseKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["warehouses"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+
     },
   });
 }

@@ -15,9 +15,14 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
+import { ChangeRentalWarehouseDto } from './dto/change-rental-warehouse.dto';
 import { RentWarehouseSpaceDto } from './dto/rent-warehouse.dto';
 import { WarehouseQueryDto } from './dto/warehouse-query.dto';
-import { WarehouseDetailResponseDto, WarehouseListItemDto } from './dto/warehouse-response.dto';
+import {
+  StorageSlotResponseDto,
+  WarehouseDetailResponseDto,
+  WarehouseListItemDto,
+} from './dto/warehouse-response.dto';
 import { RentalBookingResult, WarehouseService } from './warehouse.service';
 
 @ApiTags('Warehouses')
@@ -30,25 +35,25 @@ export class WarehouseController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Daftar Fasilitas Gudang (Warehouse Directory)',
+    summary: 'Get Warehouse Facility Directory',
     description:
-      'Mengambil seluruh fasilitas gudang aktif dengan ringkasan kapasitas m3, zona penyimpanan, dan utilisasi slot rak.',
+      'Retrieves all active warehouse facilities with capacity summary, zones, and rack utilization.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Daftar gudang berhasil diambil',
+    description: 'Warehouse directory retrieved successfully',
     type: [WarehouseListItemDto],
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   async findAll(
     @Query() query: WarehouseQueryDto,
   ): Promise<{ message: string; data: WarehouseListItemDto[] }> {
     const data = await this.warehouseService.findAll(query);
     return {
-      message: 'Daftar fasilitas gudang berhasil diambil',
+      message: 'Warehouse facilities retrieved successfully',
       data,
     };
   }
@@ -57,13 +62,13 @@ export class WarehouseController {
   @Roles('CUSTOMER', 'ADMIN')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Daftar Fasilitas Gudang Aktif Milik Customer',
+    summary: 'Get Active Customer Warehouse Facilities',
     description:
-      'Mengambil daftar gudang yang memiliki relasi sewa aktif atau penempatan barang milik Customer yang sedang login.',
+      'Retrieves warehouses associated with active rentals or stored goods for the logged-in customer.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Daftar fasilitas gudang aktif customer berhasil diambil',
+    description: 'Customer active warehouses retrieved successfully',
     type: [WarehouseListItemDto],
   })
   async getCustomerWarehouses(
@@ -71,7 +76,7 @@ export class WarehouseController {
   ): Promise<{ message: string; data: WarehouseListItemDto[] }> {
     const data = await this.warehouseService.getCustomerWarehouses(currentUser);
     return {
-      message: 'Daftar fasilitas gudang aktif pelanggan berhasil diambil',
+      message: 'Customer warehouse facilities retrieved successfully',
       data,
     };
   }
@@ -80,21 +85,21 @@ export class WarehouseController {
   @Roles('CUSTOMER', 'ADMIN')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Pemesanan Sewa Ruang Gudang (Self-Service Rental Booking)',
+    summary: 'Warehouse Space Rental Booking (Self-Service Rental Booking)',
     description:
-      'Menyimpan permohonan sewa ruang gudang (Cold Storage / Standard), menerbitkan faktur tagihan invoice real di PostgreSQL, dan mengirim notifikasi.',
+      'Records warehouse space rental booking (Cold Storage / Standard), issues real invoice in PostgreSQL, and creates notifications.',
   })
   @ApiResponse({
     status: 201,
-    description: 'Pemesanan sewa ruang gudang berhasil dicatat dan invoice diterbitkan',
+    description: 'Warehouse space rental booked successfully and invoice issued',
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi data sewa tidak valid',
+    description: 'Invalid rental booking payload',
   })
   @ApiResponse({
     status: 404,
-    description: 'Fasilitas gudang tidak ditemukan',
+    description: 'Warehouse facility not found',
   })
   async rentSpace(
     @Body() dto: RentWarehouseSpaceDto,
@@ -102,7 +107,85 @@ export class WarehouseController {
   ): Promise<{ message: string; data: RentalBookingResult }> {
     const data = await this.warehouseService.rentSpace(dto, currentUser);
     return {
-      message: 'Permohonan sewa ruang gudang berhasil diproses dan invoice diterbitkan',
+      message: 'Warehouse space rental request processed successfully and invoice issued',
+      data,
+    };
+  }
+
+  @Post('change-rental-warehouse')
+  @Roles('CUSTOMER', 'ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Pre-Inbound Warehouse Rental Transfer (Change Rental Facility)',
+    description:
+      'Transfers rented warehouse allocation and DRAFT/PENDING_PICKUP inventory to another facility BEFORE physical receiving.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Warehouse rental facility transferred successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Inventory has already entered warehouse operations or invalid request',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Source or destination warehouse facility not found',
+  })
+  async changeRentalWarehouse(
+    @Body() dto: ChangeRentalWarehouseDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    const data = await this.warehouseService.changeRentalWarehouse(dto, currentUser);
+    return {
+      message: data.message,
+      data,
+    };
+  }
+
+  @Get('slots/:slotId/inventory')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get Detailed Rack Slot Inventory & Tenant Contents',
+    description:
+      'Retrieves live multi-tenant goods currently stored in a rack slot with dual volume & weight capacities and sensor telemetry.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Slot inventory retrieved successfully',
+    type: StorageSlotResponseDto,
+  })
+  async getSlotInventoryDirect(
+    @Param('slotId') slotId: string,
+  ): Promise<{ message: string; data: StorageSlotResponseDto }> {
+    const data = await this.warehouseService.getSlotInventory(slotId);
+    return {
+      message: 'Rack slot inventory retrieved successfully',
+      data,
+    };
+  }
+
+  @Get(':warehouseId/slots/:slotId/inventory')
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get Warehouse Specific Rack Slot Inventory & Tenant Contents',
+    description:
+      'Retrieves live multi-tenant goods currently stored in a rack slot within a warehouse facility.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Warehouse slot inventory retrieved successfully',
+    type: StorageSlotResponseDto,
+  })
+  async getSlotInventory(
+    @Param('warehouseId') warehouseId: string,
+    @Param('slotId') slotId: string,
+  ): Promise<{ message: string; data: StorageSlotResponseDto }> {
+    const data = await this.warehouseService.getSlotInventory(slotId, warehouseId);
+    return {
+      message: 'Rack slot inventory retrieved successfully',
       data,
     };
   }
@@ -110,35 +193,34 @@ export class WarehouseController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Detail Fasilitas Gudang & Grid Slot 3D',
+    summary: 'Get Warehouse Facility Detail & 3D Slot Grid',
     description:
-      'Mengambil informasi lengkap gudang tertentu beserta zona sub-zero / standar dan status slot rak 3D.',
+      'Retrieves comprehensive warehouse facility info including storage zones and 3D rack slots.',
   })
   @ApiParam({
     name: 'id',
-    description:
-      'ID unik fasilitas gudang (misal: wh-jkt-central) atau Kode Gudang (misal: WH-CKG-01)',
+    description: 'Unique warehouse ID (e.g. wh-jkt-central) or Code (e.g. WH-CKG-01)',
     example: 'wh-jkt-central',
   })
   @ApiResponse({
     status: 200,
-    description: 'Detail fasilitas gudang berhasil diambil',
+    description: 'Warehouse facility detail retrieved successfully',
     type: WarehouseDetailResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   @ApiResponse({
     status: 404,
-    description: 'Fasilitas gudang tidak ditemukan',
+    description: 'Warehouse facility not found',
   })
   async findById(
     @Param('id') id: string,
   ): Promise<{ message: string; data: WarehouseDetailResponseDto }> {
     const data = await this.warehouseService.findById(id);
     return {
-      message: 'Detail fasilitas gudang berhasil diambil',
+      message: 'Warehouse facility detail retrieved successfully',
       data,
     };
   }

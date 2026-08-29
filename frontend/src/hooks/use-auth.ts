@@ -5,36 +5,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
-import { LoginCredentials, UserProfile, UserRole, RegisterCustomerInput } from "@/types";
-import { SEED_USERS } from "@/mock/seed/users.seed";
-
+import { LoginCredentials, UserProfile, RegisterCustomerInput } from "@/types";
 import { analyticsKeys } from "@/hooks/use-analytics";
 import { operationalCountsKeys } from "@/hooks/use-operational-counts";
 import { analyticsService } from "@/services/analytics.service";
-
-export const DEMO_CREDENTIALS: Record<
-  UserRole,
-  { email: string; password: string; roleName: string; description: string }
-> = {
-  ADMIN: {
-    email: "admin@wms.id",
-    password: "Password123!",
-    roleName: "Warehouse Admin",
-    description: "Full access to rack capacity, fleet, & billing management",
-  },
-  CUSTOMER: {
-    email: "customer@freshfoods.id",
-    password: "Password123!",
-    roleName: "Corporate Customer",
-    description: "Rent cold storage space, bookings, & goods monitoring",
-  },
-  DRIVER: {
-    email: "driver@wms.id",
-    password: "Password123!",
-    roleName: "Logistics Driver",
-    description: "Pickup/delivery tasks & truck fleet selection",
-  },
-};
 
 export function useAuth() {
   const router = useRouter();
@@ -180,7 +154,7 @@ export function useAuth() {
   const logout = async () => {
     try {
       await authService.logout();
-    } catch (err) {
+    } catch {
       // Ignore network error on logout
     }
     storeLogout();
@@ -189,10 +163,6 @@ export function useAuth() {
       description: "You have signed out of WMS operations.",
     });
     router.push("/login");
-  };
-
-  const getDemoUser = (role: UserRole) => {
-    return SEED_USERS.find((u) => u.role === role);
   };
 
   return {
@@ -210,7 +180,5 @@ export function useAuth() {
     changePassword: changePasswordMutation.mutateAsync,
     isChangingPassword: changePasswordMutation.isPending,
     logout,
-    getDemoUser,
-    demoCredentials: DEMO_CREDENTIALS,
   };
 }

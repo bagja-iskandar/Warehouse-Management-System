@@ -26,7 +26,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWarehouses, warehouseKeys } from "@/hooks/use-warehouses";
 import { useWarehouseStore } from "@/store/warehouse.store";
 import { useOperationalCounts } from "@/hooks/use-operational-counts";
-import { SEED_WAREHOUSES } from "@/mock/seed/warehouses.seed";
 import { useQueryClient } from "@tanstack/react-query";
 import { analyticsKeys } from "@/hooks/use-analytics";
 import { goodsKeys } from "@/hooks/use-goods";
@@ -222,20 +221,22 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const hubDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Available hubs from service/mock layer
-  const availableHubs =
-    liveWarehouses && liveWarehouses.length > 0
-      ? liveWarehouses
-      : SEED_WAREHOUSES;
+  // Available hubs from API service layer
+  const availableHubs = liveWarehouses || [];
 
   // Active warehouse resolution
   const activeWarehouse =
     availableHubs.find((h) => h.id === selectedWarehouseId) ||
-    availableHubs[0] ||
-    SEED_WAREHOUSES[0];
+    availableHubs[0] || {
+      id: selectedWarehouseId || "wh-default",
+      name: "Cakung Logistics Central Hub",
+      code: "WH-CKG-01",
+      zones: { coldStorageCapacityM3: 1500, standardCapacityM3: 3500 },
+    };
 
   // Helper for facility string
-  const getFacilitySummary = (w: typeof activeWarehouse) => {
+  const getFacilitySummary = (w?: { zones?: { coldStorageCapacityM3?: number; standardCapacityM3?: number } }) => {
+    if (!w) return "Standard Dry";
     const hasCold = Boolean(w.zones?.coldStorageCapacityM3 && w.zones.coldStorageCapacityM3 > 0);
     const hasStandard = Boolean(w.zones?.standardCapacityM3 && w.zones.standardCapacityM3 > 0);
     if (hasCold && hasStandard) return "Standard & Cold";

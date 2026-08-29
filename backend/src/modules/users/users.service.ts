@@ -8,6 +8,7 @@ import {
 import {
   GoodsStorageStatus,
   InvoiceStatus,
+  OrderStatus,
   Prisma,
   SlotStatus,
   UserRole,
@@ -72,9 +73,7 @@ export class UsersService {
     currentUser: AuthenticatedUser,
   ): Promise<UserProfileDto> {
     if (currentUser.role !== UserRole.ADMIN && currentUser.id !== id) {
-      throw new ForbiddenException(
-        'Anda tidak memiliki hak akses untuk mengubah data profil pengguna lain',
-      );
+      throw new ForbiddenException('You do not have permission to modify another user profile');
     }
 
     const existingUser = await this.prisma.user.findUnique({
@@ -82,7 +81,7 @@ export class UsersService {
     });
 
     if (!existingUser) {
-      throw new NotFoundException(`Pengguna dengan ID ${id} tidak ditemukan`);
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -106,19 +105,38 @@ export class UsersService {
       companyName: updatedUser.companyName,
       address: updatedUser.address,
       status: updatedUser.status,
+      driverLicenseNumber: updatedUser.driverLicenseNumber,
+      driverLicenseExpiry: updatedUser.driverLicenseExpiry
+        ? updatedUser.driverLicenseExpiry.toISOString()
+        : null,
       createdAt: updatedUser.createdAt.toISOString(),
     };
   }
 
   /**
-   * Mengambil daftar seluruh pengguna (Admin only).
+   * Retrieves all users (Admin only).
    */
   async findAll(currentUser: AuthenticatedUser): Promise<UserProfileDto[]> {
     if (currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Hanya Admin yang berhak melihat daftar seluruh pengguna');
+      throw new ForbiddenException('Only Admins are authorized to view all users');
     }
 
     const users = await this.prisma.user.findMany({
+      include: {
+        driverOrders: {
+          where: {
+            status: {
+              in: [
+                OrderStatus.DRIVER_ASSIGNED,
+                OrderStatus.EN_ROUTE_PICKUP,
+                OrderStatus.PICKED_UP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.ARRIVED_DESTINATION,
+              ],
+            },
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -132,16 +150,19 @@ export class UsersService {
       companyName: u.companyName,
       address: u.address,
       status: u.status,
+      driverLicenseNumber: u.driverLicenseNumber,
+      driverLicenseExpiry: u.driverLicenseExpiry ? u.driverLicenseExpiry.toISOString() : null,
+      activeOrdersCount: u.driverOrders ? u.driverOrders.length : 0,
       createdAt: u.createdAt.toISOString(),
     }));
   }
 
   /**
-   * Mengambil daftar seluruh pelanggan / tenants (Admin only) dengan metrik agregasi riil dari PostgreSQL.
+   * Retrieves customer directory (Admin only) with live aggregated PostgreSQL metrics.
    */
   async findCustomers(currentUser: AuthenticatedUser): Promise<CustomerDetailDto[]> {
     if (currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Hanya Admin yang berhak melihat direktori pelanggan');
+      throw new ForbiddenException('Only Admins are authorized to view customer directory');
     }
 
     const customers = await this.prisma.user.findMany({
@@ -217,13 +238,11 @@ export class UsersService {
   }
 
   /**
-   * Mengambil detail pengguna berdasarkan ID.
+   * Retrieves user detail by ID.
    */
   async findById(id: string, currentUser: AuthenticatedUser): Promise<UserProfileDto> {
     if (currentUser.role !== UserRole.ADMIN && currentUser.id !== id) {
-      throw new ForbiddenException(
-        'Anda tidak memiliki hak akses untuk melihat data pengguna lain',
-      );
+      throw new ForbiddenException('You do not have permission to view another user profile');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -231,7 +250,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`Pengguna dengan ID ${id} tidak ditemukan`);
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     return {
@@ -249,7 +268,7 @@ export class UsersService {
   }
 
   /**
-   * Memperbarui data pengguna / customer secara komprehensif (Admin or self).
+   * Updates user profile data (Admin or self).
    */
   async updateUser(
     id: string,
@@ -257,13 +276,11 @@ export class UsersService {
     currentUser: AuthenticatedUser,
   ): Promise<UserProfileDto> {
     if (currentUser.role !== UserRole.ADMIN && currentUser.id !== id) {
-      throw new ForbiddenException(
-        'Anda tidak memiliki hak akses untuk mengubah data pengguna lain',
-      );
+      throw new ForbiddenException('You do not have permission to modify another user profile');
     }
 
     if (dto.status !== undefined && currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Hanya Admin yang berhak mengubah status operasional akun');
+      throw new ForbiddenException('Only Admins are authorized to modify user operational status');
     }
 
     const existingUser = await this.prisma.user.findUnique({
@@ -271,16 +288,16 @@ export class UsersService {
     });
 
     if (!existingUser) {
-      throw new NotFoundException(`Pengguna dengan ID '${id}' tidak ditemukan`);
+      throw new NotFoundException(`User with ID '${id}' not found`);
     }
 
-    // Jika email diubah, pastikan tidak duplikat
+    // Ensure email is unique if changed
     if (dto.email && dto.email.trim().toLowerCase() !== existingUser.email.toLowerCase()) {
       const emailTaken = await this.prisma.user.findUnique({
         where: { email: dto.email.trim().toLowerCase() },
       });
       if (emailTaken) {
-        throw new BadRequestException('Alamat email sudah terdaftar pada pengguna lain');
+        throw new BadRequestException('Email address is already registered by another user');
       }
     }
 
@@ -312,19 +329,18 @@ export class UsersService {
   }
 
   /**
-   * Menghapus akun pengguna / customer secara transaksional dengan pembersihan seluruh relasi dependensi (Admin only).
-   * Menghindari foreign key violation dan secara otomatis memperbarui kapasitas slot & warehouse terkait.
+   * Deletes user account with transactional cascading clean-up (Admin only).
    */
   async deleteUser(
     id: string,
     currentUser: AuthenticatedUser,
   ): Promise<{ success: boolean; message: string; deletedId: string }> {
     if (currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Hanya Admin yang memiliki wewenang untuk menghapus akun pengguna');
+      throw new ForbiddenException('Only Admins are authorized to delete user accounts');
     }
 
     if (currentUser.id === id) {
-      throw new BadRequestException('Anda tidak dapat menghapus akun Admin yang sedang Anda gunakan');
+      throw new BadRequestException('You cannot delete the active Admin account currently in use');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -335,10 +351,10 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`Pengguna dengan ID '${id}' tidak ditemukan`);
+      throw new NotFoundException(`User with ID '${id}' not found`);
     }
 
-    // Catat slot dan warehouse yang terdampak untuk rekalkulasi kapasitas
+    // Record affected slots and warehouses for capacity recalculation
     const affectedSlotIds = Array.from(
       new Set(user.goodsItems.map((g) => g.slotId).filter((s): s is string => Boolean(s))),
     );
@@ -412,7 +428,9 @@ export class UsersService {
       }
     });
 
-    this.logger.log(`User '${user.name}' (${user.email}) successfully deleted by Admin ${currentUser.name}`);
+    this.logger.log(
+      `User '${user.name}' (${user.email}) successfully deleted by Admin ${currentUser.name}`,
+    );
 
     return {
       success: true,
@@ -424,7 +442,10 @@ export class UsersService {
   /**
    * Helper internal rekalkulasi kapasitas slot
    */
-  private async recalculateSlotCapacity(slotId: string, tx: Prisma.TransactionClient): Promise<void> {
+  private async recalculateSlotCapacity(
+    slotId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
     const slot = await tx.storageSlot.findUnique({
       where: { id: slotId },
       include: {
@@ -440,9 +461,9 @@ export class UsersService {
     const actualUsedM3 = Number(
       slot.goodsItems.reduce((sum, g) => sum + Number(g.volumeM3), 0).toFixed(2),
     );
-    const capacityM3 = Number(slot.capacityM3);
 
     let nextStatus: SlotStatus = SlotStatus.AVAILABLE;
+
     if (slot.status === SlotStatus.MAINTENANCE) {
       nextStatus = SlotStatus.MAINTENANCE;
     } else if (actualUsedM3 === 0) {

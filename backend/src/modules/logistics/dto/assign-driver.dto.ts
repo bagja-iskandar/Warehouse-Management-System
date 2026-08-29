@@ -4,17 +4,17 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class AssignDriverDto {
   @ApiProperty({
     example: 'veh-01',
-    description: 'ID unik kendaraan yang akan ditugaskan',
+    description: 'Unique ID of the vehicle to assign',
   })
   @IsString()
-  @IsNotEmpty({ message: 'ID kendaraan wajib disertakan' })
+  @IsNotEmpty({ message: 'Vehicle ID is required' })
   vehicleId: string;
 
   @ApiProperty({
     example: 'usr-driver-1',
-    description: 'ID driver yang ditugaskan mengemudikan kendaraan',
+    description: 'ID of the driver assigned to operate the vehicle',
   })
   @IsString()
-  @IsNotEmpty({ message: 'ID driver wajib disertakan' })
+  @IsNotEmpty({ message: 'Driver ID is required' })
   driverId: string;
 }

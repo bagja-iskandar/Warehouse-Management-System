@@ -6,14 +6,14 @@ export class UpdateOrderStatusDto {
   @ApiProperty({
     enum: OrderStatus,
     example: OrderStatus.IN_TRANSIT,
-    description: 'Status baru alur pengiriman Delivery Order',
+    description: 'New status in Delivery Order workflow',
   })
-  @IsEnum(OrderStatus, { message: 'Status order tidak valid' })
+  @IsEnum(OrderStatus, { message: 'Invalid order status' })
   status: OrderStatus;
 
   @ApiPropertyOptional({
     example: 'usr-driver-1',
-    description: 'ID driver yang ditugaskan (Wajib jika status berubah ke DRIVER_ASSIGNED)',
+    description: 'Assigned driver ID (Required when transitioning to DRIVER_ASSIGNED)',
   })
   @IsOptional()
   @IsString()
@@ -21,7 +21,7 @@ export class UpdateOrderStatusDto {
 
   @ApiPropertyOptional({
     example: 'veh-01',
-    description: 'ID kendaraan armada yang ditugaskan',
+    description: 'Assigned fleet vehicle ID',
   })
   @IsOptional()
   @IsString()
@@ -29,15 +29,15 @@ export class UpdateOrderStatusDto {
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Flag apakah pengiriman mengalami keterlambatan operasional',
+    description: 'Flag indicating whether the shipment encountered operational delay',
   })
   @IsOptional()
   @IsBoolean()
   isDelayed?: boolean;
 
   @ApiPropertyOptional({
-    example: 'Kemacetan parah di Tol Cikampek KM 38 akibat perbaikan jalan',
-    description: 'Alasan rinci terjadinya keterlambatan armada',
+    example: 'Heavy traffic congestion on Jakarta-Cikampek highway KM 38',
+    description: 'Detailed reason for shipment delay',
   })
   @IsOptional()
   @IsString()
@@ -45,23 +45,23 @@ export class UpdateOrderStatusDto {
 
   @ApiPropertyOptional({
     example: '2026-08-01T15:30:00.000Z',
-    description: 'Estimasi jadwal baru jika terjadi penundaan waktu',
+    description: 'New estimated arrival time if rescheduled',
   })
   @IsOptional()
   @IsString()
   rescheduledTime?: string;
 
   @ApiPropertyOptional({
-    example: 'Kondisi barang baik dan segel utuh',
-    description: 'Catatan konfirmasi atau status pengiriman',
+    example: 'Goods in good condition with seals intact',
+    description: 'Status or confirmation notes',
   })
   @IsOptional()
   @IsString()
   note?: string;
 
   @ApiPropertyOptional({
-    example: 'Gudang Utama Cakung Hub',
-    description: 'Lokasi checkpoint terkini',
+    example: 'Cakung Central Hub checkpoint',
+    description: 'Current checkpoint location',
   })
   @IsOptional()
   @IsString()

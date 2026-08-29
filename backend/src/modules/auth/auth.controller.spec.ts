@@ -73,7 +73,7 @@ describe('AuthController', () => {
         password: 'Password123!',
       });
 
-      expect(response.message).toBe('Login berhasil');
+      expect(response.message).toBe('Login successful');
       expect(response.data.accessToken).toBe('mock_access_token');
       expect(response.data.user.email).toBe('admin@wms.id');
     });
@@ -85,7 +85,7 @@ describe('AuthController', () => {
         refreshToken: 'mock_refresh_token',
       });
 
-      expect(response.message).toBe('Pembaruan token berhasil');
+      expect(response.message).toBe('Token renewal successful');
       expect(response.data.accessToken).toBe('new_mock_access_token');
     });
   });
@@ -109,7 +109,7 @@ describe('AuthController', () => {
         status: UserStatus.ACTIVE,
       });
 
-      expect(response.message).toBe('Profil pengguna berhasil diambil');
+      expect(response.message).toBe('User profile retrieved successfully');
       expect(response.data.id).toBe('usr-admin-1');
     });
   });
@@ -125,7 +125,7 @@ describe('AuthController', () => {
         password: 'Password123!',
       });
 
-      expect(response.message).toBe('Registrasi customer berhasil');
+      expect(response.message).toBe('Customer registration successful');
       expect(response.data.accessToken).toBe('mock_access_token');
       expect(response.data.user.email).toBe('admin@wms.id');
     });

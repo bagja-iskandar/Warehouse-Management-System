@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { ChunkRecoveryHandler } from "@/components/common/ChunkRecoveryHandler";
+import { RealtimeProvider } from "./RealtimeProvider";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -35,15 +35,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ChunkRecoveryHandler />
-      {children}
-      <Toaster
-        position="top-center"
-        richColors
-        closeButton={false}
-        duration={2500}
-        visibleToasts={1}
-      />
+      <RealtimeProvider>
+        {children}
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton={false}
+          duration={2500}
+          visibleToasts={1}
+        />
+      </RealtimeProvider>
     </QueryClientProvider>
   );
 }

@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Loader2,
   BellOff,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,8 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
 
   const getCategoryIcon = (category: NotificationCategory) => {
     switch (category) {
+      case "ORDER_MESSAGE":
+        return <MessageSquare className="h-4 w-4 text-indigo-600" />;
       case "SCHEDULE_DELAY":
       case "CONFIRMATION_REQUIRED":
         return <AlertTriangle className="h-4 w-4 text-amber-600" />;
@@ -81,8 +84,35 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
     }
   };
 
+  const getCategoryLabel = (category: NotificationCategory) => {
+    switch (category) {
+      case "ORDER_MESSAGE":
+        return "Delivery Update";
+      case "DRIVER_DISPATCHED":
+        return "Driver Dispatched";
+      case "DELIVERY_ARRIVED":
+        return "Delivery Arrived";
+      case "SCHEDULE_DELAY":
+        return "Delivery Delayed";
+      case "GOODS_STORED":
+        return "Goods Stored";
+      case "GOODS_INSPECTED":
+        return "Goods Inspected";
+      case "BILLING_DUE":
+        return "Billing Due";
+      case "PAYMENT_RECEIVED":
+        return "Payment Verified";
+      case "CONFIRMATION_REQUIRED":
+        return "Action Required";
+      default:
+        return "Warehouse Update";
+    }
+  };
+
   const getCategoryBadgeClass = (category: NotificationCategory) => {
     switch (category) {
+      case "ORDER_MESSAGE":
+        return "bg-indigo-50 text-indigo-700 border-indigo-200";
       case "SCHEDULE_DELAY":
       case "CONFIRMATION_REQUIRED":
         return "bg-amber-50 text-amber-700 border-amber-200";
@@ -195,30 +225,38 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
 
                     {/* Content Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {!notif.isRead && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                           )}
-                          <h3
-                            className={`text-xs truncate ${
-                              notif.isRead
-                                ? "font-semibold text-slate-800"
-                                : "font-bold text-slate-900"
-                            }`}
+                          <Badge
+                            className={`text-[9.5px] px-1.5 py-0 font-semibold ${getCategoryBadgeClass(
+                              notif.category
+                            )}`}
                           >
-                            {notif.title}
-                          </h3>
+                            {getCategoryLabel(notif.category)}
+                          </Badge>
                         </div>
 
                         <span
-                          className="text-[10px] text-slate-400 font-medium whitespace-nowrap shrink-0 flex items-center gap-1"
+                          className="text-[10px] text-slate-400 font-medium whitespace-nowrap shrink-0 flex items-center gap-1 font-mono"
                           title={formatDate(notif.createdAt)}
                         >
                           <Clock className="h-2.5 w-2.5" />
                           {formatRelativeTime(notif.createdAt)}
                         </span>
                       </div>
+
+                      <h3
+                        className={`text-xs ${
+                          notif.isRead
+                            ? "font-semibold text-slate-800"
+                            : "font-bold text-slate-900"
+                        }`}
+                      >
+                        {notif.title}
+                      </h3>
 
                       <p className="text-xs text-slate-600 mt-1 leading-relaxed line-clamp-3">
                         {notif.message}

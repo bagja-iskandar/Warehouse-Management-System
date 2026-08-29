@@ -1,65 +1,121 @@
-"use client";
-
-import React from "react";
 import Link from "next/link";
-import { FileQuestion, Home, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/auth.store";
 
+// Root not-found.tsx: Server Component with zero heavy dependencies.
+// IMPORTANT: This file intentionally uses NO client components that import
+// auth stores, UI libraries, or third-party packages.
+// Reason: Next.js App Router compiles root-level special files (not-found, error)
+// alongside layout.tsx in the same webpack compilation unit. Heavy dependencies
+// here inflate layout.js chunk size and extend initial compilation time,
+// which causes ChunkLoadError on cold start.
 export default function NotFoundPage() {
-  const user = useAuthStore((s) => s.user);
-
-  const getDashboardLink = () => {
-    if (!user) return "/login";
-    switch (user.role) {
-      case "ADMIN":
-        return "/admin/dashboard";
-      case "CUSTOMER":
-        return "/customer/dashboard";
-      case "DRIVER":
-        return "/driver/dashboard";
-      default:
-        return "/";
-    }
-  };
-
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-2xl p-7 sm:p-9 shadow-xl shadow-slate-200/40 text-center space-y-6">
-        {/* Brand Icon */}
-        <div className="flex flex-col items-center">
-          <div className="h-16 w-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
-            <FileQuestion className="h-8 w-8" />
+    <html lang="en">
+      <body
+        style={{
+          minHeight: "100vh",
+          background: "#F8FAFC",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: 0,
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 400,
+            background: "white",
+            border: "1px solid #E2E8F0",
+            borderRadius: 16,
+            padding: 36,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.06)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              background: "#EEF2FF",
+              border: "1px solid #C7D2FE",
+              borderRadius: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 12px",
+              fontSize: 28,
+            }}
+          >
+            🔍
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 mb-1.5">
+
+          <span
+            style={{
+              display: "inline-block",
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "#4F46E5",
+              background: "#EEF2FF",
+              padding: "3px 10px",
+              borderRadius: 20,
+              border: "1px solid #C7D2FE",
+              marginBottom: 10,
+            }}
+          >
             Error 404 — Not Found
           </span>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+
+          <h1
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              color: "#0F172A",
+              margin: "0 0 6px",
+              letterSpacing: "-0.02em",
+            }}
+          >
             Page Not Found
           </h1>
-          <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
-            The page or resource you are looking for is not available or has been moved.
-          </p>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex flex-col gap-2.5 pt-2">
-          <Link href={getDashboardLink()} className="w-full">
-            <Button className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer">
-              <Home className="h-4 w-4" />
-              <span>Back to Dashboard</span>
-            </Button>
-          </Link>
-
-          <button
-            onClick={() => window.history.back()}
-            className="w-full h-10 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+          <p
+            style={{
+              fontSize: 12,
+              color: "#64748B",
+              lineHeight: 1.6,
+              margin: "0 0 24px",
+            }}
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Go Back to Previous Page</span>
-          </button>
+            The page or resource you are looking for is not available or has
+            been moved.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Link
+              href="/"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                height: 40,
+                background: "#4F46E5",
+                color: "white",
+                borderRadius: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(79,70,229,0.25)",
+              }}
+            >
+              🏠 Back to Home
+            </Link>
+          </div>
         </div>
-      </div>
-    </div>
+      </body>
+    </html>
   );
 }

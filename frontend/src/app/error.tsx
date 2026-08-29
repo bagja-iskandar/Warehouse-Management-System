@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, RefreshCw, Home, Layers } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
+// Root error.tsx: Minimal client component with zero heavy third-party imports.
+// IMPORTANT: Importing @/components/ui/button (Radix UI, lucide-react) here
+// inflated error.js to 600+ KB and extended root segment compilation time by ~3s,
+// contributing to ChunkLoadError on cold start.
+// Inline styles and native elements used intentionally for performance.
 export default function AppError({
   error,
   reset,
@@ -17,46 +20,130 @@ export default function AppError({
   }, [error]);
 
   return (
-    <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-2xl p-7 sm:p-9 shadow-xl shadow-slate-200/40 text-center space-y-6">
-        {/* Brand Icon */}
-        <div className="flex flex-col items-center">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center mb-3">
-            <AlertTriangle className="h-7 w-7" />
-          </div>
-          <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-            Page Rendering Issue
-          </h1>
-          <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
-            An issue occurred while rendering this page component. You can try refreshing or returning to the home page.
-          </p>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#F8FAFC",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 16,
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 400,
+          background: "white",
+          border: "1px solid #E2E8F0",
+          borderRadius: 16,
+          padding: 36,
+          boxShadow: "0 20px 40px rgba(0,0,0,0.06)",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            background: "#FFFBEB",
+            border: "1px solid #FDE68A",
+            borderRadius: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 12px",
+            fontSize: 24,
+          }}
+        >
+          ⚠️
         </div>
 
-        {/* Technical Digest */}
+        <h1
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#0F172A",
+            margin: "0 0 8px",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Page Rendering Issue
+        </h1>
+        <p
+          style={{
+            fontSize: 12,
+            color: "#64748B",
+            lineHeight: 1.6,
+            margin: "0 0 16px",
+          }}
+        >
+          An issue occurred while rendering this page. You can try refreshing or
+          returning to the home page.
+        </p>
+
         {error.digest && (
-          <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-mono text-slate-500">
-            Error ID: <span className="text-slate-800 font-semibold">{error.digest}</span>
+          <div
+            style={{
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              borderRadius: 8,
+              padding: "6px 12px",
+              fontSize: 11,
+              fontFamily: "monospace",
+              color: "#64748B",
+              marginBottom: 16,
+            }}
+          >
+            Error ID:{" "}
+            <span style={{ color: "#0F172A", fontWeight: 600 }}>
+              {error.digest}
+            </span>
           </div>
         )}
 
-        {/* Action Controls */}
-        <div className="flex flex-col gap-2.5 pt-2">
-          <Button
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button
             onClick={() => reset()}
-            className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer"
+            style={{
+              height: 40,
+              background: "#4F46E5",
+              color: "white",
+              border: "none",
+              borderRadius: 12,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              boxShadow: "0 4px 12px rgba(79,70,229,0.25)",
+            }}
           >
-            <RefreshCw className="h-4 w-4" />
-            <span>Reload Page</span>
-          </Button>
-
-          <Link href="/" className="w-full">
-            <Button
-              variant="outline"
-              className="w-full h-10 border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Home className="h-4 w-4" />
-              <span>Back to Home</span>
-            </Button>
+            🔄 Reload Page
+          </button>
+          <Link
+            href="/"
+            style={{
+              height: 40,
+              border: "1px solid #E2E8F0",
+              color: "#475569",
+              borderRadius: 12,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              textDecoration: "none",
+            }}
+          >
+            🏠 Back to Home
           </Link>
         </div>
       </div>

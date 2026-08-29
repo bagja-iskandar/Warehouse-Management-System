@@ -70,10 +70,10 @@ export class TelemetryService {
       });
 
       if (!slot) {
-        throw new NotFoundException(`Slot rak gudang dengan ID '${dto.slotId}' tidak ditemukan`);
+        throw new NotFoundException(`Storage slot with ID '${dto.slotId}' not found`);
       }
 
-      // Deteksi anomali jika slot berada di zona Cold Storage dan suhu > -18.0 C
+      // Detect temperature anomaly if slot is in Cold Storage zone and temp > -18.0 C
       if (
         slot.zone === StorageZoneType.COLD_STORAGE &&
         dto.temperatureCelsius > TelemetryService.COLD_STORAGE_THRESHOLD_CELSIUS
@@ -82,7 +82,7 @@ export class TelemetryService {
       }
     }
 
-    // 2. Verifikasi Kendaraan Armada (jika disertakan)
+    // 2. Verify Fleet Vehicle
     if (dto.vehicleId) {
       vehicle = await this.prisma.vehicle.findUnique({
         where: { id: dto.vehicleId },
@@ -90,12 +90,10 @@ export class TelemetryService {
       });
 
       if (!vehicle) {
-        throw new NotFoundException(
-          `Kendaraan armada dengan ID '${dto.vehicleId}' tidak ditemukan`,
-        );
+        throw new NotFoundException(`Fleet vehicle with ID '${dto.vehicleId}' not found`);
       }
 
-      // Deteksi anomali jika kendaraan adalah Reefer Truck dan suhu > -18.0 C
+      // Detect temperature anomaly if vehicle is Reefer Truck and temp > -18.0 C
       if (
         (vehicle.type === VehicleType.REEFER_TRUCK || vehicle.hasRefrigeration) &&
         dto.temperatureCelsius > TelemetryService.COLD_STORAGE_THRESHOLD_CELSIUS
@@ -106,9 +104,9 @@ export class TelemetryService {
 
     const recordedAt = dto.recordedAt ? new Date(dto.recordedAt) : new Date();
 
-    // 3. Eksekusi Perekaman dalam Transaksi Atomik
+    // 3. Execute Recording in Atomic Transaction
     const createdLog = await this.prisma.$transaction(async (tx) => {
-      // A. Simpan log sensor
+      // A. Save sensor log
       const log = await tx.telemetryLog.create({
         data: {
           slotId: dto.slotId || null,
@@ -125,7 +123,7 @@ export class TelemetryService {
         },
       });
 
-      // B. Sinkronisasi suhu terkini pada Slot Gudang & Barang yang tersimpan
+      // B. Synchronize current temperature on storage slot and stored goods
       if (dto.slotId) {
         await tx.storageSlot.update({
           where: { id: dto.slotId },
@@ -144,25 +142,24 @@ export class TelemetryService {
         });
       }
 
-      // C. Peringatan Dini (Alert Notification) jika terjadi Anomali Suhu
+      // C. Alert Notification if Temperature Anomaly occurs
       if (isAnomaly) {
-        // Ambil Admin aktif
         const adminUsers = await tx.user.findMany({
           where: { role: UserRole.ADMIN },
           select: { id: true },
         });
 
         if (slot) {
-          const alertMessage = `ALERT SUHU: Slot Cold Storage ${slot.code} di ${slot.warehouse.name} tercatat ${dto.temperatureCelsius} C (Melebihi batas aman ${TelemetryService.COLD_STORAGE_THRESHOLD_CELSIUS} C)!`;
+          const alertMessage = `TEMPERATURE ALERT: Cold Storage slot ${slot.code} at ${slot.warehouse.name} recorded ${dto.temperatureCelsius}°C (Exceeds safety threshold ${TelemetryService.COLD_STORAGE_THRESHOLD_CELSIUS}°C)!`;
           this.logger.warn(alertMessage);
 
-          // Notifikasi untuk seluruh Admin
+          // Notification to all Admins
           for (const admin of adminUsers) {
             await tx.systemNotification.create({
               data: {
                 recipientUserId: admin.id,
                 recipientRole: UserRole.ADMIN,
-                title: `Peringatan Anomali Suhu Slot ${slot.code}`,
+                title: `Temperature Anomaly Alert: Slot ${slot.code}`,
                 message: alertMessage,
                 category: NotificationCategory.GOODS_STORED,
                 relatedEntityId: slot.warehouseId,
@@ -171,14 +168,14 @@ export class TelemetryService {
             });
           }
 
-          // Notifikasi untuk Customer yang memiliki barang di slot tersebut
+          // Notification to Customers with goods in that slot
           for (const goods of slot.goodsItems) {
             await tx.systemNotification.create({
               data: {
                 recipientUserId: goods.customerId,
                 recipientRole: UserRole.CUSTOMER,
-                title: `Peringatan Suhu Penyimpanan: ${goods.name}`,
-                message: `Suhu slot penyimpanan ${slot.code} tercatat ${dto.temperatureCelsius} C. Tim operasional WMS sedang melakukan pengecekan unit pendingin.`,
+                title: `Storage Temperature Alert: ${goods.name}`,
+                message: `Storage slot ${slot.code} temperature recorded at ${dto.temperatureCelsius}°C. Technical team is inspecting refrigeration units.`,
                 category: NotificationCategory.GOODS_STORED,
                 relatedEntityId: goods.id,
                 relatedEntityType: RelatedEntityType.GOODS,
@@ -188,7 +185,7 @@ export class TelemetryService {
         }
 
         if (vehicle) {
-          const alertMessage = `ALERT SUHU ARMADA: Box pendingin Truk Reefer ${vehicle.plateNumber} tercatat ${dto.temperatureCelsius} C (Melebihi batas aman ${TelemetryService.COLD_STORAGE_THRESHOLD_CELSIUS} C)!`;
+          const alertMessage = `FLEET TEMPERATURE ALERT: Reefer Truck ${vehicle.plateNumber} cooling box recorded ${dto.temperatureCelsius}°C (Exceeds safety threshold ${TelemetryService.COLD_STORAGE_THRESHOLD_CELSIUS}°C)!`;
           this.logger.warn(alertMessage);
 
           for (const admin of adminUsers) {
@@ -196,7 +193,7 @@ export class TelemetryService {
               data: {
                 recipientUserId: admin.id,
                 recipientRole: UserRole.ADMIN,
-                title: `Peringatan Suhu Truk Reefer ${vehicle.plateNumber}`,
+                title: `Reefer Truck Temperature Warning: ${vehicle.plateNumber}`,
                 message: alertMessage,
                 category: NotificationCategory.SCHEDULE_DELAY,
               },
@@ -208,8 +205,8 @@ export class TelemetryService {
               data: {
                 recipientUserId: vehicle.currentDriverId,
                 recipientRole: UserRole.DRIVER,
-                title: `Peringatan Suhu Unit Reefer Anda (${vehicle.plateNumber})`,
-                message: `Suhu box pendingin Anda tercatat ${dto.temperatureCelsius} C. Harap segera periksa unit pendingin Thermo King / Carrier kargo Anda.`,
+                title: `Reefer Unit Temperature Warning (${vehicle.plateNumber})`,
+                message: `Your vehicle cooling box temperature recorded at ${dto.temperatureCelsius}°C. Please inspect the refrigeration unit immediately.`,
                 category: NotificationCategory.SCHEDULE_DELAY,
               },
             });

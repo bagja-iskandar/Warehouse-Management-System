@@ -4,6 +4,8 @@ import { WarehouseService } from '../src/modules/warehouse/warehouse.service';
 import { NotificationsService } from '../src/modules/notifications/notifications.service';
 import { AuthenticatedUser } from '../src/modules/auth/interfaces/jwt-payload.interface';
 
+import { EventsService } from '../src/modules/events/events.service';
+
 const prisma = new PrismaClient();
 
 async function runTests() {
@@ -11,9 +13,10 @@ async function runTests() {
   console.log('   STARTING 7 MANDATORY REAL-DATABASE CAPACITY ACCOUNTING TESTS ');
   console.log('================================================================\n');
 
-  const notificationsService = new NotificationsService(prisma as any);
-  const goodsService = new GoodsService(prisma as any, notificationsService);
-  const warehouseService = new WarehouseService(prisma as any);
+  const eventsService = new EventsService();
+  const notificationsService = new NotificationsService(prisma as any, eventsService);
+  const goodsService = new GoodsService(prisma as any, notificationsService, eventsService);
+  const warehouseService = new WarehouseService(prisma as any, eventsService);
 
   // Setup Admin & Customer context
   const adminUserRecord = await prisma.user.findFirst({

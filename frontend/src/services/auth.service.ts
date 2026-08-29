@@ -1,4 +1,3 @@
-import { mockDb } from "@/mock/db/mock-db";
 import { UserProfile, LoginCredentials, RegisterCustomerInput } from "@/types";
 import {
   apiClient,
@@ -12,7 +11,10 @@ export interface IAuthService {
   registerCustomer(input: RegisterCustomerInput): Promise<UserProfile>;
   updateProfile(id: string, updates: Partial<UserProfile>): Promise<UserProfile>;
   changePassword(id: string, currentPass: string, newPass: string): Promise<boolean>;
-  resetPassword(email: string, newPass: string): Promise<boolean>;
+  /** Step 1: Request a one-time secure reset token for the given email */
+  requestPasswordReset(email: string): Promise<{ success: boolean; resetToken?: string }>;
+  /** Step 2: Confirm reset using the token obtained in step 1 */
+  confirmPasswordReset(token: string, newPassword: string): Promise<boolean>;
   getCurrentUser(id?: string): Promise<UserProfile | null>;
   logout(): Promise<boolean>;
   deleteAccount(id: string): Promise<boolean>;
@@ -123,17 +125,20 @@ export class HttpAuthService implements IAuthService {
     return true;
   }
 
-  async resetPassword(
-    email: string,
-    newPass: string
-  ): Promise<boolean> {
-    await apiClient("/auth/reset-password", {
+  async requestPasswordReset(email: string): Promise<{ success: boolean; resetToken?: string }> {
+    const res = await apiClient<{ success: boolean; message: string; resetToken?: string }>("/auth/request-reset", {
       method: "POST",
       skipAuth: true,
-      body: JSON.stringify({
-        email: email.trim().toLowerCase(),
-        newPassword: newPass,
-      }),
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    return { success: res.success ?? true, resetToken: res.resetToken };
+  }
+
+  async confirmPasswordReset(token: string, newPassword: string): Promise<boolean> {
+    await apiClient("/auth/confirm-reset", {
+      method: "POST",
+      skipAuth: true,
+      body: JSON.stringify({ token, newPassword }),
     });
     return true;
   }
@@ -150,106 +155,4 @@ export class HttpAuthService implements IAuthService {
   }
 }
 
-/**
- * In-Memory Mock Implementation (Local Development & Offline Testing)
- */
-export class MockAuthService implements IAuthService {
-  async login(credentials: LoginCredentials): Promise<UserProfile> {
-    const user = await mockDb.getUserByEmail(credentials.email);
-    if (!user) {
-      if (credentials.role) {
-        const users = await mockDb.getUsers();
-        const roleUser = users.find((u) => u.role === credentials.role);
-        if (roleUser) {
-          setStoredTokens("mock-jwt-access-token", "mock-jwt-refresh-token");
-          return roleUser;
-        }
-      }
-      throw new Error("Invalid email or password.");
-    }
-    setStoredTokens("mock-jwt-access-token", "mock-jwt-refresh-token");
-    return user;
-  }
-
-  async getCurrentUser(id?: string): Promise<UserProfile | null> {
-    if (!id) {
-      const users = await mockDb.getUsers();
-      return users[0] || null;
-    }
-    return mockDb.getUserById(id);
-  }
-
-  async logout(): Promise<boolean> {
-    clearStoredTokens();
-    return true;
-  }
-
-  async registerCustomer(input: RegisterCustomerInput): Promise<UserProfile> {
-    const existing = await mockDb.getUserByEmail(input.email);
-    if (existing) {
-      throw new Error("Email is already registered.");
-    }
-
-    const newUser: UserProfile = {
-      id: `usr-cust-${Date.now()}`,
-      name: input.name,
-      email: input.email,
-      role: "CUSTOMER",
-      phone: input.phone,
-      companyName: input.companyName,
-      address: input.address,
-      createdAt: new Date().toISOString(),
-      status: "ACTIVE",
-    };
-
-    setStoredTokens("mock-jwt-access-token", "mock-jwt-refresh-token");
-    return mockDb.createUser(newUser);
-  }
-
-  async updateProfile(
-    id: string,
-    updates: Partial<UserProfile>
-  ): Promise<UserProfile> {
-    return mockDb.updateUser(id, updates);
-  }
-
-  async changePassword(
-    _id: string,
-    currentPass: string,
-    newPass: string
-  ): Promise<boolean> {
-    if (!currentPass || !newPass) {
-      throw new Error("Current password and new password are required.");
-    }
-    if (newPass.length < 6) {
-      throw new Error("New password must be at least 6 characters.");
-    }
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return true;
-  }
-
-  async resetPassword(email: string, newPass: string): Promise<boolean> {
-    if (!email || !newPass) {
-      throw new Error("Email and new password are required.");
-    }
-    if (newPass.length < 6) {
-      throw new Error("New password must be at least 6 characters.");
-    }
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return true;
-  }
-
-  async deleteAccount(id: string): Promise<boolean> {
-    return mockDb.deleteUser(id);
-  }
-
-  async getUsers(): Promise<UserProfile[]> {
-    return mockDb.getUsers();
-  }
-}
-
-// Service Factory / Dependency Injection Selection
-const isMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-export const authService: IAuthService = isMock
-  ? new MockAuthService()
-  : new HttpAuthService();
+export const authService: IAuthService = new HttpAuthService();

@@ -24,7 +24,11 @@ import {
 } from './dto/invoice-response.dto';
 import { PayInvoiceDto } from './dto/pay-invoice.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
+import { EventsService } from '../events/events.service';
+import { DomainEventType } from '../events/events.types';
 import { StorageService } from './services/storage.service';
+import { OVERDUE_PENALTY_RATE_PER_WEEK } from '../../common/constants/pricing.constants';
+import { calculateOverduePenalty } from '../../common/utils/calculation.util';
 
 export interface PaginatedInvoiceResult {
   items: InvoiceListItemDto[];
@@ -49,12 +53,13 @@ export interface PenaltyCalculationResult {
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
 
-  // Aturan Bisnis Denda: 5% per minggu keterlambatan setelah tanggal jatuh tempo
-  private readonly PENALTY_RATE_PER_WEEK = new Decimal('0.05');
+  // Aturan Bisnis Denda: 5% per minggu keterlambatan setelah tanggal jatuh tempo (SSOT)
+  private readonly PENALTY_RATE_PER_WEEK = new Decimal(OVERDUE_PENALTY_RATE_PER_WEEK.toString());
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly eventsService: EventsService,
   ) {}
 
   // ===========================================================================
@@ -122,9 +127,12 @@ export class BillingService {
     const daysOverdue = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     const overdueWeeks = Math.max(1, Math.ceil(daysOverdue / 7));
 
-    // Penalty = subtotal * (0.05 * overdueWeeks)
-    const penaltyRate = this.PENALTY_RATE_PER_WEEK.mul(overdueWeeks);
-    const penaltyFee = subtotalDec.mul(penaltyRate).toDecimalPlaces(2);
+    // Penalty = subtotal * (0.05 * overdueWeeks) deterministic Decimal calculation (SSOT)
+    const penaltyFee = calculateOverduePenalty(
+      subtotalDec,
+      overdueWeeks,
+      OVERDUE_PENALTY_RATE_PER_WEEK,
+    );
     const totalAmount = subtotalDec.plus(penaltyFee).toDecimalPlaces(2);
 
     return {
@@ -275,25 +283,23 @@ export class BillingService {
     });
 
     if (!invoice) {
-      throw new NotFoundException(`Faktur tagihan dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Invoice with ID or number '${id}' not found`);
     }
 
-    // Penegakan Anti-IDOR
+    // Anti-IDOR Enforcement
     if (currentUser.role === UserRole.CUSTOMER && invoice.customerId !== currentUser.id) {
-      throw new NotFoundException(`Faktur tagihan dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Invoice with ID or number '${id}' not found`);
     }
 
     return this.mapToInvoiceDetailResponseDto(invoice);
   }
 
   /**
-   * Mengambil antrean pembayaran yang sedang menunggu verifikasi Admin (UNDER_REVIEW).
+   * Retrieves pending payments awaiting Admin verification (UNDER_REVIEW).
    */
   async getPendingPayments(currentUser: AuthenticatedUser): Promise<PaymentResponseDto[]> {
     if (currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'Hanya Administrator yang dapat mengakses antrean verifikasi pembayaran',
-      );
+      throw new ForbiddenException('Only Administrators can access the payment verification queue');
     }
 
     const pendingPayments = await this.prisma.payment.findMany({
@@ -313,8 +319,7 @@ export class BillingService {
   // ===========================================================================
 
   /**
-   * Penyerahan bukti pembayaran tagihan oleh Customer.
-   * Status invoice berubah menjadi PENDING_PAYMENT dan payment status menjadi UNDER_REVIEW.
+   * Submits proof of payment by Customer.
    */
   async payInvoice(
     id: string,
@@ -333,24 +338,24 @@ export class BillingService {
     });
 
     if (!invoice) {
-      throw new NotFoundException(`Faktur tagihan dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Invoice with ID or number '${id}' not found`);
     }
 
-    // Penegakan Anti-IDOR
+    // Anti-IDOR Enforcement
     if (currentUser.role === UserRole.CUSTOMER && invoice.customerId !== currentUser.id) {
-      throw new NotFoundException(`Faktur tagihan dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Invoice with ID or number '${id}' not found`);
     }
 
-    // Validasi Status Tagihan
+    // Invoice Status Validation
     if (invoice.status === InvoiceStatus.PAID) {
-      throw new BadRequestException('Faktur tagihan ini sudah berstatus LUNAS (PAID)');
+      throw new BadRequestException('This invoice is already marked as PAID');
     }
 
     if (invoice.status === InvoiceStatus.CANCELLED) {
-      throw new BadRequestException('Faktur tagihan ini telah dibatalkan');
+      throw new BadRequestException('This invoice has been CANCELLED');
     }
 
-    // Cek apakah ada pembayaran yang sedang dalam antrean verifikasi
+    // Check for active pending payments
     const activePendingPayment = invoice.payments.find(
       (p) => p.status === PaymentStatus.UNDER_REVIEW,
     );
@@ -361,14 +366,14 @@ export class BillingService {
       );
     }
 
-    // Hitung denda dan total kewajiban tagihan saat ini
+    // Calculate penalty and current total
     const penaltyCalc = this.calculatePenalty(invoice.subtotal, invoice.dueDate, invoice.status);
 
-    // Validasi Nominal Pembayaran menggunakan Decimal
+    // Validate payment amount using Decimal
     const submittedAmount = new Decimal(dto.amount);
     if (!submittedAmount.equals(penaltyCalc.totalAmount)) {
       throw new BadRequestException(
-        `Nominal pembayaran (Rp ${submittedAmount.toNumber().toLocaleString('id-ID')}) tidak sesuai dengan total tagihan yang wajib dibayar (Rp ${penaltyCalc.totalAmount.toNumber().toLocaleString('id-ID')})`,
+        `Payment amount (Rp ${submittedAmount.toNumber().toLocaleString('en-US')}) does not match total payable amount (Rp ${penaltyCalc.totalAmount.toNumber().toLocaleString('en-US')})`,
       );
     }
 
@@ -377,9 +382,9 @@ export class BillingService {
     const dateStr = now.toISOString().slice(0, 7).replace('-', '');
     const paymentNumber = `PAY-${dateStr}-${randomSuffix}`;
 
-    // Eksekusi Pembaruan Pembayaran dalam Transaksi Atomik
+    // Execute Payment in Atomic Database Transaction
     await this.prisma.$transaction(async (tx) => {
-      // 1. Buat record Payment baru dengan status UNDER_REVIEW
+      // 1. Create new Payment record
       await tx.payment.create({
         data: {
           paymentNumber,
@@ -395,7 +400,7 @@ export class BillingService {
         },
       });
 
-      // 2. Perbarui status invoice menjadi PENDING_PAYMENT
+      // 2. Update invoice status to PENDING_PAYMENT
       await tx.invoice.update({
         where: { id: invoice.id },
         data: {
@@ -407,7 +412,7 @@ export class BillingService {
         },
       });
 
-      // 3. Buat notifikasi untuk Admin
+      // 3. Emit notification to Admins
       const adminUsers = await tx.user.findMany({
         where: { role: UserRole.ADMIN },
         select: { id: true },
@@ -419,7 +424,7 @@ export class BillingService {
             recipientUserId: admin.id,
             recipientRole: UserRole.ADMIN,
             title: 'New Payment Submitted',
-            message: `Customer ${currentUser.name} submitted payment of Rp ${penaltyCalc.totalAmount.toNumber().toLocaleString('id-ID')} for Invoice #${invoice.invoiceNumber} (${paymentNumber}). Waiting for review.`,
+            message: `Customer ${currentUser.name} submitted payment of Rp ${penaltyCalc.totalAmount.toNumber().toLocaleString('en-US')} for Invoice #${invoice.invoiceNumber} (${paymentNumber}). Waiting for review.`,
             category: NotificationCategory.BILLING_DUE,
             relatedEntityId: invoice.id,
             relatedEntityType: RelatedEntityType.INVOICE,
@@ -428,13 +433,13 @@ export class BillingService {
         });
       }
 
-      // Notifikasi konfirmasi pengiriman bukti pembayaran ke Customer
+      // Notification confirmation to Customer
       await tx.systemNotification.create({
         data: {
           recipientUserId: currentUser.id,
           recipientRole: UserRole.CUSTOMER,
-          title: 'Bukti Pembayaran Terkirim',
-          message: `Bukti pembayaran untuk Invoice #${invoice.invoiceNumber} (${paymentNumber}) berhasil dikirim dan sedang dalam peninjauan Admin.`,
+          title: 'Proof of Payment Submitted',
+          message: `Payment proof for Invoice #${invoice.invoiceNumber} (${paymentNumber}) submitted successfully and is under Admin review.`,
           category: NotificationCategory.BILLING_DUE,
           relatedEntityId: invoice.id,
           relatedEntityType: RelatedEntityType.INVOICE,
@@ -443,15 +448,57 @@ export class BillingService {
       });
     });
 
+    // Real-Time Event Dispatching (Committed to Database)
+    this.eventsService.publish({
+      type: DomainEventType.PAYMENT_SUBMITTED,
+      payload: {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        paymentNumber,
+        customerId: invoice.customerId,
+        amount: penaltyCalc.totalAmount.toNumber(),
+        paymentMethod: dto.paymentMethod,
+        paymentReference: dto.paymentReference || `TRX-${Date.now().toString().slice(-8)}`,
+        status: PaymentStatus.UNDER_REVIEW,
+        submittedAt: now.toISOString(),
+      },
+      targetCustomerId: invoice.customerId,
+      targetInvoiceId: invoice.id,
+    });
+
+    this.eventsService.publish({
+      type: DomainEventType.INVOICE_UPDATED,
+      payload: {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        customerId: invoice.customerId,
+        status: InvoiceStatus.PENDING_PAYMENT,
+        latestPaymentStatus: PaymentStatus.UNDER_REVIEW,
+        totalAmount: penaltyCalc.totalAmount.toNumber(),
+      },
+      targetCustomerId: invoice.customerId,
+      targetInvoiceId: invoice.id,
+    });
+
+    this.eventsService.publish({
+      type: DomainEventType.NOTIFICATION_CREATED,
+      payload: {
+        recipientUserId: invoice.customerId,
+        title: 'Proof of Payment Submitted',
+        actionUrl: '/customer/billing',
+      },
+      targetCustomerId: invoice.customerId,
+    });
+
     this.logger.log(
-      `Bukti pembayaran tagihan '${invoice.invoiceNumber}' (${paymentNumber}) berhasil diserahkan oleh '${currentUser.name}'. Status: UNDER_REVIEW.`,
+      `Payment proof for invoice '${invoice.invoiceNumber}' (${paymentNumber}) submitted by '${currentUser.name}'. Status: UNDER_REVIEW.`,
     );
 
     return this.findInvoiceById(invoice.id, currentUser);
   }
 
   /**
-   * Verifikasi bukti pembayaran oleh Admin (VERIFY -> PAID / REJECT -> UNPAID/OVERDUE).
+   * Verifies proof of payment by Admin.
    */
   async verifyPayment(
     id: string,
@@ -459,9 +506,7 @@ export class BillingService {
     currentUser: AuthenticatedUser,
   ): Promise<InvoiceDetailResponseDto> {
     if (currentUser.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'Hanya Admin yang berhak melakukan verifikasi bukti pembayaran faktur',
-      );
+      throw new ForbiddenException('Only Admins are authorized to verify invoice payments');
     }
 
     const invoice = await this.prisma.invoice.findFirst({
@@ -477,7 +522,7 @@ export class BillingService {
     });
 
     if (!invoice) {
-      throw new NotFoundException(`Faktur tagihan dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Invoice with ID or number '${id}' not found`);
     }
 
     const latestUnderReviewPayment = invoice.payments.find(
@@ -581,6 +626,97 @@ export class BillingService {
         );
       }
     });
+
+    // Real-Time Domain Event Dispatching (Committed to Database)
+    if (dto.action === 'VERIFY') {
+      this.eventsService.publish({
+        type: DomainEventType.PAYMENT_VERIFIED,
+        payload: {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          paymentId: latestUnderReviewPayment?.id,
+          paymentNumber: latestUnderReviewPayment?.paymentNumber,
+          receiptNumber,
+          customerId: invoice.customerId,
+          status: PaymentStatus.VERIFIED,
+          verifiedAt: now.toISOString(),
+          verifiedByAdminName: currentUser.name,
+        },
+        targetCustomerId: invoice.customerId,
+        targetInvoiceId: invoice.id,
+      });
+
+      this.eventsService.publish({
+        type: DomainEventType.INVOICE_PAID,
+        payload: {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          receiptNumber,
+          customerId: invoice.customerId,
+          status: InvoiceStatus.PAID,
+          paidDate: now.toISOString(),
+          verifiedByAdminName: currentUser.name,
+        },
+        targetCustomerId: invoice.customerId,
+        targetInvoiceId: invoice.id,
+      });
+
+      this.eventsService.publish({
+        type: DomainEventType.NOTIFICATION_CREATED,
+        payload: {
+          recipientUserId: invoice.customerId,
+          title: 'Payment Verified & Settled',
+          actionUrl: '/customer/billing',
+        },
+        targetCustomerId: invoice.customerId,
+      });
+    } else {
+      const rejectionReason =
+        dto.rejectionReason || dto.note || 'Payment proof is invalid or unrecognized.';
+      const revertStatus =
+        now.getTime() > invoice.dueDate.getTime() ? InvoiceStatus.OVERDUE : InvoiceStatus.UNPAID;
+
+      this.eventsService.publish({
+        type: DomainEventType.PAYMENT_REJECTED,
+        payload: {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          paymentId: latestUnderReviewPayment?.id,
+          paymentNumber: latestUnderReviewPayment?.paymentNumber,
+          customerId: invoice.customerId,
+          rejectionReason,
+          status: PaymentStatus.REJECTED,
+          verifiedAt: now.toISOString(),
+          verifiedByAdminName: currentUser.name,
+        },
+        targetCustomerId: invoice.customerId,
+        targetInvoiceId: invoice.id,
+      });
+
+      this.eventsService.publish({
+        type: DomainEventType.INVOICE_UPDATED,
+        payload: {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          customerId: invoice.customerId,
+          status: revertStatus,
+          latestPaymentStatus: PaymentStatus.REJECTED,
+          rejectionReason,
+        },
+        targetCustomerId: invoice.customerId,
+        targetInvoiceId: invoice.id,
+      });
+
+      this.eventsService.publish({
+        type: DomainEventType.NOTIFICATION_CREATED,
+        payload: {
+          recipientUserId: invoice.customerId,
+          title: 'Payment Verification Rejected',
+          actionUrl: '/customer/billing',
+        },
+        targetCustomerId: invoice.customerId,
+      });
+    }
 
     return this.findInvoiceById(invoice.id, currentUser);
   }

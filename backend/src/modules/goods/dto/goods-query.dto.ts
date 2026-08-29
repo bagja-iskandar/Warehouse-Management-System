@@ -7,25 +7,24 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 export class GoodsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     enum: GoodsCategory,
-    description:
-      'Filter berdasarkan kategori barang (FURNITURE, COLD_FOOD, GENERAL_ELECTRONICS, TEXTILE)',
+    description: 'Filter by goods category (FURNITURE, COLD_FOOD, GENERAL_ELECTRONICS, TEXTILE)',
     example: GoodsCategory.COLD_FOOD,
   })
   @IsOptional()
-  @IsEnum(GoodsCategory, { message: 'Kategori barang tidak valid' })
+  @IsEnum(GoodsCategory, { message: 'Invalid goods category' })
   category?: GoodsCategory;
 
   @ApiPropertyOptional({
     enum: GoodsStorageStatus,
-    description: 'Filter berdasarkan status siklus penyimpanan barang',
+    description: 'Filter by storage lifecycle status',
     example: GoodsStorageStatus.STORED,
   })
   @IsOptional()
-  @IsEnum(GoodsStorageStatus, { message: 'Status penyimpanan barang tidak valid' })
+  @IsEnum(GoodsStorageStatus, { message: 'Invalid storage status' })
   status?: GoodsStorageStatus;
 
   @ApiPropertyOptional({
-    description: 'Filter berdasarkan ID fasilitas gudang penyimpanan',
+    description: 'Filter by storage warehouse facility ID',
     example: 'wh-jkt-central',
   })
   @IsOptional()
@@ -33,7 +32,7 @@ export class GoodsQueryDto extends PaginationQueryDto {
   warehouseId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter barang yang membutuhkan fasilitas Cold Storage sub-zero',
+    description: 'Filter goods requiring sub-zero Cold Storage facilities',
     example: true,
   })
   @IsOptional()
@@ -46,7 +45,7 @@ export class GoodsQueryDto extends PaginationQueryDto {
   requiresColdStorage?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Filter barang milik Customer tertentu (Hanya berlaku untuk peran ADMIN)',
+    description: 'Filter goods belonging to a specific Customer (Admin role only)',
     example: 'usr-cust-1',
   })
   @IsOptional()

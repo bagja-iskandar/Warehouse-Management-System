@@ -114,7 +114,7 @@ describe('GoodsController', () => {
         mockUser,
       );
 
-      expect(response.message).toBe('Barang berhasil didaftarkan ke sistem');
+      expect(response.message).toBe('Goods registered successfully');
       expect(response.data.id).toBe('brg-001');
     });
   });
@@ -127,7 +127,7 @@ describe('GoodsController', () => {
         mockUser,
       );
 
-      expect(response.message).toBe('Status barang berhasil diperbarui');
+      expect(response.message).toBe('Goods status updated successfully');
       expect(response.data.id).toBe('brg-001');
     });
   });
@@ -136,7 +136,7 @@ describe('GoodsController', () => {
     it('should return enveloped paginated goods items', async () => {
       const response = await controller.findAll({}, mockUser);
 
-      expect(response.message).toBe('Data barang berhasil diambil');
+      expect(response.message).toBe('Goods retrieved successfully');
       expect(response.data.items).toHaveLength(1);
     });
   });
@@ -145,7 +145,7 @@ describe('GoodsController', () => {
     it('should return enveloped goods detail', async () => {
       const response = await controller.findById('brg-001', mockUser);
 
-      expect(response.message).toBe('Detail data barang berhasil diambil');
+      expect(response.message).toBe('Goods detail retrieved successfully');
       expect(response.data.id).toBe('brg-001');
     });
   });

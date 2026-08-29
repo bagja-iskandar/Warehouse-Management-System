@@ -6,3 +6,5 @@ export * from "./billing.types";
 export * from "./notification.types";
 export * from "./telemetry.types";
 export * from "./analytics.types";
+export * from "./pricing";
+

@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { warehouseService, RentSpaceInput } from "@/services/warehouse.service";
+import {
+  warehouseService,
+  RentSpaceInput,
+  ChangeRentalWarehouseInput,
+} from "@/services/warehouse.service";
 
 export const warehouseKeys = {
   all: ["warehouses"] as const,
@@ -46,6 +50,23 @@ export function useRentSpace() {
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["billing"] });
       queryClient.invalidateQueries({ queryKey: ["goods"] });
+      queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+    },
+  });
+}
+
+export function useChangeRentalWarehouse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: ChangeRentalWarehouseInput) =>
+      warehouseService.changeRentalWarehouse(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: warehouseKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["billing"] });
+      queryClient.invalidateQueries({ queryKey: ["goods"] });
+      queryClient.invalidateQueries({ queryKey: ["logistics"] });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
     },
   });

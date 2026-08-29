@@ -3,9 +3,9 @@ import {
   ConflictException,
   Injectable,
   Logger,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole, UserStatus } from '@prisma/client';
@@ -24,6 +24,9 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+
+/** TTL for password reset tokens: 1 hour */
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -54,15 +57,11 @@ export class AuthService {
     }
 
     if (user.status === UserStatus.SUSPENDED) {
-      throw new UnauthorizedException(
-        'Your account is suspended. Please contact Administrator.',
-      );
+      throw new UnauthorizedException('Your account is suspended. Please contact Administrator.');
     }
 
     if (user.status === UserStatus.PENDING_VERIFICATION) {
-      throw new UnauthorizedException(
-        'Your account is pending verification.',
-      );
+      throw new UnauthorizedException('Your account is pending verification.');
     }
 
     // Generate token pair
@@ -322,40 +321,120 @@ export class AuthService {
   }
 
   /**
-   * Mengatur ulang password secara langsung melalui email terdaftar (Direct Password Reset).
+   * Step 1 of Secure Password Reset: Request a reset token.
+   * Generates a cryptographically-secure one-time token, stores its SHA-256 hash
+   * in the database with a 1-hour expiry. Always returns a generic success message
+   * to prevent user enumeration attacks.
+   *
+   * NOTE: Token delivery (email/SMS) requires external infrastructure configuration.
+   * In development, the raw token is returned in the response body for integration testing.
+   * In production, REMOVE the token from the response and deliver it via a secure channel.
    */
-  async resetPassword(dto: { email: string; newPassword: string }): Promise<{ success: boolean; message: string }> {
+  async requestPasswordReset(
+    email: string,
+  ): Promise<{ success: boolean; message: string; resetToken?: string }> {
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email.toLowerCase().trim() },
+      where: { email: email.toLowerCase().trim() },
     });
 
-    if (!user) {
-      throw new NotFoundException('Account with the specified email was not found in the system');
+    // Generic success message to prevent email enumeration
+    if (!user || user.status === UserStatus.SUSPENDED) {
+      return {
+        success: true,
+        message: 'If the email is registered and active, a reset token has been generated.',
+      };
     }
 
-    if (user.status === UserStatus.SUSPENDED) {
+    // Invalidate any existing unused reset tokens for this user
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, isUsed: false },
+      data: { isUsed: true },
+    });
+
+    // Generate 64-byte cryptographically-secure raw token
+    const rawToken = crypto.randomBytes(64).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+        isUsed: false,
+      },
+    });
+
+    this.logger.log(
+      `Password reset token generated for user ${user.id} (expires: ${expiresAt.toISOString()})`,
+    );
+
+    // TODO: In production, send rawToken via email/SMS and do NOT return it in the response.
+    // For development/staging integration testing only:
+    return {
+      success: true,
+      message: 'If the email is registered and active, a reset token has been generated.',
+      resetToken: rawToken,
+    };
+  }
+
+  /**
+   * Step 2 of Secure Password Reset: Confirm reset using token.
+   * Validates the hashed token, ensures it is unused and not expired,
+   * updates the user password, marks the token used, and revokes all sessions.
+   */
+  async confirmPasswordReset(
+    rawToken: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!rawToken || !newPassword) {
+      throw new BadRequestException('Token and new password are required');
+    }
+
+    const tokenHash = this.hashToken(rawToken);
+
+    const resetRecord = await this.prisma.passwordResetToken.findFirst({
+      where: {
+        tokenHash,
+        isUsed: false,
+        expiresAt: { gt: new Date() },
+      },
+      include: { user: true },
+    });
+
+    if (!resetRecord) {
+      throw new BadRequestException(
+        'Password reset token is invalid, expired, or has already been used.',
+      );
+    }
+
+    if (resetRecord.user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('User account is suspended. Please contact administrator.');
     }
 
-    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newPasswordHash },
-    });
+    // Execute atomically: update password, mark token used, revoke all sessions
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetRecord.userId },
+        data: { passwordHash: newPasswordHash },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: resetRecord.id },
+        data: { isUsed: true },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: resetRecord.userId, isRevoked: false },
+        data: { isRevoked: true },
+      }),
+    ]);
 
-    // Revoke seluruh active refresh tokens untuk keamanan sesi
-    await this.prisma.refreshToken.updateMany({
-      where: {
-        userId: user.id,
-        isRevoked: false,
-      },
-      data: { isRevoked: true },
-    });
+    this.logger.log(`Password successfully reset for user ${resetRecord.userId}`);
 
     return {
       success: true,
-      message: 'Password successfully reset. Please sign in with your new password.',
+      message: 'Password successfully reset. Please sign in with your new credentials.',
     };
   }
 

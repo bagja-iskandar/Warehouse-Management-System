@@ -27,6 +27,7 @@ import {
   History,
   Printer,
   Loader2,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,11 +38,12 @@ import {
   SectionCard,
   EmptyState,
 } from "@/components/dashboard";
-import { useGoods } from "@/hooks/use-goods";
+import { useGoods, useUpdateGoodsStatus } from "@/hooks/use-goods";
 import { useCustomerActiveWarehouses } from "@/hooks/use-warehouses";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { GoodsItem } from "@/types";
+import { GoodsStatusBadge } from "@/components/common/StatusBadge";
 
 export default function CustomerGoodsInventoryPage() {
   const { user } = useAuth();
@@ -57,6 +59,9 @@ export default function CustomerGoodsInventoryPage() {
 
   const [detailItem, setDetailItem] = useState<GoodsItem | null>(null);
   const [qrItem, setQrItem] = useState<GoodsItem | null>(null);
+  const [isConfirmCancel, setIsConfirmCancel] = useState(false);
+
+  const updateGoodsStatusMutation = useUpdateGoodsStatus();
 
   const { data: liveGoods = [], isLoading } = useGoods({
     customerId: user?.id,
@@ -111,26 +116,7 @@ export default function CustomerGoodsInventoryPage() {
   );
   const totalColdCount = liveGoods.filter((g) => g.requiresColdStorage).length;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "STORED":
-        return <Badge className="bg-emerald-600 text-white text-[10px]">Stored in Rack</Badge>;
-      case "DRAFT":
-        return <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">Registered (Pending Put-Away)</Badge>;
-      case "INSPECTING":
-        return <Badge className="bg-amber-500 text-slate-950 text-[10px] font-bold">Receiving Dock (Put-Away)</Badge>;
-      case "PENDING_PICKUP":
-        return <Badge className="bg-sky-600 text-white text-[10px]">Pending Pickup</Badge>;
-      case "IN_TRANSIT_INBOUND":
-        return <Badge className="bg-indigo-600 text-white text-[10px]">Inbound Transit</Badge>;
-      case "PENDING_DELIVERY":
-        return <Badge className="bg-purple-600 text-white text-[10px]">Ready for Outbound</Badge>;
-      case "DELIVERED":
-        return <Badge className="bg-slate-700 text-white text-[10px]">Delivered</Badge>;
-      default:
-        return <Badge className="bg-slate-200 text-slate-700 text-[10px]">{status}</Badge>;
-    }
-  };
+  const getStatusBadge = (status: string) => <GoodsStatusBadge status={status} />;
 
   return (
     <PageContainer>
@@ -227,11 +213,13 @@ export default function CustomerGoodsInventoryPage() {
             >
               <option value="ALL">All Statuses</option>
               <option value="STORED">Stored in Rack</option>
+              <option value="DRAFT">Registered (Pending Put-Away)</option>
               <option value="INSPECTING">Receiving Dock (Pending Put-Away)</option>
               <option value="PENDING_PICKUP">Pending Pickup</option>
               <option value="IN_TRANSIT_INBOUND">Inbound Transit</option>
               <option value="PENDING_DELIVERY">Ready for Outbound</option>
               <option value="DELIVERED">Delivered</option>
+              <option value="CANCELLED">Cancelled</option>
             </select>
 
             {/* Category Filter */}
@@ -366,12 +354,24 @@ export default function CustomerGoodsInventoryPage() {
 
                     <td className="py-3.5 px-3">
                       {item.status === "INSPECTING" ? (
-                        <Badge variant="warning" className="text-[10px] bg-amber-500 text-slate-950 font-bold">
+                        <Badge variant="warning" className="text-[10px] bg-amber-500 text-slate-950 font-bold animate-pulse">
                           Receiving Dock (Pending Put-Away)
                         </Badge>
-                      ) : item.slotCode ? (
+                      ) : item.status === "STORED" && item.slotCode ? (
                         <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
                           Slot {item.slotCode}
+                        </span>
+                      ) : item.status === "IN_TRANSIT_INBOUND" ? (
+                        <span className="text-[11px] text-indigo-700 font-medium bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
+                          Inbound Transit with Driver
+                        </span>
+                      ) : item.status === "PENDING_PICKUP" ? (
+                        <span className="text-[11px] text-sky-700 font-medium bg-sky-50 border border-sky-100 px-2 py-0.5 rounded">
+                          Origin (Pickup Scheduled)
+                        </span>
+                      ) : item.status === "DRAFT" ? (
+                        <span className="text-[11px] text-slate-500 italic bg-slate-100 px-2 py-0.5 rounded">
+                          Origin (Not yet received)
                         </span>
                       ) : (
                         <span className="text-[11px] text-slate-400 italic">Unallocated</span>
@@ -427,7 +427,10 @@ export default function CustomerGoodsInventoryPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setDetailItem(item)}
+                          onClick={() => {
+                            setIsConfirmCancel(false);
+                            setDetailItem(item);
+                          }}
                           className="h-8 px-2.5 text-xs font-semibold border-slate-200 hover:bg-slate-100 text-slate-700"
                         >
                           <Eye className="h-3.5 w-3.5 mr-1" />
@@ -463,14 +466,18 @@ export default function CustomerGoodsInventoryPage() {
                 </div>
               </div>
               <button
-                onClick={() => setDetailItem(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60"
+                onClick={() => {
+                  setDetailItem(null);
+                  setIsConfirmCancel(false);
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Storage Status & Details Card */}
               <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-[11px] text-slate-400 block">Storage Status</span>
@@ -531,20 +538,98 @@ export default function CustomerGoodsInventoryPage() {
                   <p className="text-slate-600">{detailItem.description}</p>
                 </div>
               )}
+
+              {/* Inline Confirmation Card for Cancellation */}
+              {isConfirmCancel && (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-start gap-2.5">
+                    <div className="h-7 w-7 rounded-lg bg-rose-100 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-900">
+                        Cancel Goods Registration?
+                      </h4>
+                      <p className="text-[11px] text-rose-700 mt-0.5 leading-relaxed">
+                        Are you sure you want to cancel the registration for <strong>{detailItem.name}</strong> ({detailItem.barcode})? This commodity will be marked as cancelled and removed from active storage workflows.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-rose-200/60">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsConfirmCancel(false)}
+                      disabled={updateGoodsStatusMutation.isPending}
+                      className="text-xs h-8 px-3 text-slate-600 hover:text-slate-900 hover:bg-rose-100/60 font-medium"
+                    >
+                      Keep Active
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={updateGoodsStatusMutation.isPending}
+                      onClick={async () => {
+                        try {
+                          await updateGoodsStatusMutation.mutateAsync({
+                            id: detailItem.id,
+                            status: "CANCELLED",
+                            note: "Registration cancelled by customer via portal",
+                          });
+                          toast.success(`Goods ${detailItem.name} has been successfully cancelled.`);
+                          setIsConfirmCancel(false);
+                          setDetailItem(null);
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to cancel goods registration.");
+                        }
+                      }}
+                      className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold h-8 px-3.5 rounded-lg flex items-center gap-1.5 shadow-sm shadow-rose-600/20"
+                    >
+                      {updateGoodsStatusMutation.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Ban className="h-3.5 w-3.5" />
+                      )}
+                      <span>Yes, Cancel Goods</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setDetailItem(null)}
-                className="text-xs h-9 px-4 rounded-lg border-slate-300 hover:bg-slate-100 text-slate-700 font-medium"
-              >
-                Close
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDetailItem(null);
+                    setIsConfirmCancel(false);
+                  }}
+                  className="text-xs h-9 px-4 rounded-lg border-slate-300 hover:bg-slate-100 text-slate-700 font-medium"
+                >
+                  Close
+                </Button>
+
+                {/* Cancel Registration Button for pre-stored items */}
+                {["DRAFT", "PENDING_PICKUP", "INSPECTING"].includes(detailItem.status) && !isConfirmCancel && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsConfirmCancel(true)}
+                    className="text-xs h-9 px-3.5 rounded-lg border-rose-200 bg-rose-50/70 hover:bg-rose-100 hover:border-rose-300 text-rose-700 font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Ban className="h-3.5 w-3.5 text-rose-600" />
+                    <span>Cancel Registration</span>
+                  </Button>
+                )}
+              </div>
+
               <Button
                 onClick={() => {
                   setQrItem(detailItem);
                   setDetailItem(null);
+                  setIsConfirmCancel(false);
                 }}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 rounded-lg flex items-center gap-1.5 shadow-sm"
               >

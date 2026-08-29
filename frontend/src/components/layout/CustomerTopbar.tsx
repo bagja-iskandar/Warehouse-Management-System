@@ -2,11 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   Search,
   Bell,
+  ChevronLeft,
   ChevronRight,
   Thermometer,
   Plus,
@@ -29,6 +30,7 @@ export function CustomerTopbar({
   onOpenNotifications,
   unreadNotificationsCount = 0,
 }: CustomerTopbarProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
   const { data: summary } = useCustomerSummary(user?.id);
@@ -39,7 +41,6 @@ export function CustomerTopbar({
     if (pathname.includes("/customer/logistics/request")) return "Request Delivery";
     if (pathname.includes("/customer/logistics/tracking")) return "Track Deliveries";
     if (pathname.includes("/customer/billing")) return "Billing & Invoices";
-    if (pathname.includes("/customer/history")) return "Transaction History";
     if (pathname.includes("/customer/dashboard")) return "Customer Dashboard";
     if (pathname.includes("/profile")) return "Profile Settings";
     return "Customer Portal";
@@ -49,8 +50,8 @@ export function CustomerTopbar({
 
   return (
     <header className="sticky top-4 z-40 w-full h-16 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl px-4 sm:px-6 flex items-center justify-between shadow-md shadow-slate-200/60 transition-all duration-200">
-      {/* Left: Mobile Toggle & Breadcrumbs */}
-      <div className="flex items-center gap-3">
+      {/* Left: Mobile Toggle, History Navigation (< >) & Breadcrumbs */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
         <button
           type="button"
           onClick={onOpenMobileMenu}
@@ -60,7 +61,29 @@ export function CustomerTopbar({
           <Menu className="h-5 w-5" />
         </button>
 
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        {/* History Navigation Buttons (< >) */}
+        <div className="flex items-center gap-0.5 p-0.5 bg-slate-100/90 border border-slate-200/80 rounded-xl shadow-2xs">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="h-7 w-7 rounded-lg text-slate-600 hover:text-slate-950 hover:bg-white active:scale-95 flex items-center justify-center transition-all cursor-pointer shadow-xs"
+            title="Go Back (Kembali)"
+            aria-label="Go Back"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => router.forward()}
+            className="h-7 w-7 rounded-lg text-slate-600 hover:text-slate-950 hover:bg-white active:scale-95 flex items-center justify-center transition-all cursor-pointer shadow-xs"
+            title="Go Forward (Maju)"
+            aria-label="Go Forward"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
           <span className="font-semibold text-slate-700">Customer Portal</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
           <span className="font-bold text-slate-900">{getPageTitle()}</span>

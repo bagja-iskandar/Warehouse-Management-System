@@ -13,6 +13,8 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { LogisticsService } from './logistics.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EventsService } from '../events/events.service';
 
 describe('LogisticsService', () => {
   let service: LogisticsService;
@@ -168,6 +170,20 @@ describe('LogisticsService', () => {
       providers: [
         LogisticsService,
         {
+          provide: NotificationsService,
+          useValue: {
+            createNotification: jest.fn().mockResolvedValue({ id: 'notif-1' }),
+            notifyRole: jest.fn().mockResolvedValue([{ id: 'notif-2' }]),
+          },
+        },
+        {
+          provide: EventsService,
+          useValue: {
+            publish: jest.fn(),
+            getUserEventStream: jest.fn(),
+          },
+        },
+        {
           provide: PrismaService,
           useValue: {
             vehicle: {
@@ -194,6 +210,7 @@ describe('LogisticsService', () => {
                   deliveryOrder: {
                     create: jest.fn().mockResolvedValue(mockOrderEntity),
                     update: jest.fn().mockResolvedValue(mockOrderEntity),
+                    findFirst: jest.fn().mockResolvedValue(null),
                   },
                   vehicle: {
                     update: jest.fn().mockResolvedValue(mockVehicleEntity),
@@ -234,7 +251,12 @@ describe('LogisticsService', () => {
       jest.spyOn(prisma.vehicle, 'findUnique').mockResolvedValue(mockVehicleEntity as any);
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue({
         id: 'usr-driver-1',
+        name: 'Agus Driver',
         role: UserRole.DRIVER,
+        status: UserStatus.ACTIVE,
+        driverOrders: [],
+        driverLicenseNumber: 'SIM-B2-12345',
+        driverLicenseExpiry: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
       } as any);
       jest.spyOn(prisma.vehicle, 'update').mockResolvedValue({
         ...mockVehicleEntity,
@@ -259,7 +281,12 @@ describe('LogisticsService', () => {
 
   describe('createOrder', () => {
     it('should create delivery order and validate cold storage reefer truck requirement', async () => {
-      jest.spyOn(prisma.goodsItem, 'findMany').mockResolvedValue([mockGoodsItem as any]);
+      jest.spyOn(prisma.goodsItem, 'findMany').mockResolvedValue([
+        {
+          ...mockGoodsItem,
+          status: 'PENDING_PICKUP',
+        } as any,
+      ]);
       jest.spyOn(prisma.vehicle, 'findUnique').mockResolvedValue(mockVehicleEntity as any);
       jest.spyOn(prisma.deliveryOrder, 'findFirst').mockResolvedValue(mockOrderEntity as any);
 
@@ -289,7 +316,12 @@ describe('LogisticsService', () => {
         type: VehicleType.VAN,
         hasRefrigeration: false,
       };
-      jest.spyOn(prisma.goodsItem, 'findMany').mockResolvedValue([mockGoodsItem as any]);
+      jest.spyOn(prisma.goodsItem, 'findMany').mockResolvedValue([
+        {
+          ...mockGoodsItem,
+          status: 'PENDING_PICKUP',
+        } as any,
+      ]);
       jest.spyOn(prisma.vehicle, 'findUnique').mockResolvedValue(dryVan as any);
 
       await expect(
@@ -326,7 +358,11 @@ describe('LogisticsService', () => {
 
   describe('submitPod', () => {
     it('should update POD data and transition status to DELIVERED', async () => {
-      jest.spyOn(prisma.deliveryOrder, 'findFirst').mockResolvedValue(mockOrderEntity as any);
+      jest.spyOn(prisma.deliveryOrder, 'findFirst').mockResolvedValue({
+        ...mockOrderEntity,
+        type: OrderType.DELIVERY,
+        status: OrderStatus.IN_TRANSIT,
+      } as any);
 
       const result = await service.submitPod(
         'ord-01',

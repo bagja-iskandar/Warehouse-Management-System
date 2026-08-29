@@ -6,7 +6,8 @@ export type NotificationCategory =
   | "DRIVER_DISPATCHED"
   | "DELIVERY_ARRIVED"
   | "SCHEDULE_DELAY"
-  | "CONFIRMATION_REQUIRED";
+  | "CONFIRMATION_REQUIRED"
+  | "ORDER_MESSAGE";
 
 export interface SystemNotification {
   id: string;

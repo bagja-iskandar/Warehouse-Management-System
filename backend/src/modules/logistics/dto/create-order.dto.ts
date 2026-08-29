@@ -14,15 +14,15 @@ import {
 } from 'class-validator';
 
 export class CreateOrderItemDto {
-  @ApiProperty({ example: 'brg-001', description: 'ID Barang (GoodsItem)' })
+  @ApiProperty({ example: 'brg-001', description: 'Goods Item ID (GoodsItem)' })
   @IsString()
-  @IsNotEmpty({ message: 'ID Barang wajib diisi' })
+  @IsNotEmpty({ message: 'Goods ID is required' })
   goodsId: string;
 
-  @ApiProperty({ example: 10, description: 'Jumlah kuantitas barang yang dikirim/dijemput' })
+  @ApiProperty({ example: 10, description: 'Quantity of items to pickup or deliver' })
   @Type(() => Number)
-  @IsNumber({}, { message: 'Kuantitas barang harus berupa angka' })
-  @Min(1, { message: 'Kuantitas barang minimal 1' })
+  @IsNumber({}, { message: 'Quantity must be a number' })
+  @Min(1, { message: 'Quantity must be at least 1' })
   quantity: number;
 }
 
@@ -31,23 +31,23 @@ export class CreateDeliveryOrderDto {
     enum: OrderType,
     example: OrderType.PICKUP,
     description:
-      'Jenis delivery order: PICKUP (Inbound dari customer ke gudang) atau DELIVERY (Outbound dari gudang ke alamat tujuan)',
+      'Delivery order type: PICKUP (Inbound from customer to warehouse) or DELIVERY (Outbound from warehouse to destination address)',
   })
-  @IsEnum(OrderType, { message: 'Tipe delivery order tidak valid' })
+  @IsEnum(OrderType, { message: 'Invalid delivery order type' })
   type: OrderType;
 
   @ApiProperty({
     example: ['brg-001'],
-    description: 'Daftar ID barang (GoodsItem) yang akan dimuat ke armada',
+    description: 'List of GoodsItem IDs to load onto fleet vehicle',
     type: [String],
   })
   @IsArray()
-  @ArrayMinSize(1, { message: 'Minimal harus menyertakan 1 ID barang' })
+  @ArrayMinSize(1, { message: 'Must include at least 1 goods item' })
   @IsString({ each: true })
   goodsItemIds: string[];
 
   @ApiPropertyOptional({
-    description: 'Rincian item beserta jumlah kuantitas yang diminta (Opsional)',
+    description: 'Detailed item breakdown with requested quantities (Optional)',
     type: [CreateOrderItemDto],
   })
   @IsOptional()
@@ -58,58 +58,57 @@ export class CreateDeliveryOrderDto {
 
   @ApiPropertyOptional({
     example: 'wh-jkt-central',
-    description: 'ID Fasilitas Gudang asal/tujuan',
+    description: 'Origin or destination Warehouse Facility ID',
   })
   @IsOptional()
   @IsString()
   warehouseId?: string;
 
   @ApiProperty({
-    example: 'Kavling Cold Chain Sudirman Kav. 21, Jakarta Selatan',
-    description: 'Alamat lengkap titik penjemputan / asal',
+    example: 'Sudirman Cold Chain Hub, Kav. 21, South Jakarta',
+    description: 'Full origin / pickup address',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Alamat asal wajib diisi' })
+  @IsNotEmpty({ message: 'Origin address is required' })
   originAddress: string;
 
-  @ApiProperty({ example: 'Jakarta Selatan', description: 'Kota titik asal' })
+  @ApiProperty({ example: 'South Jakarta', description: 'Origin city' })
   @IsString()
-  @IsNotEmpty({ message: 'Kota asal wajib diisi' })
+  @IsNotEmpty({ message: 'Origin city is required' })
   originCity: string;
 
   @ApiProperty({
-    example: 'Kawasan Industri Pulo Gadung Kav. 12-14, Jakarta Timur',
-    description: 'Alamat lengkap titik tujuan / pengantaran',
+    example: 'Pulo Gadung Industrial Zone Kav. 12-14, East Jakarta',
+    description: 'Full destination / drop-off address',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Alamat tujuan wajib diisi' })
+  @IsNotEmpty({ message: 'Destination address is required' })
   destinationAddress: string;
 
-  @ApiProperty({ example: 'Jakarta Timur', description: 'Kota titik tujuan' })
+  @ApiProperty({ example: 'East Jakarta', description: 'Destination city' })
   @IsString()
-  @IsNotEmpty({ message: 'Kota tujuan wajib diisi' })
+  @IsNotEmpty({ message: 'Destination city is required' })
   destinationCity: string;
 
   @ApiProperty({
     example: '2026-08-01',
-    description: 'Tanggal jadwal pengiriman (format YYYY-MM-DD)',
+    description: 'Scheduled delivery date (format YYYY-MM-DD)',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Tanggal jadwal wajib diisi' })
+  @IsNotEmpty({ message: 'Scheduled date is required' })
   scheduledDate: string;
 
   @ApiProperty({
     example: '08:00 - 12:00 WIB',
-    description: 'Slot waktu jadwal pengiriman',
+    description: 'Delivery time slot',
   })
   @IsString()
-  @IsNotEmpty({ message: 'Slot waktu wajib diisi' })
+  @IsNotEmpty({ message: 'Time slot is required' })
   scheduledTimeSlot: string;
 
   @ApiPropertyOptional({
     example: 'veh-01',
-    description:
-      'ID kendaraan yang ditugaskan (Opsional, dapat dialokasikan saat penugasan armada)',
+    description: 'Assigned vehicle ID (Optional, can be allocated during dispatch)',
   })
   @IsOptional()
   @IsString()
@@ -117,7 +116,7 @@ export class CreateDeliveryOrderDto {
 
   @ApiPropertyOptional({
     example: 'usr-driver-1',
-    description: 'ID driver yang ditugaskan (Opsional)',
+    description: 'Assigned driver ID (Optional)',
   })
   @IsOptional()
   @IsString()
@@ -125,21 +124,20 @@ export class CreateDeliveryOrderDto {
 
   @ApiPropertyOptional({
     example: 'usr-cust-1',
-    description:
-      'ID Customer pemilik order (Hanya berlaku untuk peran ADMIN; peran Customer otomatis menggunakan ID sendiri)',
+    description: 'Target Customer ID (Admin only; Customer role automatically uses own ID)',
   })
   @IsOptional()
   @IsString()
   customerId?: string;
 
-  @ApiPropertyOptional({ example: 28.5, description: 'Estimasi jarak tempuh rute dalam km' })
+  @ApiPropertyOptional({ example: 28.5, description: 'Estimated route distance in km' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   distanceKm?: number = 0;
 
-  @ApiPropertyOptional({ example: 60, description: 'Estimasi durasi tempuh dalam menit' })
+  @ApiPropertyOptional({ example: 60, description: 'Estimated route duration in minutes' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

@@ -34,11 +34,30 @@ export interface RentSpaceResponse {
   };
 }
 
+export interface ChangeRentalWarehouseInput {
+  sourceWarehouseId: string;
+  targetWarehouseId: string;
+  reason?: string;
+}
+
+export interface ChangeRentalWarehouseResponse {
+  message: string;
+  sourceWarehouse: { id: string; code: string; name: string };
+  targetWarehouse: { id: string; code: string; name: string };
+  transferredGoodsCount: number;
+  updatedOrdersCount: number;
+  priceAdjustment?: {
+    type: string;
+    amount: number;
+  };
+}
+
 export interface IWarehouseService {
   getWarehouses(): Promise<WarehouseDetail[]>;
   getCustomerActiveWarehouses(): Promise<WarehouseDetail[]>;
   getWarehouseById(id: string): Promise<WarehouseDetail | null>;
   rentSpace(input: RentSpaceInput): Promise<RentSpaceResponse>;
+  changeRentalWarehouse(input: ChangeRentalWarehouseInput): Promise<ChangeRentalWarehouseResponse>;
 }
 
 /**
@@ -76,6 +95,13 @@ export class HttpWarehouseService implements IWarehouseService {
 
   async rentSpace(input: RentSpaceInput): Promise<RentSpaceResponse> {
     return await apiClient<RentSpaceResponse>("/warehouses/rent", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  }
+
+  async changeRentalWarehouse(input: ChangeRentalWarehouseInput): Promise<ChangeRentalWarehouseResponse> {
+    return await apiClient<ChangeRentalWarehouseResponse>("/warehouses/change-rental-warehouse", {
       method: "POST",
       body: JSON.stringify(input),
     });

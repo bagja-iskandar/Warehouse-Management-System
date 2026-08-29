@@ -5,6 +5,7 @@ import { InvoiceStatus, PaymentMethod, PaymentStatus, UserRole, UserStatus } fro
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
+import { EventsService } from '../events/events.service';
 import { BillingService } from './billing.service';
 import { StorageService } from './services/storage.service';
 
@@ -139,6 +140,12 @@ describe('BillingService', () => {
                 },
               });
             }),
+          },
+        },
+        {
+          provide: EventsService,
+          useValue: {
+            publish: jest.fn(),
           },
         },
       ],

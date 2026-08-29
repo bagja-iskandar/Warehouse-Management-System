@@ -27,8 +27,8 @@ describe('AuthService', () => {
     updatedAt: new Date('2026-08-16T14:00:00.000Z'),
   };
 
-  beforeAll(async () => {
-    mockUser.passwordHash = await bcrypt.hash('Password123!', 10);
+  beforeAll(() => {
+    mockUser.passwordHash = bcrypt.hashSync('Password123!', 4);
   });
 
   beforeEach(async () => {
@@ -49,6 +49,13 @@ describe('AuthService', () => {
               update: jest.fn(),
               updateMany: jest.fn(),
             },
+            passwordResetToken: {
+              create: jest.fn(),
+              findFirst: jest.fn(),
+              update: jest.fn(),
+              updateMany: jest.fn(),
+            },
+            $transaction: jest.fn(),
           },
         },
         {
@@ -284,7 +291,7 @@ describe('AuthService', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe('Password berhasil diperbarui');
+      expect(result.message).toBe('Password successfully updated');
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'usr-admin-1' },
         data: { passwordHash: expect.any(String) },
@@ -315,6 +322,142 @@ describe('AuthService', () => {
           newPassword: 'Password123!',
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SEC-01: Secure Password Reset Flow Tests
+  // ─────────────────────────────────────────────────────────────────────────────
+  describe('requestPasswordReset', () => {
+    it('should generate a reset token for a valid active user', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser as any);
+      jest.spyOn(prisma.passwordResetToken, 'updateMany').mockResolvedValue({ count: 0 } as any);
+      jest.spyOn(prisma.passwordResetToken, 'create').mockResolvedValue({} as any);
+
+      const result = await service.requestPasswordReset('admin@wms.id');
+
+      expect(result.success).toBe(true);
+      expect(result.resetToken).toBeDefined();
+      expect(typeof result.resetToken).toBe('string');
+      expect(result.resetToken!.length).toBeGreaterThan(32);
+      expect(prisma.passwordResetToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: mockUser.id, isUsed: false },
+        data: { isUsed: true },
+      });
+      expect(prisma.passwordResetToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: mockUser.id,
+          isUsed: false,
+          tokenHash: expect.any(String),
+          expiresAt: expect.any(Date),
+        }),
+      });
+    });
+
+    it('should return generic success response when email is not found (prevents enumeration)', async () => {
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
+
+      const result = await service.requestPasswordReset('unknown@notfound.id');
+
+      expect(result.success).toBe(true);
+      expect(result.resetToken).toBeUndefined();
+      // Should NOT throw — generic response prevents email enumeration
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+    });
+
+    it('should return generic success response for suspended user (prevents enumeration)', async () => {
+      const suspendedUser = { ...mockUser, status: UserStatus.SUSPENDED };
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(suspendedUser as any);
+
+      const result = await service.requestPasswordReset('admin@wms.id');
+
+      expect(result.success).toBe(true);
+      expect(result.resetToken).toBeUndefined();
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('confirmPasswordReset', () => {
+    const mockResetRecord = {
+      id: 'prt-001',
+      userId: mockUser.id,
+      tokenHash: 'stored_hash',
+      isUsed: false,
+      expiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+      createdAt: new Date(),
+      user: mockUser,
+    };
+
+    it('should successfully reset password with a valid token', async () => {
+      jest.spyOn(prisma.passwordResetToken, 'findFirst').mockResolvedValue(mockResetRecord as any);
+      jest.spyOn(prisma, '$transaction').mockImplementation(async (ops: any) => {
+        // Simulate all operations succeeding
+        if (Array.isArray(ops)) {
+          return Promise.all(ops.map(() => Promise.resolve({})));
+        }
+        return ops;
+      });
+
+      const result = await service.confirmPasswordReset('valid_raw_token', 'NewPassword2026!');
+
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('successfully reset');
+    });
+
+    it('should throw BadRequestException for an invalid token', async () => {
+      jest.spyOn(prisma.passwordResetToken, 'findFirst').mockResolvedValue(null);
+
+      await expect(
+        service.confirmPasswordReset('invalid_token', 'NewPassword2026!'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException for an already-used token (reuse prevention)', async () => {
+      // The `isUsed: false` filter in findFirst means used token returns null
+      jest.spyOn(prisma.passwordResetToken, 'findFirst').mockResolvedValue(null);
+
+      await expect(service.confirmPasswordReset('used_token', 'NewPassword2026!')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for an expired token', async () => {
+      // Expired token: expiresAt is in the past, so findFirst returns null (gt filter)
+      jest.spyOn(prisma.passwordResetToken, 'findFirst').mockResolvedValue(null);
+
+      await expect(
+        service.confirmPasswordReset('expired_token', 'NewPassword2026!'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw UnauthorizedException if user account is suspended at confirm time', async () => {
+      const suspendedRecord = {
+        ...mockResetRecord,
+        user: { ...mockUser, status: UserStatus.SUSPENDED },
+      };
+      jest.spyOn(prisma.passwordResetToken, 'findFirst').mockResolvedValue(suspendedRecord as any);
+
+      await expect(
+        service.confirmPasswordReset('valid_raw_token', 'NewPassword2026!'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should revoke all active refresh tokens after successful password reset', async () => {
+      jest.spyOn(prisma.passwordResetToken, 'findFirst').mockResolvedValue(mockResetRecord as any);
+
+      const transactionSpy = jest
+        .spyOn(prisma, '$transaction')
+        .mockImplementation(async (ops: any) => {
+          if (Array.isArray(ops)) {
+            return Promise.all(ops.map(() => Promise.resolve({})));
+          }
+          return ops;
+        });
+
+      await service.confirmPasswordReset('valid_raw_token', 'NewPassword2026!');
+
+      // Verify $transaction was called (which atomically updates password, marks token used, revokes sessions)
+      expect(transactionSpy).toHaveBeenCalled();
     });
   });
 });

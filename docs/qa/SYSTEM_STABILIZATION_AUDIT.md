@@ -34,7 +34,7 @@ Dokumen audit ini mencatat evaluasi teknis dan verifikasi alur bisnis secara kom
 ### 3.1 Frontend Subsystem (44 Rute Terverifikasi)
 - **Auth**: `/`, `/login`, `/register`, `/forgot-password`, `/profile`, `/profile/change-password`
 - **Admin (11 Rute)**: `/admin/dashboard`, `/admin/goods`, `/admin/warehouse`, `/admin/warehouse/capacity`, `/admin/logistics`, `/admin/billing`, `/admin/drivers`, `/admin/fleet`, `/admin/customers`, `/admin/reports`, `/admin/monitoring`
-- **Customer (10 Rute)**: `/customer/dashboard`, `/customer/goods`, `/customer/goods/input`, `/customer/logistics/request`, `/customer/logistics/track`, `/customer/logistics/tracking`, `/customer/receipt/confirm`, `/customer/rental`, `/customer/billing`, `/customer/history`, `/customer/monitoring`, `/customer/profile`
+- **Customer (9 Rute Utama)**: `/customer/dashboard`, `/customer/goods`, `/customer/goods/input`, `/customer/logistics/request`, `/customer/logistics/track`, `/customer/logistics/tracking`, `/customer/receipt/confirm`, `/customer/rental`, `/customer/billing`, `/customer/monitoring`, `/customer/profile` (dengan graceful redirect pada legacy `/customer/history`)
 - **Driver (8 Rute)**: `/driver/dashboard`, `/driver/tasks`, `/driver/tasks/[id]`, `/driver/pickup`, `/driver/transit`, `/driver/pod`, `/driver/history`, `/driver/vehicle/select`, `/driver/profile`
 
 ### 3.2 Backend Subsystem (10 Modul Terverifikasi)

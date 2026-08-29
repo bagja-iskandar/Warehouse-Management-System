@@ -49,6 +49,7 @@ export function useMarkNotificationAsRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["logistics"] });
     },
   });
 }
@@ -61,6 +62,7 @@ export function useMarkAllNotificationsAsRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
       queryClient.invalidateQueries({ queryKey: ["operational-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["logistics"] });
     },
   });
 }

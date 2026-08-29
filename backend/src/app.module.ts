@@ -17,6 +17,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { TelemetryModule } from './modules/telemetry/telemetry.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     TelemetryModule,
     AnalyticsModule,
     NotificationsModule,
+    EventsModule,
   ],
 })
 export class AppModule {}

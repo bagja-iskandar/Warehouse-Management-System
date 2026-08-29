@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus, OrderType, VehicleType } from '@prisma/client';
-import { GoodsListItemDto } from '../../goods/dto/goods-response.dto';
+import { OrderMessageResponseDto } from './order-message-response.dto';
 
 export class OrderCustomerSummaryDto {
   @ApiProperty({ example: 'usr-cust-1' })
@@ -179,6 +179,18 @@ export class DeliveryOrderListItemDto {
   @ApiPropertyOptional({ example: null })
   driverRating?: number | null;
 
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Number of unread customer communication updates',
+  })
+  unreadMessagesCount?: number;
+
+  @ApiPropertyOptional({
+    type: () => OrderMessageResponseDto,
+    description: 'Latest operational dispatch message update',
+  })
+  latestMessage?: OrderMessageResponseDto | null;
+
   @ApiProperty({ example: '2026-08-01T07:30:00.000Z' })
   createdAt: string;
 
@@ -195,4 +207,10 @@ export class DeliveryOrderDetailResponseDto extends DeliveryOrderListItemDto {
 
   @ApiPropertyOptional({ type: OrderVehicleSummaryDto })
   vehicle?: OrderVehicleSummaryDto | null;
+
+  @ApiPropertyOptional({
+    type: () => [OrderMessageResponseDto],
+    description: 'Chronological list of order communication messages',
+  })
+  messages?: OrderMessageResponseDto[];
 }

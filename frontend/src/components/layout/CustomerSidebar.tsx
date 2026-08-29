@@ -10,7 +10,6 @@ import {
   Truck,
   Navigation,
   Receipt,
-  History,
   Layers,
   LogOut,
   ChevronDown,
@@ -102,12 +101,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             queryFn: () => billingService.getInvoices(user?.id),
             staleTime: 1000 * 60,
           });
-        } else if (href === "/customer/history") {
-          queryClient.prefetchQuery({
-            queryKey: goodsKeys.mutations(user?.id),
-            queryFn: () => goodsService.getMutations(user?.id),
-            staleTime: 1000 * 60,
-          });
         }
       } catch {
         // safe fallback
@@ -184,11 +177,6 @@ export function CustomerSidebar({ isOpen, onClose }: CustomerSidebarProps) {
             counts && counts.customerUnpaidInvoicesCount > 0
               ? "bg-rose-50 text-rose-700 border-rose-200 font-bold"
               : "bg-amber-50 text-amber-700 border-amber-200 font-bold",
-        },
-        {
-          title: "Transaction History",
-          href: "/customer/history",
-          icon: History,
         },
       ],
     },

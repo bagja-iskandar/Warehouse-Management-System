@@ -31,11 +31,11 @@ export class GoodsHistoryEventDto {
   @ApiProperty({ enum: GoodsStorageStatus, example: 'STORED' })
   status: GoodsStorageStatus;
 
-  @ApiProperty({ example: 'Barang Disimpan di Gudang' })
+  @ApiProperty({ example: 'Goods Stored in Warehouse' })
   title: string;
 
   @ApiProperty({
-    example: 'Inspeksi suhu memenuhi syarat (-19.4 C). Ditempatkan di Slot COLD-A01.',
+    example: 'Temperature inspection verified (-19.4°C). Placed into Slot COLD-A01.',
   })
   description: string;
 
@@ -45,7 +45,7 @@ export class GoodsHistoryEventDto {
   @ApiProperty({ example: 'Admin' })
   actorRole: string;
 
-  @ApiPropertyOptional({ example: 'Slot COLD-A01, Gudang Cakung' })
+  @ApiPropertyOptional({ example: 'Slot COLD-A01, Cakung Warehouse' })
   location?: string | null;
 
   @ApiProperty({ example: '2026-08-01T09:00:00.000Z' })
@@ -59,10 +59,10 @@ export class GoodsWarehouseSummaryDto {
   @ApiProperty({ example: 'WH-CKG-01' })
   code: string;
 
-  @ApiProperty({ example: 'Gudang Utama Cakung Logistics Hub' })
+  @ApiProperty({ example: 'Cakung Central Logistics Hub' })
   name: string;
 
-  @ApiProperty({ example: 'Jakarta Timur' })
+  @ApiProperty({ example: 'East Jakarta' })
   city: string;
 }
 
@@ -76,7 +76,10 @@ export class GoodsSlotSummaryDto {
   @ApiProperty({ enum: StorageZoneType, example: 'COLD_STORAGE' })
   zone: StorageZoneType;
 
-  @ApiPropertyOptional({ example: -18.5 })
+  @ApiPropertyOptional({ example: 'Level 1 - Rack A' })
+  location?: string | null;
+
+  @ApiPropertyOptional({ example: -19.5 })
   temperatureCelsius?: number | null;
 
   @ApiProperty({ enum: SlotStatus, example: 'OCCUPIED' })
@@ -87,13 +90,13 @@ export class GoodsCustomerSummaryDto {
   @ApiProperty({ example: 'usr-cust-1' })
   id: string;
 
-  @ApiProperty({ example: 'Siti Rahma' })
+  @ApiProperty({ example: 'PT Samudera Bahari Indonesia' })
   name: string;
 
-  @ApiPropertyOptional({ example: 'CV Fresh Frozen Nusantara' })
+  @ApiPropertyOptional({ example: 'PT Samudera Bahari Indonesia' })
   companyName?: string | null;
 
-  @ApiProperty({ example: 'customer@freshfoods.id' })
+  @ApiProperty({ example: 'coldchain@samuderabahari.co.id' })
   email: string;
 
   @ApiProperty({ example: '081809876543' })
@@ -104,8 +107,11 @@ export class GoodsListItemDto {
   @ApiProperty({ example: 'brg-001' })
   id: string;
 
-  @ApiProperty({ example: 'BRG-2026-FROZEN-001', description: 'Nomor Barcode / SKU unik' })
+  @ApiProperty({ example: 'BRG-2026-FROZEN-001' })
   barcode: string;
+
+  @ApiPropertyOptional({ example: 'BRG-2026-FROZEN-001' })
+  sku?: string;
 
   @ApiProperty({ example: 'usr-cust-1' })
   customerId: string;
@@ -131,43 +137,48 @@ export class GoodsListItemDto {
   @ApiPropertyOptional({ example: 'COLD-A01' })
   slotCode?: string | null;
 
-  @ApiProperty({ example: 'Norwegian Salmon Fillet Grade A' })
+  @ApiProperty({ example: 'Atlantic Salmon Fillet Premium' })
   name: string;
 
   @ApiProperty({ enum: GoodsCategory, example: 'COLD_FOOD' })
   category: GoodsCategory;
 
-  @ApiProperty({ example: 'Ikan salmon beku kualitas ekspor dalam kemasan insulated box vakum.' })
+  @ApiProperty({
+    example: 'Export-grade frozen salmon fillet packed in vacuum-sealed insulated boxes.',
+  })
   description: string;
 
   @ApiProperty({ type: GoodsDimensionsDto })
   dimensions: GoodsDimensionsDto;
 
-  @ApiProperty({ example: 30, description: 'Jumlah unit kuantitas barang' })
+  @ApiProperty({ example: 30, description: 'Total item units count' })
   quantity: number;
 
-  @ApiProperty({ example: 'Master Box', description: 'Satuan unit kemasan barang' })
+  @ApiProperty({ example: 'Master Box', description: 'Packaging unit' })
   unit: string;
 
-  @ApiProperty({ example: true, description: 'Kebutuhan ruang pendingin Cold Storage' })
+  @ApiProperty({ example: true, description: 'Cold storage refrigeration requirement' })
   requiresColdStorage: boolean;
 
-  @ApiPropertyOptional({ example: -22.0, description: 'Batas bawah suhu target (C)' })
+  @ApiPropertyOptional({ example: -22.0, description: 'Target temperature lower bound (°C)' })
   targetTempMin?: number | null;
 
-  @ApiPropertyOptional({ example: -18.0, description: 'Batas atas suhu target (C)' })
+  @ApiPropertyOptional({ example: -18.0, description: 'Target temperature upper bound (°C)' })
   targetTempMax?: number | null;
 
-  @ApiPropertyOptional({ example: -19.4, description: 'Suhu aktual terkini sensor IoT (C)' })
+  @ApiPropertyOptional({
+    example: -19.4,
+    description: 'Current actual IoT sensor temperature (°C)',
+  })
   currentTemp?: number | null;
 
-  @ApiProperty({ example: '2026-08-01T09:00:00.000Z', description: 'Tanggal mulai sewa gudang' })
+  @ApiProperty({ example: '2026-08-01T09:00:00.000Z', description: 'Storage rental start date' })
   storageStartDate: string;
 
-  @ApiPropertyOptional({ example: null, description: 'Tanggal akhir sewa gudang' })
+  @ApiPropertyOptional({ example: null, description: 'Storage rental end date' })
   storageEndDate?: string | null;
 
-  @ApiProperty({ example: 2400000.0, description: 'Tarif sewa bulanan (IDR)' })
+  @ApiProperty({ example: 2400000.0, description: 'Monthly storage rental fee (IDR)' })
   monthlyRentalFee: number;
 
   @ApiProperty({ enum: GoodsStorageStatus, example: 'STORED' })

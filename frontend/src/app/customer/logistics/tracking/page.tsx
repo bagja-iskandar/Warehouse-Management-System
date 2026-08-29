@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Truck,
   Navigation,
@@ -26,6 +27,8 @@ import {
   Package,
   Layers,
   Sparkles,
+  MessageSquare,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,94 +39,21 @@ import {
   SectionCard,
   EmptyState,
 } from "@/components/dashboard";
-import { useDeliveryOrders, useDeliveryOrder } from "@/hooks/use-logistics";
+import { useDeliveryOrders, useDeliveryOrder, useMarkOrderMessageAsRead } from "@/hooks/use-logistics";
 import { useAuth } from "@/hooks/use-auth";
 import { DeliveryOrder, OrderStatus } from "@/types";
 import { ShipmentStatusStepper } from "@/components/logistics/ShipmentStatusStepper";
+import { OrderStatusBadge } from "@/components/common/StatusBadge";
+
 
 // =============================================================================
 // Helper Functions & Status Mapping
 // =============================================================================
 
-function getStatusBadge(status: OrderStatus) {
-  switch (status) {
-    case "PENDING_ASSIGNMENT":
-      return (
-        <Badge variant="outline" className="border-slate-300 text-slate-700 bg-slate-50 text-[11px] gap-1.5 py-0.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-          Pending Assignment
-        </Badge>
-      );
-    case "DRIVER_ASSIGNED":
-      return (
-        <Badge className="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] gap-1.5 py-0.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-          Driver Assigned
-        </Badge>
-      );
-    case "EN_ROUTE_PICKUP":
-      return (
-        <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] gap-1.5 py-0.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
-          En Route to Pickup
-        </Badge>
-      );
-    case "PICKED_UP":
-      return (
-        <Badge className="bg-amber-50 text-amber-800 border border-amber-200 text-[11px] gap-1.5 py-0.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-          Cargo Picked Up
-        </Badge>
-      );
-    case "IN_TRANSIT":
-      return (
-        <Badge className="bg-amber-500 text-slate-950 font-bold border-amber-600 text-[11px] gap-1.5 py-0.5 shadow-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-slate-950 animate-ping" />
-          In Transit
-        </Badge>
-      );
-    case "ARRIVED_DESTINATION":
-      return (
-        <Badge className="bg-teal-50 text-teal-700 border border-teal-200 text-[11px] gap-1.5 py-0.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
-          Arrived at Dock
-        </Badge>
-      );
-    case "DELIVERED":
-      return (
-        <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] gap-1.5 py-0.5">
-          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-          Delivered
-        </Badge>
-      );
-    case "CONFIRMED":
-      return (
-        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[11px] gap-1.5 py-0.5">
-          <CheckCircle2 className="h-3 w-3 text-emerald-700" />
-          Completed & Confirmed
-        </Badge>
-      );
-    case "DELAYED":
-      return (
-        <Badge className="bg-rose-50 text-rose-700 border border-rose-200 text-[11px] gap-1.5 py-0.5">
-          <AlertTriangle className="h-3 w-3 text-rose-600" />
-          Delayed
-        </Badge>
-      );
-    case "CANCELLED":
-      return (
-        <Badge variant="outline" className="border-slate-300 text-slate-400 bg-slate-100 text-[11px] py-0.5">
-          Cancelled
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="secondary" className="text-[11px] py-0.5">
-          {String(status).replace(/_/g, " ")}
-        </Badge>
-      );
-  }
-}
+const getStatusBadge = (status: OrderStatus) => (
+  <OrderStatusBadge status={status} />
+);
+
 
 // Timeline steps definition
 const TIMELINE_STEPS: { key: OrderStatus; label: string; shortLabel: string; description: string }[] = [
@@ -197,8 +127,10 @@ function getStepIndex(status: OrderStatus): number {
   }
 }
 
-export default function CustomerTrackDeliveriesPage() {
+function TrackDeliveriesContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const queryOrderId = searchParams.get("orderId") || searchParams.get("order");
   const { data: rawOrders = [], isLoading, refetch, isRefetching } = useDeliveryOrders();
 
   // Multi-tenant safe: ensure client-side filter as secondary defense
@@ -212,7 +144,22 @@ export default function CustomerTrackDeliveriesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  // Automatically filter or focus to order when navigated via query param (e.g. from Notification Center)
+  useEffect(() => {
+    if (queryOrderId && customerOrders.length > 0) {
+      const match = customerOrders.find(
+        (o) => o.id === queryOrderId || o.orderNumber?.toLowerCase() === queryOrderId.toLowerCase()
+      );
+      if (match) {
+        setSearchQuery(match.orderNumber);
+        const el = document.getElementById(`order-${match.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }
+  }, [queryOrderId, customerOrders]);
 
   // Filtered orders
   const filteredOrders = useMemo(() => {
@@ -285,11 +232,27 @@ export default function CustomerTrackDeliveriesPage() {
     return { total, active, inTransit, delivered, reefer };
   }, [customerOrders]);
 
-  // Selected Order for Detail Modal
-  const selectedOrder = useMemo(() => {
-    if (!selectedOrderId) return null;
-    return customerOrders.find((o) => o.id === selectedOrderId || o.orderNumber === selectedOrderId) || null;
-  }, [customerOrders, selectedOrderId]);
+  // Auto-mark unread messages as read when order cards are viewed
+  const markMessageReadMutation = useMarkOrderMessageAsRead();
+  const readMessageIdsRef = React.useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    customerOrders.forEach((order) => {
+      if (order.messages && order.messages.length > 0) {
+        const unread = order.messages.filter(
+          (m) => !m.isRead && !readMessageIdsRef.current.has(m.id)
+        );
+        unread.forEach((m) => {
+          readMessageIdsRef.current.add(m.id);
+          markMessageReadMutation.mutate({
+            orderId: order.id,
+            messageId: m.id,
+          });
+        });
+      }
+    });
+  }, [customerOrders, markMessageReadMutation]);
+
 
   return (
     <PageContainer>
@@ -499,7 +462,7 @@ export default function CustomerTrackDeliveriesPage() {
           </div>
         </div>
       ) : (
-        /* Delivery Orders Grid */
+        /* Full-Content Delivery Orders List (Direct in-card progression & details, no popup modal needed!) */
         <div className="space-y-4">
           {filteredOrders.map((order) => {
             const isCold = order.requiresReefer;
@@ -509,9 +472,10 @@ export default function CustomerTrackDeliveriesPage() {
             return (
               <div
                 key={order.id}
-                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 hover:border-slate-300 transition-colors"
+                id={`order-${order.id}`}
+                className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4 hover:border-slate-300 transition-all"
               >
-                {/* Card Header */}
+                {/* 1. Card Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
@@ -535,7 +499,13 @@ export default function CustomerTrackDeliveriesPage() {
                   <div className="flex items-center gap-3 text-xs text-slate-500 font-mono">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      {order.scheduledDate ? new Date(order.scheduledDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-"}
+                      {order.scheduledDate
+                        ? new Date(order.scheduledDate).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "-"}
                     </span>
                     {order.scheduledTimeSlot && (
                       <span className="flex items-center gap-1">
@@ -546,114 +516,210 @@ export default function CustomerTrackDeliveriesPage() {
                   </div>
                 </div>
 
-                {/* Cargo Summary & Vol/Weight */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div>
-                    <span className="text-[11px] text-slate-400 block font-medium">Cargo Summary:</span>
-                    <p className="font-bold text-slate-900 mt-0.5">{order.goodsSummary || "WMS Cargo Package"}</p>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-slate-600 font-mono text-[11px] bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 self-start sm:self-auto">
-                    <span>
-                      Vol: <strong>{order.totalVolumeM3 ? Number(order.totalVolumeM3).toFixed(2) : "0.00"} m³</strong>
-                    </span>
-                    <span>
-                      Weight: <strong>{order.totalWeightKg ? Number(order.totalWeightKg).toFixed(1) : "0.0"} kg</strong>
-                    </span>
-                    {order.distanceKm > 0 && (
-                      <span>
-                        Dist: <strong>{order.distanceKm} km</strong>
-                      </span>
-                    )}
-                  </div>
+                {/* 2. Live Shipment Progression Stepper (Direct in-card!) */}
+                <div className="pt-0.5">
+                  <ShipmentStatusStepper
+                    status={order.status}
+                    type={order.type}
+                    isDelayed={order.isDelayed}
+                    delayReason={order.delayReason}
+                  />
                 </div>
 
-                {/* Origin -> Destination Route */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 pt-1">
-                  <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 mt-0.5 shrink-0">
-                      <MapPin className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
-                        Origin Point
+                {/* 3. Dual-Column Summary Grid: Route & Cargo (Left) + Driver & Fleet (Right) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 pt-1">
+                  {/* Left Box: Route & Cargo Summary */}
+                  <div className="p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-xl space-y-2.5 text-xs flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                        Route & Cargo Summary
                       </span>
-                      <p className="font-semibold text-slate-800 text-xs truncate mt-0.5">
-                        {order.originAddress || "Origin Logistics Hub"}
-                      </p>
-                      <span className="text-[11px] text-slate-500 block">{order.originCity || "Jakarta"}</span>
+
+                      <div className="space-y-2">
+                        {/* Origin */}
+                        <div className="flex items-start gap-2">
+                          <div className="p-1 rounded-md bg-indigo-50 text-indigo-600 shrink-0 mt-0.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] text-slate-400 font-medium block">Origin:</span>
+                            <p className="font-semibold text-slate-800 text-xs truncate">
+                              {order.originAddress || "Origin Logistics Hub"}
+                            </p>
+                            <span className="text-[11px] text-slate-500 block">{order.originCity || "Jakarta"}</span>
+                          </div>
+                        </div>
+
+                        {/* Destination */}
+                        <div className="flex items-start gap-2">
+                          <div className="p-1 rounded-md bg-emerald-50 text-emerald-600 shrink-0 mt-0.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] text-slate-400 font-medium block">Destination:</span>
+                            <p className="font-semibold text-slate-800 text-xs truncate">
+                              {order.destinationAddress || "Recipient Destination"}
+                            </p>
+                            <span className="text-[11px] text-slate-500 block">{order.destinationCity || "Destination City"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cargo Volume & Weight */}
+                    <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-slate-400 block font-medium">Cargo:</span>
+                        <p className="font-bold text-slate-900 text-xs truncate">
+                          {order.goodsSummary || "WMS Cargo Package"}
+                        </p>
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shrink-0 shadow-2xs">
+                        {order.totalVolumeM3 ? Number(order.totalVolumeM3).toFixed(2) : "0.00"} m³ ·{" "}
+                        {order.totalWeightKg ? Number(order.totalWeightKg).toFixed(1) : "0.0"} kg
+                      </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 mt-0.5 shrink-0">
-                      <MapPin className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
-                        Destination Facility
+                  {/* Right Box: Assigned Driver & Dedicated Fleet */}
+                  <div className="p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-xl space-y-2.5 text-xs flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                        Assigned Driver & Dedicated Fleet
                       </span>
-                      <p className="font-semibold text-slate-800 text-xs truncate mt-0.5">
-                        {order.destinationAddress || "Recipient Destination"}
-                      </p>
-                      <span className="text-[11px] text-slate-500 block">{order.destinationCity || "Destination City"}</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Driver & Fleet Allocation Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {/* Driver Card */}
-                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                    <div className="h-8 w-8 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold shrink-0">
-                      <User className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] text-slate-400 block font-medium">Assigned Driver</span>
-                      {hasDriver ? (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-slate-800 truncate">{order.driverName}</span>
-                          {order.driverPhone && (
+                      <div className="space-y-2">
+                        {/* Driver Card */}
+                        <div className="p-2.5 rounded-lg bg-white border border-slate-200/80 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="h-7 w-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center font-bold shrink-0">
+                              <User className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[10px] text-slate-400 block font-medium">Driver PIC</span>
+                              {hasDriver ? (
+                                <span className="font-bold text-slate-900 text-xs truncate block">{order.driverName}</span>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">Pending driver assignment</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {hasDriver && order.driverPhone && (
                             <a
                               href={`tel:${order.driverPhone}`}
-                              className="text-[11px] text-indigo-600 hover:underline flex items-center gap-1 shrink-0 font-mono"
+                              className="text-[11px] text-indigo-600 hover:text-indigo-800 flex items-center gap-1 shrink-0 font-mono bg-indigo-50/60 px-2 py-1 rounded-md border border-indigo-100 font-semibold"
                             >
                               <Phone className="h-3 w-3" />
-                              {order.driverPhone}
+                              <span>{order.driverPhone}</span>
                             </a>
                           )}
                         </div>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">Not assigned yet</span>
-                      )}
-                    </div>
-                  </div>
 
-                  {/* Vehicle Card */}
-                  <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
-                    <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
-                      <Truck className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] text-slate-400 block font-medium">Dedicated Fleet</span>
-                      {hasVehicle ? (
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-slate-900 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded text-[11px]">
-                            {order.vehiclePlate}
-                          </span>
-                          <span className="text-[11px] text-slate-600 truncate">
-                            {order.vehicleType?.replace(/_/g, " ") || "Box Truck"}
-                          </span>
+                        {/* Dedicated Vehicle Card */}
+                        <div className="p-2.5 rounded-lg bg-white border border-slate-200/80 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="h-7 w-7 rounded-md bg-amber-50 text-amber-700 flex items-center justify-center font-bold shrink-0">
+                              <Truck className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[10px] text-slate-400 block font-medium">Dedicated Vehicle</span>
+                              {hasVehicle ? (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-mono font-bold text-slate-900 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded text-[11px]">
+                                    {order.vehiclePlate}
+                                  </span>
+                                  <span className="text-[11px] text-slate-600 font-medium truncate">
+                                    {order.vehicleType?.replace(/_/g, " ") || "Box Truck"}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">Pending fleet allocation</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {hasVehicle && isCold && (
+                            <Badge className="bg-sky-50 text-sky-700 border-sky-200 text-[9.5px] py-0 px-1.5 font-semibold shrink-0">
+                              -18°C Reefer
+                            </Badge>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">Not allocated yet</span>
-                      )}
+                      </div>
+                    </div>
+
+                    {/* Fleet Telematics Status */}
+                    <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-slate-500">
+                      <span>Fleet Telematics:</span>
+                      <span className="font-semibold text-slate-700">
+                        {hasVehicle ? "Active GPS Tracking" : "Awaiting Dispatch"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
+                {/* 4. Admin Follow-up (Inline on Order Card) */}
+                {order.latestMessage && (
+                  <div
+                    className={`p-3 rounded-xl border text-xs transition-colors ${
+                      !order.latestMessage.isRead
+                        ? "bg-amber-50/75 border-amber-200/90 text-amber-950 shadow-2xs"
+                        : "bg-slate-50/90 border-slate-200 text-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <MessageSquare
+                          className={`h-3.5 w-3.5 ${
+                            !order.latestMessage.isRead ? "text-amber-600" : "text-slate-500"
+                          }`}
+                        />
+                        <span className="font-bold text-[11.5px] text-slate-900">
+                          Admin Follow-up
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9.5px] py-0 px-1.5 font-semibold ${
+                            !order.latestMessage.isRead
+                              ? "bg-amber-100 text-amber-900 border-amber-300"
+                              : "bg-white text-slate-700 border-slate-200"
+                          }`}
+                        >
+                          {order.latestMessage.title || order.latestMessage.messageType.replace(/_/g, " ")}
+                        </Badge>
+                        {!order.latestMessage.isRead && (
+                          <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-800 bg-amber-200/80 px-1.5 py-0.2 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
+                            New update
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="text-[10.5px] text-slate-400 font-mono">
+                        {order.latestMessage.senderName ? `${order.latestMessage.senderName} • ` : "Admin • "}
+                        {new Date(order.latestMessage.createdAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        WIB
+                      </span>
+                    </div>
+
+                    <p
+                      className={`text-[11.5px] leading-relaxed font-sans ${
+                        !order.latestMessage.isRead ? "text-amber-900" : "text-slate-700"
+                      }`}
+                    >
+                      {'“'}{order.latestMessage.content}{'"'}
+                    </p>
+                  </div>
+                )}
+
                 {/* Delay Warning Banner if any */}
-                {order.isDelayed && (
+                {order.isDelayed && !order.latestMessage && (
                   <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5">
                     <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
                     <div>
@@ -663,7 +729,37 @@ export default function CustomerTrackDeliveriesPage() {
                   </div>
                 )}
 
-                {/* Footer Actions */}
+                {/* 5. Proof of Delivery (POD) Verified Banner */}
+                {(order.status === "DELIVERED" || order.status === "CONFIRMED") && (
+                  <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-emerald-900 font-bold">
+                      <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span>
+                          POD Verified {order.recipientName ? `• Received by ${order.recipientName}` : ""}
+                        </span>
+                        {order.confirmedAt && (
+                          <span className="text-[10.5px] text-emerald-700 font-normal font-mono block">
+                            Timestamp: {new Date(order.confirmedAt).toLocaleString("id-ID")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {order.proofOfDeliveryUrl && (
+                      <a
+                        href={order.proofOfDeliveryUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-emerald-800 underline font-semibold flex items-center gap-1 shrink-0"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span>View Receipt</span>
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* 6. Card Footer (Last Updated & Action Button if Outbound Delivered) */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
                   <div className="text-[11px] text-slate-400">
                     <span>Last updated: </span>
@@ -672,260 +768,39 @@ export default function CustomerTrackDeliveriesPage() {
                     </strong>
                   </div>
 
-                  <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                    {order.type === "DELIVERY" && order.status === "DELIVERED" && (
+                  {order.type === "DELIVERY" && order.status === "DELIVERED" && (
+                    <div className="flex items-center gap-2.5 self-end sm:self-auto">
                       <Link href="/customer/receipt/confirm">
                         <Button
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-3.5 rounded-lg gap-1.5 shadow-sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 rounded-xl gap-1.5 shadow-sm"
                         >
                           <FileCheck className="h-3.5 w-3.5" />
                           <span>Confirm Receipt (POD)</span>
                         </Button>
                       </Link>
-                    )}
-                    <Button
-                      onClick={() => setSelectedOrderId(order.id)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-9 px-3.5 rounded-lg gap-1.5 shadow-sm"
-                    >
-                      <Navigation className="h-3.5 w-3.5" />
-                      <span>View Tracking Details</span>
-                    </Button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       )}
-
-      {/* ===================================================================== */}
-      {/* Tracking Detail Modal (Compact, Non-Scrolling Enterprise Design)       */}
-      {/* ===================================================================== */}
-      {selectedOrder && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSelectedOrderId(null);
-          }}
-        >
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl shadow-2xl space-y-3.5 p-5 animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header without duplicate X button */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-                  <Navigation className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 font-mono">
-                      {selectedOrder.orderNumber}
-                    </h2>
-                    <Badge
-                      variant="outline"
-                      className="text-[10.5px] border-slate-200 text-slate-700 bg-slate-50 font-semibold"
-                    >
-                      {selectedOrder.type === "DELIVERY" ? "Outbound Delivery" : "Inbound Pickup"}
-                    </Badge>
-                    {getStatusBadge(selectedOrder.status)}
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Scheduled:{" "}
-                    {selectedOrder.scheduledDate
-                      ? new Date(selectedOrder.scheduledDate).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "-"}{" "}
-                    {selectedOrder.scheduledTimeSlot ? `(${selectedOrder.scheduledTimeSlot})` : ""}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Progression Timeline (Shared Reusable Component with Connecting Lines) */}
-            <ShipmentStatusStepper
-              status={selectedOrder.status}
-              type={selectedOrder.type}
-              isDelayed={selectedOrder.isDelayed}
-              delayReason={selectedOrder.delayReason}
-            />
-
-            {/* 2-Column Details Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Left Card: Route & Cargo Details */}
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Route & Cargo Summary
-                </span>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[9.5px] text-slate-400 font-medium block">Origin:</span>
-                      <p className="font-semibold text-slate-800 text-[11.5px] truncate">
-                        {selectedOrder.originAddress || "Origin Logistics Hub"}
-                      </p>
-                      <span className="text-[10.5px] text-slate-500 block">{selectedOrder.originCity}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[9.5px] text-slate-400 font-medium block">Destination:</span>
-                      <p className="font-semibold text-slate-800 text-[11.5px] truncate">
-                        {selectedOrder.destinationAddress || "Recipient Facility"}
-                      </p>
-                      <span className="text-[10.5px] text-slate-500 block">{selectedOrder.destinationCity}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[9.5px] text-slate-400 block font-medium">Cargo:</span>
-                    <p className="font-bold text-slate-800 text-[11px] truncate">
-                      {selectedOrder.goodsSummary || "WMS Cargo Package"}
-                    </p>
-                  </div>
-                  <div className="text-[10.5px] font-mono text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 shrink-0">
-                    {selectedOrder.totalVolumeM3 ? Number(selectedOrder.totalVolumeM3).toFixed(2) : "0.00"} m³ •{" "}
-                    {selectedOrder.totalWeightKg ? Number(selectedOrder.totalWeightKg).toFixed(0) : "0"} kg
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Card: Driver & Vehicle Allocation */}
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Assigned Driver & Dedicated Fleet
-                </span>
-
-                {/* Driver */}
-                <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="h-7 w-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold shrink-0">
-                    <User className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[9.5px] text-slate-400 font-medium block">Driver PIC</span>
-                    {selectedOrder.driverName ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-bold text-slate-900 text-xs truncate">{selectedOrder.driverName}</span>
-                        {selectedOrder.driverPhone && (
-                          <a
-                            href={`tel:${selectedOrder.driverPhone}`}
-                            className="text-[10.5px] text-indigo-600 hover:underline font-mono flex items-center gap-0.5 shrink-0"
-                          >
-                            <Phone className="h-3 w-3" />
-                            {selectedOrder.driverPhone}
-                          </a>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[10.5px] text-slate-400 italic">Waiting for central dispatch</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Vehicle */}
-                <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="h-7 w-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
-                    <Truck className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[9.5px] text-slate-400 font-medium block">Dedicated Vehicle</span>
-                    {selectedOrder.vehiclePlate ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-amber-950 bg-amber-100 border border-amber-200 px-1.5 py-0.2 rounded text-[10.5px]">
-                            {selectedOrder.vehiclePlate}
-                          </span>
-                          <span className="text-[10.5px] text-slate-600 truncate">
-                            {selectedOrder.vehicleType?.replace(/_/g, " ")}
-                          </span>
-                        </div>
-                        {selectedOrder.requiresReefer && (
-                          <span className="text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.2 rounded shrink-0">
-                            -18°C Reefer
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[10.5px] text-slate-400 italic">Vehicle unit not yet allocated</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Proof of Delivery (POD) Section (If Delivered) */}
-            {(selectedOrder.status === "DELIVERED" || selectedOrder.status === "CONFIRMED") && (
-              <div className="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-emerald-900 font-bold">
-                  <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <div>
-                    <span>
-                      POD Verified {selectedOrder.recipientName ? `• Received by ${selectedOrder.recipientName}` : ""}
-                    </span>
-                    {selectedOrder.confirmedAt && (
-                      <span className="text-[10.5px] text-emerald-700 font-normal font-mono block">
-                        Timestamp: {new Date(selectedOrder.confirmedAt).toLocaleString("id-ID")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {selectedOrder.proofOfDeliveryUrl && (
-                  <a
-                    href={selectedOrder.proofOfDeliveryUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[11px] text-emerald-800 underline font-semibold flex items-center gap-1 shrink-0"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <span>View Receipt</span>
-                  </a>
-                )}
-              </div>
-            )}
-
-            {/* Delay Alert if any */}
-            {selectedOrder.isDelayed && (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
-                <span className="text-[11px]">
-                  <strong>Schedule Delayed:</strong> {selectedOrder.delayReason || "Traffic congestion on delivery route"}
-                </span>
-              </div>
-            )}
-
-            {/* Modal Footer with Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-              {selectedOrder.type === "DELIVERY" && selectedOrder.status === "DELIVERED" ? (
-                <Link href="/customer/receipt/confirm">
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 rounded-lg gap-1.5 shadow-sm"
-                  >
-                    <FileCheck className="h-3.5 w-3.5" />
-                    <span>Confirm Goods Receipt (POD) →</span>
-                  </Button>
-                </Link>
-              ) : (
-                <div />
-              )}
-
-              <Button
-                variant="outline"
-                onClick={() => setSelectedOrderId(null)}
-                className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 px-4 font-semibold rounded-lg"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </PageContainer>
+  );
+}
+
+export default function CustomerTrackDeliveriesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-12 text-center text-xs text-slate-400">
+          <RefreshCw className="h-6 w-6 text-indigo-600 animate-spin mx-auto mb-2" />
+          <span>Loading delivery tracking...</span>
+        </div>
+      }
+    >
+      <TrackDeliveriesContent />
+    </Suspense>
   );
 }

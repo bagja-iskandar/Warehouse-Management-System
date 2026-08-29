@@ -1,9 +1,18 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { NotificationCategory, Prisma, RelatedEntityType, UserRole, UserStatus } from '@prisma/client';
+import {
+  NotificationCategory,
+  Prisma,
+  RelatedEntityType,
+  UserRole,
+  UserStatus,
+} from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationResponseDto } from './dto/notification-response.dto';
+
+import { EventsService } from '../events/events.service';
+import { DomainEventType } from '../events/events.types';
 
 export interface CreateNotificationInput {
   recipientUserId: string;
@@ -20,7 +29,10 @@ export interface CreateNotificationInput {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventsService: EventsService,
+  ) {}
 
   /**
    * Helper internal untuk memetakan entity Prisma SystemNotification ke DTO
@@ -67,7 +79,19 @@ export class NotificationsService {
       `Notification emitted to User '${input.recipientUserId}' [${input.recipientRole}]: ${input.title}`,
     );
 
-    return this.mapToDto(created);
+    const dto = this.mapToDto(created);
+
+    // If standalone (outside tx), publish immediate event. For tx, calling methods publish domain events.
+    this.eventsService.publish({
+      type: DomainEventType.NOTIFICATION_CREATED,
+      payload: dto,
+      targetCustomerId:
+        input.recipientRole === UserRole.CUSTOMER ? input.recipientUserId : undefined,
+      targetDriverId: input.recipientRole === UserRole.DRIVER ? input.recipientUserId : undefined,
+      targetRoles: input.recipientRole === UserRole.ADMIN ? [UserRole.ADMIN] : undefined,
+    });
+
+    return dto;
   }
 
   /**
@@ -168,13 +192,29 @@ export class NotificationsService {
     });
 
     if (!existing) {
-      throw new NotFoundException(`Notifikasi dengan ID '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Notification with ID '${id}' not found`);
     }
 
     const updated = await this.prisma.systemNotification.update({
       where: { id },
       data: { isRead: true },
     });
+
+    // If this notification is an ORDER_MESSAGE, mark corresponding order message as read
+    if (existing.category === NotificationCategory.ORDER_MESSAGE && existing.relatedEntityId) {
+      await this.prisma.deliveryOrderMessage.updateMany({
+        where: {
+          customerId: currentUser.id,
+          orderId: existing.relatedEntityId,
+          title: existing.title,
+          isRead: false,
+        },
+        data: {
+          isRead: true,
+          readAt: new Date(),
+        },
+      });
+    }
 
     return this.mapToDto(updated);
   }
@@ -190,6 +230,20 @@ export class NotificationsService {
       },
       data: { isRead: true },
     });
+
+    // Also synchronize unread DeliveryOrderMessages for customer
+    if (currentUser.role === UserRole.CUSTOMER) {
+      await this.prisma.deliveryOrderMessage.updateMany({
+        where: {
+          customerId: currentUser.id,
+          isRead: false,
+        },
+        data: {
+          isRead: true,
+          readAt: new Date(),
+        },
+      });
+    }
 
     return { updatedCount: result.count };
   }

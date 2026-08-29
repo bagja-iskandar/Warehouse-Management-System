@@ -12,6 +12,8 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { GoodsService } from './goods.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EventsService } from '../events/events.service';
 
 describe('GoodsService', () => {
   let service: GoodsService;
@@ -49,6 +51,12 @@ describe('GoodsService', () => {
     name: 'Gudang Utama Cakung Logistics Hub',
     city: 'Jakarta Timur',
     isActive: true,
+    zones: [
+      {
+        id: 'zone-cold',
+        type: StorageZoneType.COLD_STORAGE,
+      },
+    ],
   };
 
   const mockSlotEntity = {
@@ -114,14 +122,29 @@ describe('GoodsService', () => {
       providers: [
         GoodsService,
         {
+          provide: NotificationsService,
+          useValue: {
+            createNotification: jest.fn().mockResolvedValue({ id: 'notif-1' }),
+            notifyRole: jest.fn().mockResolvedValue([{ id: 'notif-2' }]),
+          },
+        },
+        {
+          provide: EventsService,
+          useValue: {
+            publish: jest.fn(),
+            getUserEventStream: jest.fn(),
+          },
+        },
+        {
           provide: PrismaService,
           useValue: {
             user: {
               findUnique: jest.fn(),
             },
             warehouse: {
-              findUnique: jest.fn(),
-              update: jest.fn(),
+              findUnique: jest.fn().mockResolvedValue(mockWarehouseEntity),
+              findFirst: jest.fn().mockResolvedValue(mockWarehouseEntity),
+              update: jest.fn().mockResolvedValue(mockWarehouseEntity),
             },
             storageSlot: {
               findUnique: jest.fn(),
@@ -140,9 +163,35 @@ describe('GoodsService', () => {
             $transaction: jest.fn().mockImplementation(async (callback) => {
               if (typeof callback === 'function') {
                 return callback({
+                  $queryRaw: jest.fn().mockResolvedValue([{ id: 'usr-cust-1' }]),
+                  invoice: {
+                    findMany: jest.fn().mockResolvedValue([
+                      {
+                        id: 'inv-01',
+                        status: 'PAID',
+                        items: [
+                          {
+                            goodsName: 'WH-CKG-01 COLD_STORAGE',
+                            description: 'Gudang Utama Cakung Logistics Hub Cold Storage',
+                            volumeM3: new Decimal(500),
+                          },
+                        ],
+                        customerRental: {
+                          storageType: 'COLD_STORAGE',
+                          maxCapacityM3: new Decimal(500),
+                          maxWeightKg: new Decimal(50000),
+                        },
+                      },
+                    ]),
+                  },
                   goodsItem: {
+                    count: jest.fn().mockResolvedValue(1),
+                    findMany: jest.fn().mockResolvedValue([]),
                     create: jest.fn().mockResolvedValue(mockGoodsItem),
                     update: jest.fn().mockResolvedValue(mockGoodsItem),
+                    aggregate: jest.fn().mockResolvedValue({
+                      _sum: { volumeM3: new Decimal(0), weightKg: new Decimal(0) },
+                    }),
                   },
                   goodsMutation: {
                     create: jest.fn().mockResolvedValue({ id: 'mut-1' }),
@@ -203,7 +252,7 @@ describe('GoodsService', () => {
 
     it('should throw NotFoundException if warehouse does not exist or is inactive', async () => {
       jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockCustomerUserEntity as any);
-      jest.spyOn(prisma.warehouse, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.warehouse, 'findFirst').mockResolvedValue(null);
 
       await expect(
         service.create(

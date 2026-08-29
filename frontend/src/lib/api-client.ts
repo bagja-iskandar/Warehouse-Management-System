@@ -4,7 +4,7 @@
  * HTTP Status Normalization, and Human-Friendly Error Messages.
  */
 
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 const ACCESS_TOKEN_KEY = "wms_access_token";
@@ -245,9 +245,11 @@ export async function apiClient<T = any>(
   if (
     res.status === 401 &&
     !skipAuth &&
-    !endpoint.includes("/auth/login") &&
-    !endpoint.includes("/auth/refresh") &&
-    !endpoint.includes("/auth/reset-password")
+    !endpoint.includes('/auth/login') &&
+    !endpoint.includes('/auth/refresh') &&
+    !endpoint.includes('/auth/reset-password') &&
+    !endpoint.includes('/auth/request-reset') &&
+    !endpoint.includes('/auth/confirm-reset')
   ) {
     const refreshToken = getStoredRefreshToken();
 

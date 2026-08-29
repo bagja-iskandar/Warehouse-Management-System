@@ -32,6 +32,15 @@ export class UserProfileDto {
   @ApiProperty({ enum: UserStatus, example: 'ACTIVE', description: 'Current account status' })
   status: UserStatus;
 
+  @ApiPropertyOptional({ example: 'SIM-B2-981249012', description: 'Driver license number' })
+  driverLicenseNumber?: string | null;
+
+  @ApiPropertyOptional({ example: '2028-12-31', description: 'Driver license expiration date' })
+  driverLicenseExpiry?: string | null;
+
+  @ApiPropertyOptional({ example: 0, description: 'Active orders in progress' })
+  activeOrdersCount?: number;
+
   @ApiProperty({ example: '2026-08-16T14:00:00.000Z', description: 'Account creation timestamp' })
   createdAt: string;
 }

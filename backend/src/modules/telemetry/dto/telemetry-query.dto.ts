@@ -6,7 +6,7 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 export class TelemetryQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     example: 'slot-c01',
-    description: 'Filter log berdasarkan ID slot gudang',
+    description: 'Filter logs by warehouse slot ID',
   })
   @IsOptional()
   @IsString()
@@ -14,7 +14,7 @@ export class TelemetryQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: 'veh-01',
-    description: 'Filter log berdasarkan ID kendaraan armada',
+    description: 'Filter logs by fleet vehicle ID',
   })
   @IsOptional()
   @IsString()
@@ -22,7 +22,7 @@ export class TelemetryQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Filter log anomali suhu melebihi ambang batas threshold',
+    description: 'Filter logs by temperature anomaly exceeding threshold',
   })
   @IsOptional()
   @Transform(({ value }) => {
@@ -35,7 +35,7 @@ export class TelemetryQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: '2026-08-01T00:00:00.000Z',
-    description: 'Filter log mulai dari tanggal tertentu',
+    description: 'Filter logs starting from specific ISO date',
   })
   @IsOptional()
   @IsDateString()
@@ -43,7 +43,7 @@ export class TelemetryQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: '2026-08-17T23:59:59.000Z',
-    description: 'Filter log hingga tanggal tertentu',
+    description: 'Filter logs up to specific ISO date',
   })
   @IsOptional()
   @IsDateString()

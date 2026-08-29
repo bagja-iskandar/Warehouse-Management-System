@@ -8,22 +8,40 @@ export class NotificationResponseDto {
   @ApiProperty({ description: 'ID User penerima notifikasi', example: 'usr-cust-1' })
   recipientUserId: string;
 
-  @ApiProperty({ enum: UserRole, description: 'Role penerima notifikasi', example: UserRole.CUSTOMER })
+  @ApiProperty({
+    enum: UserRole,
+    description: 'Role penerima notifikasi',
+    example: UserRole.CUSTOMER,
+  })
   recipientRole: UserRole;
 
   @ApiProperty({ description: 'Judul notifikasi', example: 'Barang Berhasil Didaftarkan' })
   title: string;
 
-  @ApiProperty({ description: 'Pesan detail notifikasi', example: 'Barang Salmon Fillet telah tercatat...' })
+  @ApiProperty({
+    description: 'Pesan detail notifikasi',
+    example: 'Barang Salmon Fillet telah tercatat...',
+  })
   message: string;
 
-  @ApiProperty({ enum: NotificationCategory, description: 'Kategori notifikasi', example: NotificationCategory.GOODS_STORED })
+  @ApiProperty({
+    enum: NotificationCategory,
+    description: 'Kategori notifikasi',
+    example: NotificationCategory.GOODS_STORED,
+  })
   category: NotificationCategory;
 
-  @ApiPropertyOptional({ description: 'ID entitas terkait (misal goodsId, orderId)', example: 'brg-001' })
+  @ApiPropertyOptional({
+    description: 'ID entitas terkait (misal goodsId, orderId)',
+    example: 'brg-001',
+  })
   relatedEntityId?: string | null;
 
-  @ApiPropertyOptional({ enum: RelatedEntityType, description: 'Tipe entitas terkait', example: RelatedEntityType.GOODS })
+  @ApiPropertyOptional({
+    enum: RelatedEntityType,
+    description: 'Tipe entitas terkait',
+    example: RelatedEntityType.GOODS,
+  })
   relatedEntityType?: RelatedEntityType | null;
 
   @ApiProperty({ description: 'Status telah dibaca', example: false })

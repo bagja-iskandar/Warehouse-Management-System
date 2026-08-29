@@ -8,6 +8,8 @@ import {
 import {
   GoodsCategory,
   GoodsStorageStatus,
+  MessageDeliveryChannel,
+  MessageDeliveryStatus,
   NotificationCategory,
   OrderStatus,
   OrderType,
@@ -15,21 +17,37 @@ import {
   RelatedEntityType,
   UserRole,
   VehicleStatus,
-  VehicleType,
 } from '@prisma/client';
 import * as crypto from 'crypto';
+import {
+  evaluateDriverEligibility,
+  evaluateVehicleCompatibility,
+  OrderCargoRequirement,
+} from '../../common/utils/fleet-compatibility.util';
+import { canInboundItem } from '../../common/utils/inventory-lifecycle.util';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateDeliveryOrderDto } from './dto/create-order.dto';
+import { CreateOrderMessageDto } from './dto/create-order-message.dto';
+import { OrderMessageResponseDto } from './dto/order-message-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
-import { DeliveryOrderDetailResponseDto, DeliveryOrderListItemDto, OrderItemDto } from './dto/order-response.dto';
+import { DeliveryOrderDetailResponseDto, DeliveryOrderListItemDto } from './dto/order-response.dto';
+
 import { ReceiveInboundDto } from './dto/receive-inbound.dto';
 import { SubmitPodDto } from './dto/submit-pod.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { VehicleQueryDto } from './dto/vehicle-query.dto';
 import { VehicleResponseDto } from './dto/vehicle-response.dto';
+
+import { EventsService } from '../events/events.service';
+import { DomainEventType } from '../events/events.types';
+import {
+  ALLOWED_ORDER_TRANSITIONS,
+  validateRolePermissionOnOrder,
+} from './utils/logistics-state-machine.util';
+import { mapToOrderListItemDto } from './utils/logistics-mapper.util';
 
 export interface PaginatedOrderResult {
   items: DeliveryOrderListItemDto[];
@@ -45,38 +63,10 @@ export interface PaginatedOrderResult {
 export class LogisticsService {
   private readonly logger = new Logger(LogisticsService.name);
 
-  // State Machine transisi status pengiriman Delivery Order
-  private readonly ALLOWED_ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-    [OrderStatus.PENDING_ASSIGNMENT]: [OrderStatus.DRIVER_ASSIGNED, OrderStatus.CANCELLED],
-    [OrderStatus.DRIVER_ASSIGNED]: [
-      OrderStatus.EN_ROUTE_PICKUP,
-      OrderStatus.PENDING_ASSIGNMENT,
-      OrderStatus.CANCELLED,
-    ],
-    [OrderStatus.EN_ROUTE_PICKUP]: [
-      OrderStatus.PICKED_UP,
-      OrderStatus.DELAYED,
-      OrderStatus.CANCELLED,
-    ],
-    [OrderStatus.PICKED_UP]: [OrderStatus.IN_TRANSIT, OrderStatus.DELAYED],
-    [OrderStatus.IN_TRANSIT]: [OrderStatus.ARRIVED_DESTINATION, OrderStatus.DELAYED],
-    [OrderStatus.ARRIVED_DESTINATION]: [OrderStatus.DELIVERED, OrderStatus.DELAYED],
-    [OrderStatus.DELIVERED]: [OrderStatus.CONFIRMED],
-    [OrderStatus.DELAYED]: [
-      OrderStatus.EN_ROUTE_PICKUP,
-      OrderStatus.PICKED_UP,
-      OrderStatus.IN_TRANSIT,
-      OrderStatus.ARRIVED_DESTINATION,
-      OrderStatus.DELIVERED,
-      OrderStatus.CANCELLED,
-    ],
-    [OrderStatus.CONFIRMED]: [],
-    [OrderStatus.CANCELLED]: [],
-  };
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly eventsService: EventsService,
   ) {}
 
   // ===========================================================================
@@ -108,6 +98,19 @@ export class LogisticsService {
         driver: {
           select: { id: true, name: true, phone: true },
         },
+        deliveryOrders: {
+          where: {
+            status: {
+              in: [
+                OrderStatus.DRIVER_ASSIGNED,
+                OrderStatus.EN_ROUTE_PICKUP,
+                OrderStatus.PICKED_UP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.ARRIVED_DESTINATION,
+              ],
+            },
+          },
+        },
       },
       orderBy: { plateNumber: 'asc' },
     });
@@ -122,6 +125,7 @@ export class LogisticsService {
       hasRefrigeration: v.hasRefrigeration,
       minTempCelsius: v.minTempCelsius ? Number(v.minTempCelsius) : null,
       status: v.status,
+      activeOrdersCount: v.deliveryOrders ? v.deliveryOrders.length : 0,
       currentDriverId: v.currentDriverId,
       currentDriverName: v.driver?.name || null,
       currentDriverPhone: v.driver?.phone || null,
@@ -140,7 +144,7 @@ export class LogisticsService {
   ): Promise<VehicleResponseDto> {
     if (currentUser.role !== UserRole.ADMIN) {
       throw new ForbiddenException(
-        'Hanya Admin yang berhak menugaskan pengemudi ke kendaraan armada',
+        'Only Admins are authorized to assign drivers to fleet vehicles',
       );
     }
 
@@ -150,16 +154,47 @@ export class LogisticsService {
       }),
       this.prisma.user.findUnique({
         where: { id: dto.driverId },
+        include: {
+          driverOrders: {
+            where: {
+              status: {
+                in: [
+                  OrderStatus.DRIVER_ASSIGNED,
+                  OrderStatus.EN_ROUTE_PICKUP,
+                  OrderStatus.PICKED_UP,
+                  OrderStatus.IN_TRANSIT,
+                  OrderStatus.ARRIVED_DESTINATION,
+                ],
+              },
+            },
+          },
+        },
       }),
     ]);
 
     if (!vehicle) {
-      throw new NotFoundException(`Kendaraan dengan ID '${dto.vehicleId}' tidak ditemukan`);
+      throw new NotFoundException(`Vehicle with ID '${dto.vehicleId}' not found`);
     }
 
     if (!driver || driver.role !== UserRole.DRIVER) {
       throw new NotFoundException(
-        `Pengemudi dengan ID '${dto.driverId}' tidak ditemukan atau bukan berstatus Driver`,
+        `Driver with ID '${dto.driverId}' not found or does not have DRIVER role`,
+      );
+    }
+
+    const driverEligibility = evaluateDriverEligibility({
+      id: driver.id,
+      name: driver.name,
+      role: driver.role,
+      status: driver.status,
+      driverLicenseNumber: driver.driverLicenseNumber,
+      driverLicenseExpiry: driver.driverLicenseExpiry,
+      activeOrdersCount: driver.driverOrders ? driver.driverOrders.length : 0,
+    });
+
+    if (!driverEligibility.isEligible || !driverEligibility.isSelectable) {
+      throw new BadRequestException(
+        `Driver '${driver.name}' cannot be assigned: ${driverEligibility.reason}`,
       );
     }
 
@@ -186,6 +221,7 @@ export class LogisticsService {
       hasRefrigeration: updated.hasRefrigeration,
       minTempCelsius: updated.minTempCelsius ? Number(updated.minTempCelsius) : null,
       status: updated.status,
+      activeOrdersCount: 0,
       currentDriverId: updated.currentDriverId,
       currentDriverName: updated.driver?.name || null,
       currentDriverPhone: updated.driver?.phone || null,
@@ -193,6 +229,119 @@ export class LogisticsService {
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * Helper terpusat untuk memvalidasi kompatibilitas armada dan kelayakan pengemudi terhadap kargo order.
+   */
+  async validateDriverAndVehicleForOrder(
+    orderReq: {
+      id?: string;
+      orderNumber?: string;
+      requiresReefer: boolean;
+      totalVolumeM3: Prisma.Decimal | number;
+      totalWeightKg: Prisma.Decimal | number;
+      goodsSummary?: string;
+    },
+    vehicleId?: string | null,
+    driverId?: string | null,
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ vehicle?: any; driver?: any }> {
+    const db = tx || this.prisma;
+    const activeOrderStatuses: OrderStatus[] = [
+      OrderStatus.DRIVER_ASSIGNED,
+      OrderStatus.EN_ROUTE_PICKUP,
+      OrderStatus.PICKED_UP,
+      OrderStatus.IN_TRANSIT,
+      OrderStatus.ARRIVED_DESTINATION,
+    ];
+
+    let vehicle: any = null;
+    if (vehicleId) {
+      vehicle = await db.vehicle.findUnique({
+        where: { id: vehicleId },
+        include: {
+          deliveryOrders: {
+            where: {
+              status: { in: activeOrderStatuses },
+              ...(orderReq.id ? { id: { not: orderReq.id } } : {}),
+            },
+          },
+        },
+      });
+
+      if (!vehicle) {
+        throw new NotFoundException(`Vehicle with ID '${vehicleId}' not found`);
+      }
+
+      const activeOrdersCount = vehicle.deliveryOrders ? vehicle.deliveryOrders.length : 0;
+      const cargoReq: OrderCargoRequirement = {
+        requiresReefer: orderReq.requiresReefer,
+        totalVolumeM3: Number(orderReq.totalVolumeM3),
+        totalWeightKg: Number(orderReq.totalWeightKg),
+        requiredTempCelsius: orderReq.requiresReefer ? -18 : null,
+      };
+
+      const compat = evaluateVehicleCompatibility(
+        {
+          id: vehicle.id,
+          plateNumber: vehicle.plateNumber,
+          name: vehicle.name,
+          type: vehicle.type,
+          maxWeightKg: Number(vehicle.maxWeightKg),
+          maxVolumeM3: Number(vehicle.maxVolumeM3),
+          hasRefrigeration: vehicle.hasRefrigeration,
+          minTempCelsius: vehicle.minTempCelsius ? Number(vehicle.minTempCelsius) : null,
+          status: vehicle.status,
+          activeOrdersCount,
+        },
+        cargoReq,
+      );
+
+      if (!compat.isCompatible || !compat.isSelectable) {
+        throw new BadRequestException(
+          `Vehicle ${vehicle.plateNumber} is not eligible for this order. ${compat.reason}`,
+        );
+      }
+    }
+
+    let driver: any = null;
+    if (driverId) {
+      driver = await db.user.findUnique({
+        where: { id: driverId },
+        include: {
+          driverOrders: {
+            where: {
+              status: { in: activeOrderStatuses },
+              ...(orderReq.id ? { id: { not: orderReq.id } } : {}),
+            },
+          },
+        },
+      });
+
+      if (!driver) {
+        throw new NotFoundException(`Driver with ID '${driverId}' not found`);
+      }
+
+      const activeDriverOrdersCount = driver.driverOrders ? driver.driverOrders.length : 0;
+      const eligibility = evaluateDriverEligibility({
+        id: driver.id,
+        name: driver.name,
+        role: driver.role,
+        status: driver.status,
+        driverLicenseNumber: driver.driverLicenseNumber,
+        driverLicenseExpiry: driver.driverLicenseExpiry,
+        activeOrdersCount: activeDriverOrdersCount,
+      });
+
+      if (!eligibility.isEligible || !eligibility.isSelectable) {
+        throw new BadRequestException(
+          `Driver ${driver.name} is not eligible for this assignment. ${eligibility.reason}`,
+        );
+      }
+    }
+
+    return { vehicle, driver };
   }
 
   // ===========================================================================
@@ -299,6 +448,10 @@ export class LogisticsService {
               hasRefrigeration: true,
             },
           },
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+          },
           orderItems: {
             include: {
               goods: {
@@ -319,7 +472,7 @@ export class LogisticsService {
     ]);
 
     const totalPages = Math.ceil(totalItems / limit) || 1;
-    const items = orders.map((o) => this.mapToOrderListItemDto(o));
+    const items = orders.map((o) => mapToOrderListItemDto(o));
 
     return {
       items,
@@ -365,6 +518,9 @@ export class LogisticsService {
             hasRefrigeration: true,
           },
         },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+        },
         orderItems: {
           include: {
             goods: {
@@ -398,12 +554,12 @@ export class LogisticsService {
     });
 
     if (!order) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
-    // Penegakan Anti-IDOR
+    // Tenant Isolation / Anti-IDOR Enforcement
     if (currentUser.role === UserRole.CUSTOMER && order.customerId !== currentUser.id) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
     if (
@@ -411,10 +567,10 @@ export class LogisticsService {
       order.driverId !== currentUser.id &&
       order.driverId !== null
     ) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
-    const baseItem = this.mapToOrderListItemDto(order);
+    const baseItem = mapToOrderListItemDto(order);
 
     const items = order.orderItems.map((oi) => {
       const g = oi.goods;
@@ -464,6 +620,23 @@ export class LogisticsService {
         ? items.reduce((sum, it) => sum + (it.quantity || 0), 0)
         : baseItem.totalPackages || 1;
 
+    const messages: OrderMessageResponseDto[] = (order.messages || []).map((m) => ({
+      id: m.id,
+      orderId: m.orderId,
+      customerId: m.customerId,
+      senderId: m.senderId || null,
+      senderName: m.senderName,
+      senderRole: m.senderRole,
+      messageType: m.messageType,
+      title: m.title,
+      content: m.content,
+      channel: m.channel,
+      status: m.status,
+      isRead: m.isRead,
+      readAt: m.readAt ? m.readAt.toISOString() : null,
+      createdAt: m.createdAt.toISOString(),
+    }));
+
     return {
       ...baseItem,
       totalPackages,
@@ -471,6 +644,7 @@ export class LogisticsService {
       driver: order.driver,
       vehicle: order.vehicle,
       items,
+      messages,
     };
   }
 
@@ -481,17 +655,19 @@ export class LogisticsService {
     dto: CreateDeliveryOrderDto,
     currentUser: AuthenticatedUser,
   ): Promise<DeliveryOrderDetailResponseDto> {
-    // 1. Tentukan pemilik order
+    // 1. Determine order owner
     let targetCustomerId: string;
     if (currentUser.role === UserRole.CUSTOMER) {
       targetCustomerId = currentUser.id;
     } else if (currentUser.role === UserRole.ADMIN) {
       targetCustomerId = dto.customerId || currentUser.id;
     } else {
-      throw new ForbiddenException('Hanya Customer atau Admin yang berhak membuat Delivery Order');
+      throw new ForbiddenException(
+        'Only Customers or Admins are authorized to create Delivery Orders',
+      );
     }
 
-    // 2. Tentukan daftar ID barang yang akan diproses
+    // 2. Determine goods IDs
     const goodsIds =
       dto.items && dto.items.length > 0
         ? Array.from(new Set(dto.items.map((i) => i.goodsId)))
@@ -499,11 +675,11 @@ export class LogisticsService {
 
     if (goodsIds.length === 0) {
       throw new BadRequestException(
-        'Minimal harus menyertakan 1 barang untuk membuat delivery order',
+        'Must include at least 1 goods item to create a delivery order',
       );
     }
 
-    // 3. Ambil seluruh data barang yang dipilih dari PostgreSQL
+    // 3. Fetch goods from database
     const goodsList = await this.prisma.goodsItem.findMany({
       where: {
         id: { in: goodsIds },
@@ -514,22 +690,56 @@ export class LogisticsService {
     });
 
     if (goodsList.length !== goodsIds.length) {
-      throw new BadRequestException('Satu atau lebih ID barang tidak ditemukan dalam database');
+      throw new BadRequestException('One or more goods IDs were not found in the database');
     }
 
-    // 4. Pastikan seluruh barang milik Customer yang bersangkutan (Tenant Isolation)
+    // 4. Ensure tenant isolation & lifecycle checks
     for (const g of goodsList) {
       if (g.customerId !== targetCustomerId) {
-        throw new ForbiddenException(`Barang '${g.name}' bukan milik akun Customer yang dituju`);
+        throw new ForbiddenException(
+          `Goods '${g.name}' do not belong to the target Customer account`,
+        );
+      }
+
+      // Check Cancelled State (Terminated)
+      if (g.status === GoodsStorageStatus.CANCELLED) {
+        throw new BadRequestException(
+          `Inventory item '${g.name}' is cancelled and cannot be processed.`,
+        );
+      }
+
+      // Inbound vs Outbound strict eligibility checks
+      if (dto.type === OrderType.PICKUP) {
+        if (!canInboundItem(g.status)) {
+          throw new BadRequestException(
+            `Inventory item '${g.name}' cannot be processed for inbound pickup (current status: '${g.status}'). Only items with status 'DRAFT' or 'PENDING_PICKUP' are allowed.`,
+          );
+        }
+      } else if (dto.type === OrderType.DELIVERY) {
+        if (g.status !== GoodsStorageStatus.STORED) {
+          throw new BadRequestException(
+            `Not available for outbound — inventory '${g.name}' has not been stored in the warehouse rack yet (current status: '${g.status}'). Only stored items can be dispatched.`,
+          );
+        }
+        if (!g.slotId) {
+          throw new BadRequestException(
+            `Inventory item '${g.name}' has not been allocated to a storage rack slot yet.`,
+          );
+        }
+        if (g.quantity <= 0) {
+          throw new BadRequestException(
+            `Inventory item '${g.name}' has no available stock for outbound dispatch.`,
+          );
+        }
       }
     }
 
-    // 5. Validasi Gudang (Warehouse Isolation) jika warehouseId disertakan
+    // 5. Warehouse Isolation Validation
     if (dto.warehouseId) {
       for (const g of goodsList) {
         if (g.warehouseId !== dto.warehouseId) {
           throw new BadRequestException(
-            `Barang '${g.name}' berada di gudang '${g.warehouse.name}', bukan fasilitas gudang yang dipilih`,
+            `Goods '${g.name}' is located in warehouse '${g.warehouse.name}', not the selected facility`,
           );
         }
       }
@@ -580,40 +790,18 @@ export class LogisticsService {
     totalVolumeM3 = Number(totalVolumeM3.toFixed(4));
     const goodsSummary = summaryParts.join(', ');
 
-    // 8. Validasi Kendaraan (jika ditentukan)
-    let vehicle = null;
-    if (dto.vehicleId) {
-      vehicle = await this.prisma.vehicle.findUnique({
-        where: { id: dto.vehicleId },
-      });
-
-      if (!vehicle) {
-        throw new NotFoundException(`Kendaraan dengan ID '${dto.vehicleId}' tidak ditemukan`);
-      }
-
-      // Validasi Wajib Reefer Truck untuk Cold Storage
-      if (
-        requiresReefer &&
-        !vehicle.hasRefrigeration &&
-        vehicle.type !== VehicleType.REEFER_TRUCK
-      ) {
-        throw new BadRequestException(
-          'Kargo memuat komoditas Cold Storage bersuhu dingin. Wajib dialokasikan ke armada berpendingin (Reefer Truck)!',
-        );
-      }
-
-      // Validasi Kapasitas Muatan Kendaraan
-      if (totalWeightKg > Number(vehicle.maxWeightKg)) {
-        throw new BadRequestException(
-          `Total berat kargo (${totalWeightKg} kg) melebihi batas beban kendaraan '${vehicle.name}' (${vehicle.maxWeightKg} kg)`,
-        );
-      }
-
-      if (totalVolumeM3 > Number(vehicle.maxVolumeM3)) {
-        throw new BadRequestException(
-          `Total volume kargo (${totalVolumeM3} m3) melebihi batas ruang kubikasi kendaraan '${vehicle.name}' (${vehicle.maxVolumeM3} m3)`,
-        );
-      }
+    // 8. Validasi Kompatibilitas Kendaraan & Driver Terpusat
+    if (dto.vehicleId || dto.driverId) {
+      await this.validateDriverAndVehicleForOrder(
+        {
+          requiresReefer,
+          totalVolumeM3,
+          totalWeightKg,
+          goodsSummary,
+        },
+        dto.vehicleId,
+        dto.driverId,
+      );
     }
 
     // 9. Generate Nomor Order Unik
@@ -625,6 +813,51 @@ export class LogisticsService {
 
     // 10. Eksekusi Transaksi Database Atomik
     const createdOrder = await this.prisma.$transaction(async (tx) => {
+      // Concurrency check for vehicle & driver within transaction
+      if (dto.vehicleId) {
+        const conflictOrder = await tx.deliveryOrder.findFirst({
+          where: {
+            vehicleId: dto.vehicleId,
+            status: {
+              in: [
+                OrderStatus.DRIVER_ASSIGNED,
+                OrderStatus.EN_ROUTE_PICKUP,
+                OrderStatus.PICKED_UP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.ARRIVED_DESTINATION,
+              ],
+            },
+          },
+        });
+        if (conflictOrder) {
+          throw new BadRequestException(
+            `Double assignment prevented: Vehicle is already assigned to active order '#${conflictOrder.orderNumber}'.`,
+          );
+        }
+      }
+
+      if (dto.driverId) {
+        const conflictDriverOrder = await tx.deliveryOrder.findFirst({
+          where: {
+            driverId: dto.driverId,
+            status: {
+              in: [
+                OrderStatus.DRIVER_ASSIGNED,
+                OrderStatus.EN_ROUTE_PICKUP,
+                OrderStatus.PICKED_UP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.ARRIVED_DESTINATION,
+              ],
+            },
+          },
+        });
+        if (conflictDriverOrder) {
+          throw new BadRequestException(
+            `Double assignment prevented: Driver is already assigned to active order '#${conflictDriverOrder.orderNumber}'.`,
+          );
+        }
+      }
+
       const order = await tx.deliveryOrder.create({
         data: {
           orderNumber,
@@ -658,17 +891,20 @@ export class LogisticsService {
       if (dto.vehicleId) {
         await tx.vehicle.update({
           where: { id: dto.vehicleId },
-          data: { status: VehicleStatus.IN_SERVICE },
+          data: {
+            status: VehicleStatus.IN_SERVICE,
+            currentDriverId: dto.driverId || undefined,
+          },
         });
       }
 
-      // Terbitkan Notifikasi Transaksional: Customer & Seluruh Admin
+      // Emit Transactional Notifications: Customer & All Admins
       await this.notificationsService.createNotification(
         {
           recipientUserId: targetCustomerId,
           recipientRole: UserRole.CUSTOMER,
-          title: 'Permintaan Pengiriman Dibuat',
-          message: `Delivery order #${order.orderNumber} (${dto.type}) berhasil diajukan untuk rute ${dto.originCity} → ${dto.destinationCity}.`,
+          title: 'Delivery Request Created',
+          message: `Delivery order #${order.orderNumber} (${dto.type}) successfully submitted for route ${dto.originCity} → ${dto.destinationCity}.`,
           category: NotificationCategory.CONFIRMATION_REQUIRED,
           relatedEntityId: order.id,
           relatedEntityType: RelatedEntityType.ORDER,
@@ -680,8 +916,8 @@ export class LogisticsService {
       await this.notificationsService.notifyRole(
         UserRole.ADMIN,
         {
-          title: 'Permintaan Pengiriman Baru',
-          message: `Order baru #${order.orderNumber} (${goodsSummary}) menunggu penugasan driver dan armada.`,
+          title: 'New Delivery Request',
+          message: `New order #${order.orderNumber} (${goodsSummary}) is awaiting driver and fleet assignment.`,
           category: NotificationCategory.CONFIRMATION_REQUIRED,
           relatedEntityId: order.id,
           relatedEntityType: RelatedEntityType.ORDER,
@@ -695,8 +931,8 @@ export class LogisticsService {
           {
             recipientUserId: dto.driverId,
             recipientRole: UserRole.DRIVER,
-            title: 'Tugas Pengiriman Baru',
-            message: `Anda ditugaskan untuk pengiriman #${order.orderNumber} (${dto.originCity} → ${dto.destinationCity}).`,
+            title: 'New Delivery Assignment',
+            message: `You have been assigned to delivery #${order.orderNumber} (${dto.originCity} → ${dto.destinationCity}).`,
             category: NotificationCategory.DRIVER_DISPATCHED,
             relatedEntityId: order.id,
             relatedEntityType: RelatedEntityType.ORDER,
@@ -709,11 +945,28 @@ export class LogisticsService {
       return order;
     });
 
+    // Publish Real-Time Domain Event
+    this.eventsService.publish({
+      type: DomainEventType.ORDER_CREATED,
+      payload: {
+        orderId: createdOrder.id,
+        orderNumber: createdOrder.orderNumber,
+        type: createdOrder.type,
+        customerId: createdOrder.customerId,
+        driverId: createdOrder.driverId,
+        vehicleId: createdOrder.vehicleId,
+        status: createdOrder.status,
+      },
+      targetCustomerId: createdOrder.customerId,
+      targetDriverId: createdOrder.driverId || undefined,
+      targetOrderId: createdOrder.id,
+    });
+
     return this.findOrderById(createdOrder.id, currentUser);
   }
 
   /**
-   * Memperbarui status Delivery Order dalam alur State Machine yang terkontrol.
+   * Updates Delivery Order status in a controlled State Machine workflow.
    */
   async updateOrderStatus(
     id: string,
@@ -727,30 +980,107 @@ export class LogisticsService {
     });
 
     if (!order) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
-    // Penegakan Anti-IDOR
+    // Tenant Isolation / Anti-IDOR Enforcement
     if (currentUser.role === UserRole.CUSTOMER && order.customerId !== currentUser.id) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
     const currentStatus = order.status;
     const newStatus = dto.status;
 
-    // 1. Validasi Otorisasi Peran
-    this.validateRolePermissionOnOrder(currentUser.role, newStatus, order.type);
+    // 1. Role Permission Validation
+    validateRolePermissionOnOrder(currentUser.role, newStatus, order.type);
 
-    // 2. Validasi State Machine
-    const allowed = this.ALLOWED_ORDER_TRANSITIONS[currentStatus] || [];
+    // 2. State Machine Validation
+    const allowed = ALLOWED_ORDER_TRANSITIONS[currentStatus] || [];
     if (!allowed.includes(newStatus)) {
       throw new BadRequestException(
-        `Transisi status pengiriman dari '${currentStatus}' ke '${newStatus}' tidak diizinkan.`,
+        `Order status transition from '${currentStatus}' to '${newStatus}' is not allowed.`,
       );
+    }
+
+    // 2.5 Fleet & Driver Compatibility Validation if assigning or changing vehicle/driver
+    const targetVehicleId = dto.vehicleId !== undefined ? dto.vehicleId : order.vehicleId;
+    const targetDriverId = dto.driverId !== undefined ? dto.driverId : order.driverId;
+
+    if (newStatus === OrderStatus.DRIVER_ASSIGNED || dto.vehicleId || dto.driverId) {
+      if (newStatus === OrderStatus.DRIVER_ASSIGNED) {
+        if (!targetVehicleId) {
+          throw new BadRequestException('Dispatch assignment requires a valid Vehicle ID.');
+        }
+        if (!targetDriverId) {
+          throw new BadRequestException('Dispatch assignment requires a valid Driver ID.');
+        }
+      }
+
+      if (targetVehicleId || targetDriverId) {
+        await this.validateDriverAndVehicleForOrder(
+          {
+            id: order.id,
+            orderNumber: order.orderNumber,
+            requiresReefer: order.requiresReefer,
+            totalVolumeM3: order.totalVolumeM3,
+            totalWeightKg: order.totalWeightKg,
+            goodsSummary: order.goodsSummary,
+          },
+          targetVehicleId,
+          targetDriverId,
+        );
+      }
     }
 
     // 3. Eksekusi Pembaruan Status dalam Transaksi
     await this.prisma.$transaction(async (tx) => {
+      // Concurrency check for vehicle & driver within transaction
+      if (targetVehicleId && (newStatus === OrderStatus.DRIVER_ASSIGNED || dto.vehicleId)) {
+        const conflictOrder = await tx.deliveryOrder.findFirst({
+          where: {
+            vehicleId: targetVehicleId,
+            id: { not: order.id },
+            status: {
+              in: [
+                OrderStatus.DRIVER_ASSIGNED,
+                OrderStatus.EN_ROUTE_PICKUP,
+                OrderStatus.PICKED_UP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.ARRIVED_DESTINATION,
+              ],
+            },
+          },
+        });
+        if (conflictOrder) {
+          throw new BadRequestException(
+            `Double assignment prevented: Vehicle is already assigned to active order '#${conflictOrder.orderNumber}'.`,
+          );
+        }
+      }
+
+      if (targetDriverId && (newStatus === OrderStatus.DRIVER_ASSIGNED || dto.driverId)) {
+        const conflictDriverOrder = await tx.deliveryOrder.findFirst({
+          where: {
+            driverId: targetDriverId,
+            id: { not: order.id },
+            status: {
+              in: [
+                OrderStatus.DRIVER_ASSIGNED,
+                OrderStatus.EN_ROUTE_PICKUP,
+                OrderStatus.PICKED_UP,
+                OrderStatus.IN_TRANSIT,
+                OrderStatus.ARRIVED_DESTINATION,
+              ],
+            },
+          },
+        });
+        if (conflictDriverOrder) {
+          throw new BadRequestException(
+            `Double assignment prevented: Driver is already assigned to active order '#${conflictDriverOrder.orderNumber}'.`,
+          );
+        }
+      }
+
       const updateData: Prisma.DeliveryOrderUpdateInput = {
         status: newStatus,
       };
@@ -769,12 +1099,12 @@ export class LogisticsService {
       });
 
       // Synchronize vehicle status
-      if (dto.vehicleId && newStatus === OrderStatus.DRIVER_ASSIGNED) {
+      if (targetVehicleId && newStatus === OrderStatus.DRIVER_ASSIGNED) {
         await tx.vehicle.update({
-          where: { id: dto.vehicleId },
+          where: { id: targetVehicleId },
           data: {
             status: VehicleStatus.IN_SERVICE,
-            currentDriverId: dto.driverId || undefined,
+            currentDriverId: targetDriverId || undefined,
           },
         });
       } else if (newStatus === OrderStatus.DELIVERED || newStatus === OrderStatus.CANCELLED) {
@@ -789,7 +1119,54 @@ export class LogisticsService {
         }
       }
 
-      // Notifikasi Transaksional Berdasarkan Perubahan Status
+      // Synchronize associated GoodsItem status for Inbound Pickup Orders
+      if (order.type === OrderType.PICKUP) {
+        const orderItems = await tx.orderItem.findMany({
+          where: { orderId: order.id },
+          include: { goods: true },
+        });
+
+        if (
+          newStatus === OrderStatus.DRIVER_ASSIGNED ||
+          newStatus === OrderStatus.EN_ROUTE_PICKUP
+        ) {
+          for (const item of orderItems) {
+            if (item.goods.status === GoodsStorageStatus.DRAFT) {
+              await tx.goodsItem.update({
+                where: { id: item.goodsId },
+                data: { status: GoodsStorageStatus.PENDING_PICKUP },
+              });
+            }
+          }
+        } else if (newStatus === OrderStatus.PICKED_UP || newStatus === OrderStatus.IN_TRANSIT) {
+          for (const item of orderItems) {
+            if (
+              item.goods.status === GoodsStorageStatus.DRAFT ||
+              item.goods.status === GoodsStorageStatus.PENDING_PICKUP
+            ) {
+              await tx.goodsItem.update({
+                where: { id: item.goodsId },
+                data: { status: GoodsStorageStatus.IN_TRANSIT_INBOUND },
+              });
+              await tx.goodsMutation.create({
+                data: {
+                  goodsId: item.goodsId,
+                  status: GoodsStorageStatus.IN_TRANSIT_INBOUND,
+                  title: 'Inbound Cargo In Transit',
+                  description: `Cargo has been picked up by driver and is in transit to the warehouse facility.`,
+                  actorId: currentUser.id,
+                  actorName: currentUser.name,
+                  actorRole: currentUser.role,
+                  location: `In Transit (${order.originCity} → ${order.destinationCity})`,
+                  timestamp: new Date(),
+                },
+              });
+            }
+          }
+        }
+      }
+
+      // Transactional Notifications Based on Status Changes
       if (newStatus === OrderStatus.DRIVER_ASSIGNED) {
         const driverId = dto.driverId || order.driverId;
         if (driverId) {
@@ -797,8 +1174,8 @@ export class LogisticsService {
             {
               recipientUserId: driverId,
               recipientRole: UserRole.DRIVER,
-              title: 'Tugas Pengiriman Ditugaskan',
-              message: `Anda telah ditugaskan untuk menjalankan pengiriman #${order.orderNumber}.`,
+              title: 'Delivery Task Assigned',
+              message: `You have been assigned to carry out delivery #${order.orderNumber}.`,
               category: NotificationCategory.DRIVER_DISPATCHED,
               relatedEntityId: order.id,
               relatedEntityType: RelatedEntityType.ORDER,
@@ -811,8 +1188,8 @@ export class LogisticsService {
           {
             recipientUserId: order.customerId,
             recipientRole: UserRole.CUSTOMER,
-            title: 'Driver & Armada Ditugaskan',
-            message: `Pengiriman #${order.orderNumber} telah ditugaskan ke driver. Silakan pantau perkiraan jadwal penjemputan/pengiriman.`,
+            title: 'Driver & Fleet Assigned',
+            message: `Shipment #${order.orderNumber} has been assigned to driver. Please monitor pickup and transit schedule.`,
             category: NotificationCategory.DRIVER_DISPATCHED,
             relatedEntityId: order.id,
             relatedEntityType: RelatedEntityType.ORDER,
@@ -829,8 +1206,8 @@ export class LogisticsService {
           {
             recipientUserId: order.customerId,
             recipientRole: UserRole.CUSTOMER,
-            title: `Status Pengiriman: ${newStatus}`,
-            message: `Status delivery order #${order.orderNumber} saat ini telah diperbarui menjadi ${newStatus}.`,
+            title: `Shipment Status: ${newStatus}`,
+            message: `Delivery order #${order.orderNumber} status has been updated to ${newStatus}.`,
             category: NotificationCategory.DELIVERY_ARRIVED,
             relatedEntityId: order.id,
             relatedEntityType: RelatedEntityType.ORDER,
@@ -843,8 +1220,8 @@ export class LogisticsService {
           {
             recipientUserId: order.customerId,
             recipientRole: UserRole.CUSTOMER,
-            title: `Status Pengiriman: Tiba di Tujuan`,
-            message: `Status delivery order #${order.orderNumber} saat ini telah tiba di lokasi tujuan (${order.destinationCity}).`,
+            title: `Shipment Status: Arrived at Destination`,
+            message: `Delivery order #${order.orderNumber} has arrived at destination location (${order.destinationCity}).`,
             category: NotificationCategory.DELIVERY_ARRIVED,
             relatedEntityId: order.id,
             relatedEntityType: RelatedEntityType.ORDER,
@@ -853,13 +1230,13 @@ export class LogisticsService {
           tx,
         );
 
-        // Jika Inbound Pickup, beri notifikasi ke seluruh Admin Gudang untuk proses receiving
+        // If Inbound Pickup, notify Warehouse Admins for receiving process
         if (order.type === OrderType.PICKUP) {
           await this.notificationsService.notifyRole(
             UserRole.ADMIN,
             {
-              title: 'Inbound Shipment Tiba di Gudang',
-              message: `Inbound shipment #${order.orderNumber} telah tiba di loading dock dan menunggu verifikasi penerimaan (Receiving).`,
+              title: 'Inbound Shipment Arrived at Warehouse',
+              message: `Inbound shipment #${order.orderNumber} has arrived at loading dock and is awaiting receiving verification.`,
               category: NotificationCategory.DELIVERY_ARRIVED,
               relatedEntityId: order.id,
               relatedEntityType: RelatedEntityType.ORDER,
@@ -874,8 +1251,8 @@ export class LogisticsService {
             {
               recipientUserId: order.driverId,
               recipientRole: UserRole.DRIVER,
-              title: 'Penerimaan Dikonfirmasi Customer',
-              message: `Customer telah mengonfirmasi penerimaan pengiriman #${order.orderNumber}. Tugas selesai!`,
+              title: 'Delivery Receipt Confirmed',
+              message: `Customer has confirmed receipt of delivery #${order.orderNumber}. Task completed!`,
               category: NotificationCategory.CONFIRMATION_REQUIRED,
               relatedEntityId: order.id,
               relatedEntityType: RelatedEntityType.ORDER,
@@ -887,8 +1264,8 @@ export class LogisticsService {
         await this.notificationsService.notifyRole(
           UserRole.ADMIN,
           {
-            title: 'Order Selesai Dikonfirmasi',
-            message: `Delivery order #${order.orderNumber} telah dikonfirmasi oleh customer.`,
+            title: 'Order Confirmed Completed',
+            message: `Delivery order #${order.orderNumber} has been confirmed by customer.`,
             category: NotificationCategory.CONFIRMATION_REQUIRED,
             relatedEntityId: order.id,
             relatedEntityType: RelatedEntityType.ORDER,
@@ -899,14 +1276,62 @@ export class LogisticsService {
       }
     });
 
+    // Real-Time Domain Event Dispatching
+    const finalDriverId = dto.driverId || order.driverId;
+    const finalVehicleId = dto.vehicleId || order.vehicleId;
+
+    if (newStatus === OrderStatus.DRIVER_ASSIGNED || dto.driverId || dto.vehicleId) {
+      this.eventsService.publish({
+        type: DomainEventType.DRIVER_ASSIGNED,
+        payload: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          driverId: finalDriverId,
+          vehicleId: finalVehicleId,
+          customerId: order.customerId,
+          status: newStatus,
+        },
+        targetCustomerId: order.customerId,
+        targetDriverId: finalDriverId || undefined,
+        targetOrderId: order.id,
+      });
+    }
+
+    this.eventsService.publish({
+      type: DomainEventType.DELIVERY_STATUS_CHANGED,
+      payload: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        previousStatus: currentStatus,
+        newStatus,
+        customerId: order.customerId,
+        driverId: finalDriverId,
+      },
+      targetCustomerId: order.customerId,
+      targetDriverId: finalDriverId || undefined,
+      targetOrderId: order.id,
+    });
+
+    if (newStatus === OrderStatus.CONFIRMED) {
+      this.eventsService.publish({
+        type: DomainEventType.DELIVERY_RECEIPT_CONFIRMED,
+        payload: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerId: order.customerId,
+          driverId: finalDriverId,
+        },
+        targetCustomerId: order.customerId,
+        targetDriverId: finalDriverId || undefined,
+        targetOrderId: order.id,
+      });
+    }
+
     return this.findOrderById(order.id, currentUser);
   }
 
   /**
-   * Menerima dan memverifikasi barang Inbound yang tiba di Loading Dock Gudang (Admin Receiving).
-   * Memvalidasi Expected vs Received/Damaged/Missing, mengalihkan status order menjadi DELIVERED (Received),
-   * membebaskan kendaraan, mengalihkan status barang menjadi INSPECTING (Put-Away Pending),
-   * mencatat GoodsMutation, dan menerbitkan notifikasi ke Admin & Customer.
+   * Receives and verifies inbound goods at the warehouse loading dock (Admin Receiving).
    */
   async receiveInboundOrder(
     id: string,
@@ -915,7 +1340,7 @@ export class LogisticsService {
   ): Promise<DeliveryOrderDetailResponseDto> {
     if (currentUser.role !== UserRole.ADMIN) {
       throw new ForbiddenException(
-        'Hanya Admin/Warehouse Staff yang berhak melakukan receiving barang inbound',
+        'Only Admin or Warehouse Staff are authorized to perform inbound receiving',
       );
     }
 
@@ -938,35 +1363,43 @@ export class LogisticsService {
     });
 
     if (!order) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
     if (order.type !== OrderType.PICKUP) {
-      throw new BadRequestException('Proses Receiving hanya berlaku untuk Inbound Pickup order');
-    }
-
-    if (
-      order.status !== OrderStatus.ARRIVED_DESTINATION &&
-      order.status !== OrderStatus.IN_TRANSIT
-    ) {
       throw new BadRequestException(
-        `Order belum tiba di gudang atau sudah pernah diproses receiving (Status saat ini: ${order.status})`,
+        'Receiving process is only applicable for Inbound Pickup orders',
       );
     }
 
-    // Hitung total kuantitas barang yang diharapkan (Expected Quantity)
+    if (order.status !== OrderStatus.ARRIVED_DESTINATION) {
+      throw new BadRequestException(
+        `Receiving rejected. Driver must arrive physically at the warehouse loading dock (status: ARRIVED_DESTINATION) before receiving verification can be performed. Current status: '${order.status}'.`,
+      );
+    }
+
+    // Ensure no goods are CANCELLED
+    for (const item of order.orderItems) {
+      if (item.goods.status === GoodsStorageStatus.CANCELLED) {
+        throw new BadRequestException(
+          `Inventory item '${item.goods.name}' is cancelled and cannot be processed.`,
+        );
+      }
+    }
+
+    // Calculate expected quantity vs verified quantity
     const expectedQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0);
     const totalCounted = dto.receivedQuantity + dto.damagedQuantity + dto.missingQuantity;
 
     if (totalCounted !== expectedQuantity) {
       throw new BadRequestException(
-        `Total verifikasi fisik (${totalCounted}: ${dto.receivedQuantity} diterima, ${dto.damagedQuantity} rusak, ${dto.missingQuantity} hilang) tidak sesuai dengan total koli manifest order (${expectedQuantity}).`,
+        `Physical verification total (${totalCounted}: ${dto.receivedQuantity} received, ${dto.damagedQuantity} damaged, ${dto.missingQuantity} missing) does not match order manifest total (${expectedQuantity}).`,
       );
     }
 
-    // Eksekusi Receiving dalam Transaksi Database Atomik
+    // Execute Receiving in Atomic Database Transaction
     await this.prisma.$transaction(async (tx) => {
-      // 1. Update status order menjadi DELIVERED (Received at Warehouse)
+      // 1. Update order status to DELIVERED (Received at Warehouse)
       await tx.deliveryOrder.update({
         where: { id: order.id },
         data: {
@@ -978,7 +1411,7 @@ export class LogisticsService {
         },
       });
 
-      // 2. Bebaskan kendaraan armada menjadi AVAILABLE
+      // 2. Free vehicle to AVAILABLE
       if (order.vehicleId) {
         await tx.vehicle.update({
           where: { id: order.vehicleId },
@@ -986,7 +1419,7 @@ export class LogisticsService {
         });
       }
 
-      // 3. Update status semua barang terkait menjadi INSPECTING (Put-Away Pending)
+      // 3. Update associated goods status to INSPECTING (Put-Away Pending)
       for (const item of order.orderItems) {
         await tx.goodsItem.update({
           where: { id: item.goodsId },
@@ -995,14 +1428,14 @@ export class LogisticsService {
           },
         });
 
-        // 4. Catat riwayat mutasi perpindahan ke Receiving Area
+        // 4. Record mutation history to Receiving Dock
         const warehouseName = item.goods.warehouse?.name || 'Logistics Hub';
         await tx.goodsMutation.create({
           data: {
             goodsId: item.goodsId,
             status: GoodsStorageStatus.INSPECTING,
             title: 'Inbound Receiving Completed (Put-Away Pending)',
-            description: `Barang kargo tiba di loading dock dan diverifikasi oleh Admin (${currentUser.name}). Kondisi: ${dto.condition}. Diterima: ${dto.receivedQuantity}, Rusak: ${dto.damagedQuantity}, Hilang: ${dto.missingQuantity}. Catatan: ${dto.receivingNotes || '-'}. Menunggu penataan ke slot rak.`,
+            description: `Cargo arrived at loading dock and verified by Admin (${currentUser.name}). Condition: ${dto.condition}. Received: ${dto.receivedQuantity}, Damaged: ${dto.damagedQuantity}, Missing: ${dto.missingQuantity}. Notes: ${dto.receivingNotes || '-'}. Awaiting rack slot put-away.`,
             actorId: currentUser.id,
             actorName: currentUser.name,
             actorRole: currentUser.role,
@@ -1012,13 +1445,13 @@ export class LogisticsService {
         });
       }
 
-      // 5. Terbitkan Notifikasi ke Admin (Put-Away Required)
-      const targetWarehouseName = order.orderItems[0]?.goods?.warehouse?.name || 'Gudang Utama';
+      // 5. Emit Notification to Admins (Put-Away Required)
+      const targetWarehouseName = order.orderItems[0]?.goods?.warehouse?.name || 'Main Warehouse';
       await this.notificationsService.notifyRole(
         UserRole.ADMIN,
         {
-          title: 'Inbound Received — Put-Away Diperlukan',
-          message: `Inbound shipment #${order.orderNumber} telah berhasil diterima di ${targetWarehouseName}.\nReceived: ${dto.receivedQuantity} | Damaged: ${dto.damagedQuantity} | Missing: ${dto.missingQuantity}.\nKondisi: ${dto.condition}. Silakan lakukan penempatan ke rak (Put-Away).`,
+          title: 'Inbound Received — Put-Away Required',
+          message: `Inbound shipment #${order.orderNumber} successfully received at ${targetWarehouseName}.\nReceived: ${dto.receivedQuantity} | Damaged: ${dto.damagedQuantity} | Missing: ${dto.missingQuantity}.\nCondition: ${dto.condition}. Please proceed with Put-Away storage.`,
           category: NotificationCategory.GOODS_INSPECTED,
           relatedEntityId: order.id,
           relatedEntityType: RelatedEntityType.ORDER,
@@ -1027,13 +1460,13 @@ export class LogisticsService {
         tx,
       );
 
-      // 6. Terbitkan Notifikasi ke Customer Pemilik
+      // 6. Emit Notification to Customer Owner
       await this.notificationsService.createNotification(
         {
           recipientUserId: order.customerId,
           recipientRole: UserRole.CUSTOMER,
-          title: 'Barang Telah Diterima di Gudang',
-          message: `Barang Anda dari pengiriman #${order.orderNumber} telah tiba di ${targetWarehouseName} dan berhasil diverifikasi penerimaan (Diterima: ${dto.receivedQuantity}, Rusak: ${dto.damagedQuantity}, Hilang: ${dto.missingQuantity}). Status: Menunggu Penataan Rak (Put-Away).`,
+          title: 'Goods Received at Warehouse',
+          message: `Your goods from shipment #${order.orderNumber} have arrived at ${targetWarehouseName} and were verified (Received: ${dto.receivedQuantity}, Damaged: ${dto.damagedQuantity}, Missing: ${dto.missingQuantity}). Status: Awaiting Put-Away.`,
           category: NotificationCategory.GOODS_INSPECTED,
           relatedEntityId: order.id,
           relatedEntityType: RelatedEntityType.ORDER,
@@ -1043,12 +1476,81 @@ export class LogisticsService {
       );
     });
 
+    // Real-Time Event Dispatching after Transaction Commits
+    const primaryWarehouseId = order.orderItems[0]?.goods?.warehouseId;
+
+    this.eventsService.publish({
+      type: DomainEventType.INBOUND_CONFIRMED,
+      payload: {
+        inboundId: order.id,
+        orderNumber: order.orderNumber,
+        warehouseId: primaryWarehouseId,
+        customerId: order.customerId,
+        status: OrderStatus.DELIVERED,
+        receivedQuantity: dto.receivedQuantity,
+        damagedQuantity: dto.damagedQuantity,
+        missingQuantity: dto.missingQuantity,
+      },
+      targetCustomerId: order.customerId,
+      targetWarehouseId: primaryWarehouseId,
+      targetOrderId: order.id,
+    });
+
+    this.eventsService.publish({
+      type: DomainEventType.GOODS_RECEIVED,
+      payload: {
+        orderId: order.id,
+        customerId: order.customerId,
+        warehouseId: primaryWarehouseId,
+        goodsCount: order.orderItems.length,
+      },
+      targetCustomerId: order.customerId,
+      targetWarehouseId: primaryWarehouseId,
+    });
+
+    this.eventsService.publish({
+      type: DomainEventType.INVENTORY_MUTATED,
+      payload: {
+        orderId: order.id,
+        customerId: order.customerId,
+        action: 'RECEIVED_INBOUND',
+      },
+      targetCustomerId: order.customerId,
+      targetWarehouseId: primaryWarehouseId,
+    });
+
+    this.eventsService.publish({
+      type: DomainEventType.DELIVERY_STATUS_CHANGED,
+      payload: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        previousStatus: OrderStatus.ARRIVED_DESTINATION,
+        newStatus: OrderStatus.DELIVERED,
+        customerId: order.customerId,
+        driverId: order.driverId,
+      },
+      targetCustomerId: order.customerId,
+      targetDriverId: order.driverId || undefined,
+      targetOrderId: order.id,
+    });
+
+    if (primaryWarehouseId) {
+      this.eventsService.publish({
+        type: DomainEventType.WAREHOUSE_CAPACITY_CHANGED,
+        payload: {
+          warehouseId: primaryWarehouseId,
+          customerId: order.customerId,
+        },
+        targetWarehouseId: primaryWarehouseId,
+        targetCustomerId: order.customerId,
+      });
+    }
+
     return this.findOrderById(order.id, currentUser);
   }
 
   /**
-   * Upload Bukti Serah Terima Digital POD (Digital Signature, Foto Kargo, Rating)
-   * dan pembebasan armada otomatis (Hanya berlaku untuk Outbound Delivery).
+   * Submits Proof of Delivery (Digital POD) and frees vehicle (Applicable for Outbound Delivery).
    */
   async submitPod(
     id: string,
@@ -1065,20 +1567,20 @@ export class LogisticsService {
     });
 
     if (!order) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
     if (order.type === OrderType.PICKUP) {
       throw new BadRequestException(
-        'Pengiriman inbound tidak memerlukan POD customer. Proses penerimaan dilakukan oleh Admin Gudang melalui menu Inbound Receiving.',
+        'Inbound shipments do not require customer POD. The receiving process is handled by Warehouse Admins via Inbound Receiving.',
       );
     }
 
     if (currentUser.role === UserRole.CUSTOMER && order.customerId !== currentUser.id) {
-      throw new NotFoundException(`Delivery Order dengan ID atau nomor '${id}' tidak ditemukan`);
+      throw new NotFoundException(`Delivery Order with ID or number '${id}' not found`);
     }
 
-    // Eksekusi Submit POD dalam transaksi atomik
+    // Execute Submit POD in atomic database transaction
     await this.prisma.$transaction(async (tx) => {
       await tx.deliveryOrder.update({
         where: { id: order.id },
@@ -1093,7 +1595,7 @@ export class LogisticsService {
         },
       });
 
-      // Bebaskan kendaraan menjadi AVAILABLE
+      // Free vehicle to AVAILABLE
       if (order.vehicleId) {
         await tx.vehicle.update({
           where: { id: order.vehicleId },
@@ -1101,13 +1603,13 @@ export class LogisticsService {
         });
       }
 
-      // Terbitkan Notifikasi POD ke Customer dan Admin
+      // Emit POD Notifications to Customer and Admin
       await this.notificationsService.createNotification(
         {
           recipientUserId: order.customerId,
           recipientRole: UserRole.CUSTOMER,
-          title: 'Barang Telah Sampai (POD Terbit)',
-          message: `Pengiriman #${order.orderNumber} telah diserahkan kepada ${dto.recipientName}. Silakan cek bukti serah terima dan konfirmasi.`,
+          title: 'Shipment Delivered (Digital POD Issued)',
+          message: `Shipment #${order.orderNumber} has been delivered to ${dto.recipientName}. Please check proof of delivery.`,
           category: NotificationCategory.DELIVERY_ARRIVED,
           relatedEntityId: order.id,
           relatedEntityType: RelatedEntityType.ORDER,
@@ -1119,8 +1621,8 @@ export class LogisticsService {
       await this.notificationsService.notifyRole(
         UserRole.ADMIN,
         {
-          title: 'POD Pengiriman Diterbitkan',
-          message: `Driver telah menyelesaikan pengiriman #${order.orderNumber} (Penerima: ${dto.recipientName}).`,
+          title: 'Shipment POD Issued',
+          message: `Driver has completed delivery #${order.orderNumber} (Recipient: ${dto.recipientName}).`,
           category: NotificationCategory.DELIVERY_ARRIVED,
           relatedEntityId: order.id,
           relatedEntityType: RelatedEntityType.ORDER,
@@ -1130,125 +1632,254 @@ export class LogisticsService {
       );
     });
 
+    // Real-Time Event Dispatching
+    this.eventsService.publish({
+      type: DomainEventType.DELIVERY_COMPLETED,
+      payload: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerId: order.customerId,
+        driverId: order.driverId,
+        recipientName: dto.recipientName,
+        proofOfDeliveryUrl: dto.proofOfDeliveryUrl,
+      },
+      targetCustomerId: order.customerId,
+      targetDriverId: order.driverId || undefined,
+      targetOrderId: order.id,
+    });
+
+    this.eventsService.publish({
+      type: DomainEventType.DELIVERY_STATUS_CHANGED,
+      payload: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        previousStatus: order.status,
+        newStatus: OrderStatus.DELIVERED,
+        customerId: order.customerId,
+        driverId: order.driverId,
+      },
+      targetCustomerId: order.customerId,
+      targetDriverId: order.driverId || undefined,
+      targetOrderId: order.id,
+    });
+
     return this.findOrderById(order.id, currentUser);
   }
 
   // ===========================================================================
-  // 3. PRIVATE HELPER METHODS
+  // 3. CUSTOMER COMMUNICATION & ORDER MESSAGES
   // ===========================================================================
 
-  private validateRolePermissionOnOrder(
-    role: UserRole,
-    newStatus: OrderStatus,
-    orderType: OrderType = OrderType.DELIVERY,
-  ): void {
-    if (role === UserRole.CUSTOMER) {
-      if (orderType === OrderType.PICKUP) {
-        throw new ForbiddenException(
-          'Pelanggan tidak memiliki izin untuk mengubah status pengiriman inbound (Receiving dilakukan oleh Admin gudang)',
-        );
-      }
-      const customerAllowed: OrderStatus[] = [OrderStatus.CONFIRMED, OrderStatus.CANCELLED];
-      if (!customerAllowed.includes(newStatus)) {
-        throw new ForbiddenException(
-          `Pelanggan tidak memiliki izin untuk mengubah status pengiriman menjadi '${newStatus}'`,
-        );
-      }
-    } else if (role === UserRole.DRIVER) {
-      const driverAllowed: OrderStatus[] =
-        orderType === OrderType.PICKUP
-          ? [
-              OrderStatus.EN_ROUTE_PICKUP,
-              OrderStatus.PICKED_UP,
-              OrderStatus.IN_TRANSIT,
-              OrderStatus.ARRIVED_DESTINATION,
-              OrderStatus.DELAYED,
-            ]
-          : [
-              OrderStatus.EN_ROUTE_PICKUP,
-              OrderStatus.PICKED_UP,
-              OrderStatus.IN_TRANSIT,
-              OrderStatus.ARRIVED_DESTINATION,
-              OrderStatus.DELIVERED,
-              OrderStatus.DELAYED,
-            ];
-      if (!driverAllowed.includes(newStatus)) {
-        throw new ForbiddenException(
-          `Pengemudi tidak memiliki izin untuk mengubah status pengiriman menjadi '${newStatus}'`,
-        );
-      }
+  /**
+   * Mengirim pesan / update komunikasi dari Dispatcher ke Customer terkait Delivery Order.
+   */
+  async createOrderMessage(
+    orderId: string,
+    dto: CreateOrderMessageDto,
+    currentUser: AuthenticatedUser,
+  ): Promise<OrderMessageResponseDto> {
+    const order = await this.prisma.deliveryOrder.findFirst({
+      where: {
+        OR: [{ id: orderId }, { orderNumber: orderId }],
+      },
+      include: {
+        customer: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Delivery Order with ID or number '${orderId}' not found`);
     }
-  }
 
-  private mapToOrderListItemDto(
-    order: any,
-  ): DeliveryOrderListItemDto {
-    const items: OrderItemDto[] = (order.orderItems || []).map((oi: any) => ({
-      id: oi.id,
-      goodsId: oi.goodsId || oi.goods?.id || '',
-      name: oi.goods?.name || 'Cargo Item',
-      barcode: oi.goods?.barcode || '',
-      quantity: Number(oi.quantity) || 1,
-      unit: oi.goods?.unit || 'Packages',
-      volumeM3: oi.goods?.volumeM3 ? Number(oi.goods.volumeM3) : 0,
-      weightKg: oi.goods?.weightKg ? Number(oi.goods.weightKg) : 0,
-      requiresColdStorage: Boolean(oi.goods?.requiresColdStorage),
-    }));
+    if (currentUser.role !== UserRole.ADMIN) {
+      throw new ForbiddenException(
+        'Only Admins / Dispatchers are authorized to send customer communications.',
+      );
+    }
 
-    const totalPackages =
-      items.length > 0
-        ? items.reduce((sum, it) => sum + (it.quantity || 0), 0)
-        : 1;
+    const channel = dto.channel || MessageDeliveryChannel.IN_APP;
+
+    const message = await this.prisma.$transaction(async (tx) => {
+      const msg = await tx.deliveryOrderMessage.create({
+        data: {
+          orderId: order.id,
+          customerId: order.customerId,
+          senderId: currentUser.id,
+          senderName: currentUser.name,
+          senderRole: currentUser.role,
+          messageType: dto.messageType,
+          title: dto.title,
+          content: dto.content,
+          channel,
+          status: MessageDeliveryStatus.SENT,
+          isRead: false,
+        },
+      });
+
+      // Emit In-App System Notification for Customer
+      await this.notificationsService.createNotification(
+        {
+          recipientUserId: order.customerId,
+          recipientRole: UserRole.CUSTOMER,
+          title: dto.title,
+          message: dto.content,
+          category: NotificationCategory.ORDER_MESSAGE,
+          relatedEntityId: order.id,
+          relatedEntityType: RelatedEntityType.ORDER,
+          actionUrl: `/customer/logistics/tracking?orderId=${order.id}`,
+        },
+        tx,
+      );
+
+      return msg;
+    });
+
+    // Real-Time Event Dispatching for Order Message
+    this.eventsService.publish({
+      type: DomainEventType.ORDER_MESSAGE_CREATED,
+      payload: {
+        messageId: message.id,
+        orderId: message.orderId,
+        orderNumber: order.orderNumber,
+        customerId: message.customerId,
+        senderName: message.senderName,
+        title: message.title,
+        content: message.content,
+        createdAt: message.createdAt.toISOString(),
+      },
+      targetCustomerId: order.customerId,
+      targetOrderId: order.id,
+    });
 
     return {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      type: order.type,
-      customerId: order.customerId,
-      customerName: order.customer?.name || '',
-      customerPhone: order.customer?.phone || '',
-      goodsItemIds: (order.orderItems || []).map((oi: any) => oi.goodsId),
-      items,
-      totalPackages,
-      goodsSummary: order.goodsSummary,
-      totalVolumeM3: Number(order.totalVolumeM3),
-      totalWeightKg: Number(order.totalWeightKg),
-      requiresReefer: order.requiresReefer,
-      originAddress: order.originAddress,
-      originCity: order.originCity,
-      destinationAddress: order.destinationAddress,
-      destinationCity: order.destinationCity,
-      scheduledDate:
-        order.scheduledDate instanceof Date
-          ? order.scheduledDate.toISOString().split('T')[0]
-          : String(order.scheduledDate).split('T')[0],
-      scheduledTimeSlot: order.scheduledTimeSlot,
-      driverId: order.driverId,
-      driverName: order.driver?.name || null,
-      driverPhone: order.driver?.phone || null,
-      vehicleId: order.vehicleId,
-      vehiclePlate: order.vehicle?.plateNumber || null,
-      vehicleType: order.vehicle?.type || null,
-      status: order.status,
-      estimatedDurationMins: order.estimatedDurationMins,
-      distanceKm: Number(order.distanceKm),
-      isDelayed: order.isDelayed,
-      delayReason: order.delayReason,
-      rescheduledTime: order.rescheduledTime
-        ? new Date(order.rescheduledTime).toISOString()
-        : null,
-      proofOfDeliveryUrl: order.proofOfDeliveryUrl,
-      recipientName: order.recipientName,
-      recipientSignature: order.recipientSignature,
-      driverRating: order.driverRating ? Number(order.driverRating) : null,
-      createdAt:
-        order.createdAt instanceof Date
-          ? order.createdAt.toISOString()
-          : String(order.createdAt),
-      updatedAt:
-        order.updatedAt instanceof Date
-          ? order.updatedAt.toISOString()
-          : String(order.updatedAt),
+      id: message.id,
+      orderId: message.orderId,
+      customerId: message.customerId,
+      senderId: message.senderId,
+      senderName: message.senderName,
+      senderRole: message.senderRole,
+      messageType: message.messageType,
+      title: message.title,
+      content: message.content,
+      channel: message.channel,
+      status: message.status,
+      isRead: message.isRead,
+      readAt: null,
+      createdAt: message.createdAt.toISOString(),
+    };
+  }
+
+  /**
+   * Mengambil riwayat pesan / komunikasi pada Delivery Order tertentu.
+   */
+  async findOrderMessages(
+    orderId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<OrderMessageResponseDto[]> {
+    const order = await this.prisma.deliveryOrder.findFirst({
+      where: {
+        OR: [{ id: orderId }, { orderNumber: orderId }],
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Delivery Order with ID or number '${orderId}' not found`);
+    }
+
+    // Tenant Isolation
+    if (currentUser.role === UserRole.CUSTOMER && order.customerId !== currentUser.id) {
+      throw new NotFoundException(`Delivery Order with ID or number '${orderId}' not found`);
+    }
+
+    if (
+      currentUser.role === UserRole.DRIVER &&
+      order.driverId !== currentUser.id &&
+      order.driverId !== null
+    ) {
+      throw new NotFoundException(`Delivery Order with ID or number '${orderId}' not found`);
+    }
+
+    const messages = await this.prisma.deliveryOrderMessage.findMany({
+      where: { orderId: order.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return messages.map((m) => ({
+      id: m.id,
+      orderId: m.orderId,
+      customerId: m.customerId,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      senderRole: m.senderRole,
+      messageType: m.messageType,
+      title: m.title,
+      content: m.content,
+      channel: m.channel,
+      status: m.status,
+      isRead: m.isRead,
+      readAt: m.readAt ? m.readAt.toISOString() : null,
+      createdAt: m.createdAt.toISOString(),
+    }));
+  }
+
+  /**
+   * Menandai pesan order telah dibaca oleh customer.
+   */
+  async markOrderMessageAsRead(
+    orderId: string,
+    messageId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<OrderMessageResponseDto> {
+    const message = await this.prisma.deliveryOrderMessage.findUnique({
+      where: { id: messageId },
+      include: { order: true },
+    });
+
+    if (!message || (message.orderId !== orderId && message.order.orderNumber !== orderId)) {
+      throw new NotFoundException(`Order Message with ID '${messageId}' not found`);
+    }
+
+    if (currentUser.role === UserRole.CUSTOMER && message.customerId !== currentUser.id) {
+      throw new ForbiddenException('You can only mark your own messages as read.');
+    }
+
+    const updated = await this.prisma.deliveryOrderMessage.update({
+      where: { id: message.id },
+      data: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    });
+
+    // Synchronize corresponding SystemNotification record for this message as read
+    await this.prisma.systemNotification.updateMany({
+      where: {
+        recipientUserId: message.customerId,
+        relatedEntityId: message.orderId,
+        title: message.title,
+        category: NotificationCategory.ORDER_MESSAGE,
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
+    return {
+      id: updated.id,
+      orderId: updated.orderId,
+      customerId: updated.customerId,
+      senderId: updated.senderId,
+      senderName: updated.senderName,
+      senderRole: updated.senderRole,
+      messageType: updated.messageType,
+      title: updated.title,
+      content: updated.content,
+      channel: updated.channel,
+      status: updated.status,
+      isRead: updated.isRead,
+      readAt: updated.readAt ? updated.readAt.toISOString() : null,
+      createdAt: updated.createdAt.toISOString(),
     };
   }
 }

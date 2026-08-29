@@ -19,8 +19,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const correlationId =
-      ((request.headers['x-request-id'] ||
-        request.headers['x-correlation-id']) as string | undefined) ||
+      ((request.headers['x-request-id'] || request.headers['x-correlation-id']) as
+        string | undefined) ||
       `wms_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
     // Set correlation ID in outgoing response headers

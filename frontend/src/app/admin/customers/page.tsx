@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AccountStatusBadge } from "@/components/common/StatusBadge";
+
 import {
   PageContainer,
   PageHeader,
@@ -140,18 +142,10 @@ export default function CustomerManagementPage() {
   const totalUnpaidInvoices = customers.reduce((acc, c) => acc + c.unpaidInvoicesCount, 0);
   const activeCustomersCount = customers.filter((c) => c.status === "ACTIVE").length;
 
-  const getStatusBadge = (status: CustomerItem["status"]) => {
-    switch (status) {
-      case "ACTIVE":
-        return <Badge className="bg-emerald-600 text-white text-[10px]">Active Tenant</Badge>;
-      case "SUSPENDED":
-        return <Badge className="bg-rose-600 text-white text-[10px]">Suspended</Badge>;
-      case "PENDING_VERIFICATION":
-        return <Badge className="bg-amber-500 text-slate-950 text-[10px]">Pending Verification</Badge>;
-      default:
-        return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
-    }
-  };
+  const getStatusBadge = (status: CustomerItem["status"]) => (
+    <AccountStatusBadge status={status} />
+  );
+
 
   return (
     <PageContainer>

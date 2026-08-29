@@ -8,13 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import {
@@ -103,10 +97,7 @@ export class NotificationsController {
     description: 'Notifikasi berhasil ditandai telah dibaca',
     type: NotificationResponseDto,
   })
-  async markAsRead(
-    @Param('id') id: string,
-    @CurrentUser() currentUser: AuthenticatedUser,
-  ) {
+  async markAsRead(@Param('id') id: string, @CurrentUser() currentUser: AuthenticatedUser) {
     const result = await this.notificationsService.markAsRead(id, currentUser);
     return {
       message: 'Notifikasi berhasil ditandai telah dibaca',

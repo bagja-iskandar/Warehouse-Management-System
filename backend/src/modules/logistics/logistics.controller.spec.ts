@@ -112,7 +112,7 @@ describe('LogisticsController', () => {
   describe('findAllOrders', () => {
     it('should return enveloped order list', async () => {
       const response = await controller.findAllOrders({}, mockAdmin);
-      expect(response.message).toBe('Daftar delivery order berhasil diambil');
+      expect(response.message).toBe('Delivery orders retrieved successfully');
       expect(response.data.items).toHaveLength(1);
     });
   });

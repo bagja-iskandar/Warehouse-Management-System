@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Truck,
@@ -19,6 +19,23 @@ import {
   Building2,
   FileText,
   User,
+  Snowflake,
+  XCircle,
+  Ban,
+  Package,
+  Weight,
+  Check,
+  Phone,
+  ExternalLink,
+  UserCheck,
+  ShieldCheck,
+  Sparkles,
+  Loader2,
+  Warehouse,
+  ArrowUpDown,
+  Boxes,
+  AlertCircle,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +51,17 @@ import { useDrivers } from "@/hooks/use-users";
 import { useWarehouses } from "@/hooks/use-warehouses";
 import { useWarehouseStore } from "@/store/warehouse.store";
 import { ShipmentStatusStepper } from "@/components/logistics/ShipmentStatusStepper";
-import { Phone, ExternalLink, UserCheck, ShieldCheck, Sparkles, Loader2, Warehouse, ArrowUpDown, Boxes, AlertCircle } from "lucide-react";
+import { OrderMessageModal } from "@/components/logistics/OrderMessageModal";
+import { InboundReceivingModal } from "@/components/logistics/InboundReceivingModal";
+import { LogisticsAssignModal } from "@/components/logistics/LogisticsAssignModal";
+import { LogisticsDetailModal } from "@/components/logistics/LogisticsDetailModal";
+
+import {
+  evaluateVehicleCompatibility,
+  evaluateDriverEligibility,
+  formatVehicleTypeName,
+  OrderCargoRequirement,
+} from "@/lib/fleet-compatibility";
 import { toast } from "sonner";
 
 type LogisticsSortOption =
@@ -84,8 +111,8 @@ export default function LogisticsManagementPage() {
     warehouseId: selectedWarehouseFilter === "ALL" ? undefined : selectedWarehouseFilter,
     ...querySortParam,
   });
-  const { data: liveVehicles = [] } = useVehicles();
-  const { data: liveDrivers = [] } = useDrivers();
+  const { data: liveVehicles = [], refetch: refetchVehicles } = useVehicles();
+  const { data: liveDrivers = [], refetch: refetchDrivers } = useDrivers();
   const updateStatusMutation = useUpdateOrderStatus();
 
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -101,38 +128,144 @@ export default function LogisticsManagementPage() {
   // Inbound Receiving Modal State
   const receiveInboundMutation = useReceiveInboundOrder();
   const [receivingOrderId, setReceivingOrderId] = useState<string | null>(null);
-  const [receivedQty, setReceivedQty] = useState<number>(0);
-  const [damagedQty, setDamagedQty] = useState<number>(0);
-  const [missingQty, setMissingQty] = useState<number>(0);
-  const [receivingCondition, setReceivingCondition] = useState<string>("GOOD");
-  const [receivingNotes, setReceivingNotes] = useState<string>("");
   const [receivingError, setReceivingError] = useState<string | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
+
+  // Customer Communication Modal State
+  const [messagingOrderId, setMessagingOrderId] = useState<string | null>(null);
 
   const selectedOrder = liveOrders?.find((o) => o.id === selectedOrderId);
   const assigningOrder = liveOrders?.find((o) => o.id === assigningOrderId);
   const receivingOrder = liveOrders?.find((o) => o.id === receivingOrderId);
+  const messagingOrder = liveOrders?.find((o) => o.id === messagingOrderId);
 
-  // Set default driver and vehicle when opening assignment modal
-  React.useEffect(() => {
-    if (assigningOrder) {
-      if (liveDrivers.length > 0 && !assignDriverId) {
-        setAssignDriverId(liveDrivers[0].id);
+  // Count available reefer vehicles in fleet
+  const availableReeferCount = useMemo(() => {
+    return liveVehicles.filter(
+      (v) =>
+        (v.hasRefrigeration || v.type === "REEFER_TRUCK") &&
+        v.status === "AVAILABLE" &&
+        (!v.activeOrdersCount || v.activeOrdersCount === 0)
+    ).length;
+  }, [liveVehicles]);
+
+  // Re-fetch fresh vehicle & driver availability when assignment modal opens
+  useEffect(() => {
+    if (assigningOrderId || messagingOrderId) {
+      refetchVehicles();
+      refetchDrivers();
+    }
+  }, [assigningOrderId, messagingOrderId, refetchVehicles, refetchDrivers]);
+
+  // Derive Cargo Requirements from assigningOrder
+  const orderCargoReq: OrderCargoRequirement = useMemo(() => {
+    if (!assigningOrder) {
+      return {
+        requiresReefer: false,
+        totalVolumeM3: 0,
+        totalWeightKg: 0,
+      };
+    }
+    return {
+      requiresReefer: assigningOrder.requiresReefer,
+      totalVolumeM3: Number(assigningOrder.totalVolumeM3 || 0),
+      totalWeightKg: Number(assigningOrder.totalWeightKg || 0),
+      requiredTempCelsius: assigningOrder.requiresReefer ? -18 : null,
+    };
+  }, [assigningOrder]);
+
+  // Evaluate & sort compatibility for all fleet units (Recommended & Available at TOP)
+  const vehicleOptions = useMemo(() => {
+    const list = liveVehicles.map((v) => ({
+      vehicle: v,
+      eval: evaluateVehicleCompatibility(v, orderCargoReq),
+    }));
+
+    return list.sort((a, b) => {
+      // 1. Selectable (Available & Compatible) always at top
+      if (a.eval.isSelectable && !b.eval.isSelectable) return -1;
+      if (!a.eval.isSelectable && b.eval.isSelectable) return 1;
+
+      // 2. If both selectable and order requires reefer, lower min temp first
+      if (a.eval.isSelectable && b.eval.isSelectable) {
+        if (orderCargoReq.requiresReefer) {
+          const tempA = a.vehicle.minTempCelsius != null ? Number(a.vehicle.minTempCelsius) : -18;
+          const tempB = b.vehicle.minTempCelsius != null ? Number(b.vehicle.minTempCelsius) : -18;
+          if (tempA !== tempB) return tempA - tempB;
+        }
+        return Number(a.vehicle.maxWeightKg) - Number(b.vehicle.maxWeightKg);
       }
-      if (liveVehicles.length > 0 && !assignVehicleId) {
-        // Prefer reefer truck if required
-        const preferredVehicle = assigningOrder.requiresReefer
-          ? liveVehicles.find((v) => v.hasRefrigeration || v.type === "REEFER_TRUCK") || liveVehicles[0]
-          : liveVehicles[0];
-        setAssignVehicleId(preferredVehicle.id);
+
+      // 3. For non-selectable, put in-service before completely incompatible
+      if (a.eval.isCompatible && !b.eval.isCompatible) return -1;
+      if (!a.eval.isCompatible && b.eval.isCompatible) return 1;
+
+      return a.vehicle.plateNumber.localeCompare(b.vehicle.plateNumber);
+    });
+  }, [liveVehicles, orderCargoReq]);
+
+  // Evaluate & sort eligibility for all drivers (Available drivers at TOP)
+  const driverOptions = useMemo(() => {
+    const list = liveDrivers.map((d) => ({
+      driver: d,
+      eval: evaluateDriverEligibility(d),
+    }));
+
+    return list.sort((a, b) => {
+      // 1. Selectable (Ready & Available) always at top
+      if (a.eval.isSelectable && !b.eval.isSelectable) return -1;
+      if (!a.eval.isSelectable && b.eval.isSelectable) return 1;
+
+      return a.driver.name.localeCompare(b.driver.name);
+    });
+  }, [liveDrivers]);
+
+  const selectableVehicles = useMemo(
+    () => vehicleOptions.filter((opt) => opt.eval.isSelectable),
+    [vehicleOptions]
+  );
+
+  const selectableDrivers = useMemo(
+    () => driverOptions.filter((opt) => opt.eval.isSelectable),
+    [driverOptions]
+  );
+
+  // Auto-select first compatible vehicle and driver upon modal opening
+  useEffect(() => {
+    if (assigningOrder) {
+      const validVeh = selectableVehicles.find((o) => o.vehicle.id === assignVehicleId);
+      if (!validVeh) {
+        setAssignVehicleId(selectableVehicles.length > 0 ? selectableVehicles[0].vehicle.id : "");
+      }
+
+      const validDriver = selectableDrivers.find((o) => o.driver.id === assignDriverId);
+      if (!validDriver) {
+        setAssignDriverId(selectableDrivers.length > 0 ? selectableDrivers[0].driver.id : "");
       }
     }
-  }, [assigningOrder, liveDrivers, liveVehicles, assignDriverId, assignVehicleId]);
+  }, [assigningOrder, selectableVehicles, selectableDrivers, assignVehicleId, assignDriverId]);
+
 
   const handleAssignDispatch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assigningOrder || !assignDriverId || !assignVehicleId) {
       toast.error("Please select both a Driver and a Vehicle for assignment.");
+      return;
+    }
+
+    const selectedVehOpt = vehicleOptions.find((o) => o.vehicle.id === assignVehicleId);
+    if (selectedVehOpt && !selectedVehOpt.eval.isSelectable) {
+      toast.error("Vehicle Not Eligible", {
+        description: selectedVehOpt.eval.reason || "The selected vehicle cannot be assigned.",
+      });
+      return;
+    }
+
+    const selectedDrvOpt = driverOptions.find((o) => o.driver.id === assignDriverId);
+    if (selectedDrvOpt && !selectedDrvOpt.eval.isSelectable) {
+      toast.error("Driver Not Eligible", {
+        description: selectedDrvOpt.eval.reason || "The selected driver cannot be assigned.",
+      });
       return;
     }
 
@@ -155,59 +288,6 @@ export default function LogisticsManagementPage() {
       });
     } finally {
       setIsAssigning(false);
-    }
-  };
-
-  const handleReceiveInbound = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!receivingOrder) return;
-
-    setReceivingError(null);
-
-    const expectedQty =
-      receivingOrder.totalPackages ||
-      (receivingOrder.items && receivingOrder.items.length > 0
-        ? receivingOrder.items.reduce((s, it) => s + (it.quantity || 0), 0)
-        : 1);
-    const totalCounted = Number(receivedQty) + Number(damagedQty) + Number(missingQty);
-
-    if (totalCounted !== expectedQty) {
-      const msg = `Total counted (${totalCounted}) must match expected manifest quantity (${expectedQty}).`;
-      setReceivingError(msg);
-      toast.error("Validation Error", {
-        description: msg,
-      });
-      return;
-    }
-
-    setIsReceiving(true);
-    try {
-      await receiveInboundMutation.mutateAsync({
-        orderId: receivingOrder.id,
-        data: {
-          receivedQuantity: Number(receivedQty),
-          damagedQuantity: Number(damagedQty),
-          missingQuantity: Number(missingQty),
-          condition: receivingCondition,
-          receivingNotes: receivingNotes || undefined,
-        },
-      });
-
-      toast.success("Inbound Receiving Verified Successfully", {
-        description: `Order #${receivingOrder.orderNumber} is now marked as RECEIVED. Goods are ready for Put-Away.`,
-      });
-      setReceivingError(null);
-      setReceivingOrderId(null);
-    } catch (err: any) {
-      const msg =
-        err?.message ||
-        "An unexpected error occurred during receiving. Please check your inputs and try again.";
-      setReceivingError(msg);
-      toast.error("Receiving failed", {
-        description: msg,
-      });
-    } finally {
-      setIsReceiving(false);
     }
   };
 
@@ -545,6 +625,14 @@ export default function LogisticsManagementPage() {
                     <span className="font-mono text-[10.5px] text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded inline-block mt-0.5">
                       {order.vehiclePlate} ({order.assignedVehicle})
                     </span>
+                    {order.requiresReefer && availableReeferCount === 0 && order.rawStatus === "PENDING_ASSIGNMENT" && (
+                      <div className="mt-1">
+                        <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-semibold gap-1 py-0.5 px-1.5 inline-flex items-center">
+                          <AlertTriangle className="h-2.5 w-2.5 text-amber-600 shrink-0" />
+                          <span>Reefer Vehicle Unavailable</span>
+                        </Badge>
+                      </div>
+                    )}
                   </td>
 
                   {/* Status */}
@@ -614,6 +702,16 @@ export default function LogisticsManagementPage() {
                   {/* Actions */}
                   <td className="py-3.5 px-3 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setMessagingOrderId(order.id)}
+                        className="h-8 px-2 text-xs border-slate-300 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 text-slate-700 font-semibold flex items-center gap-1 shadow-2xs rounded-lg transition-colors"
+                        title="Send real-time status update message to customer"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
+                        <span>Message</span>
+                      </Button>
                       {order.rawStatus === "PENDING_ASSIGNMENT" && (
                         <Button
                           size="sm"
@@ -630,17 +728,6 @@ export default function LogisticsManagementPage() {
                           onClick={() => {
                             setReceivingOrderId(order.id);
                             setReceivingError(null);
-                            const ord = liveOrders?.find((o) => o.id === order.id);
-                            const totalQty =
-                              ord?.totalPackages ||
-                              (ord?.items && ord.items.length > 0
-                                ? ord.items.reduce((s, it) => s + (it.quantity || 0), 0)
-                                : order.totalKoli || 1);
-                            setReceivedQty(totalQty);
-                            setDamagedQty(0);
-                            setMissingQty(0);
-                            setReceivingCondition("GOOD");
-                            setReceivingNotes("");
                           }}
                           className="h-8 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1 shadow-sm rounded-lg"
                         >
@@ -666,619 +753,80 @@ export default function LogisticsManagementPage() {
         </div>
       </SectionCard>
 
-      {/* ===================================================================== */}
-      {/* Dispatch Assignment Modal (Admin assigns Driver & Dedicated Fleet)    */}
-      {/* ===================================================================== */}
-      {assigningOrder && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !isAssigning) setAssigningOrderId(null);
-          }}
-        >
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-                  <UserCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">
-                    Assign Driver & Fleet Dispatch
-                  </h2>
-                  <p className="text-xs text-slate-500 font-mono">
-                    Order #{assigningOrder.orderNumber}
-                  </p>
-                </div>
-              </div>
-            </div>
+      <LogisticsAssignModal
+        assigningOrder={assigningOrder || null}
+        vehicleOptions={vehicleOptions}
+        driverOptions={driverOptions}
+        selectableVehicles={selectableVehicles}
+        selectableDrivers={selectableDrivers}
+        liveVehicles={liveVehicles}
+        liveDrivers={liveDrivers}
+        assignDriverId={assignDriverId}
+        setAssignDriverId={setAssignDriverId}
+        assignVehicleId={assignVehicleId}
+        setAssignVehicleId={setAssignVehicleId}
+        isAssigning={isAssigning}
+        onClose={() => setAssigningOrderId(null)}
+        onSubmit={handleAssignDispatch}
+      />
 
-            {/* Order Brief */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Customer:</span>
-                <span className="font-bold text-slate-800">{assigningOrder.customerName || "Tenant"}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Cargo:</span>
-                <span className="font-bold text-slate-800 truncate max-w-[260px]">
-                  {assigningOrder.goodsSummary || "Commodities"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Destination:</span>
-                <span className="font-medium text-slate-800 truncate max-w-[260px]">
-                  {assigningOrder.destinationAddress}
-                </span>
-              </div>
-              <div className="flex justify-between items-center pt-1 border-t border-slate-200/60">
-                <span className="text-slate-500">Reefer Required:</span>
-                {assigningOrder.requiresReefer ? (
-                  <Badge variant="warning" className="text-[10px] bg-sky-100 text-sky-800 border-sky-200">
-                    -18°C Reefer Required
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-[10px]">
-                    Standard Dry Fleet
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <form onSubmit={handleAssignDispatch} className="space-y-3.5">
-              {/* Select Driver */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Select Certified Driver PIC:
-                </label>
-                <select
-                  value={assignDriverId}
-                  onChange={(e) => setAssignDriverId(e.target.value)}
-                  required
-                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
-                >
-                  <option value="" disabled>-- Select Driver --</option>
-                  {liveDrivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.name} ({driver.phone || "No Phone"}) • {driver.driverLicenseNumber || "SIM B2"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Select Vehicle */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Select Dedicated Fleet Unit:
-                </label>
-                <select
-                  value={assignVehicleId}
-                  onChange={(e) => setAssignVehicleId(e.target.value)}
-                  required
-                  className="w-full h-10 px-3 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600"
-                >
-                  <option value="" disabled>-- Select Vehicle --</option>
-                  {liveVehicles.map((veh) => (
-                    <option key={veh.id} value={veh.id}>
-                      {veh.plateNumber} — {veh.name} ({veh.type.replace(/_/g, " ")}) {veh.hasRefrigeration ? "❄️ Reefer" : "📦 Box"} • {veh.status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isAssigning}
-                  onClick={() => setAssigningOrderId(null)}
-                  className="text-xs border-slate-300 text-slate-700 h-9"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isAssigning || !assignDriverId || !assignVehicleId}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold h-9 px-4 rounded-lg flex items-center gap-1.5"
-                >
-                  {isAssigning ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Saving Dispatch...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      <span>Confirm Assignment & Queue</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <LogisticsDetailModal
+        selectedOrder={selectedOrder || null}
+        onClose={() => setSelectedOrderId(null)}
+      />
 
       {/* ===================================================================== */}
-      {/* Waybill / Tracking Detail Modal (Consistent with Customer & Driver)   */}
-      {/* ===================================================================== */}
-      {selectedOrder && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSelectedOrderId(null);
-          }}
-        >
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl shadow-2xl space-y-3.5 p-5 animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
-                  <Navigation className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-sm sm:text-base font-bold text-slate-900 font-mono">
-                      {selectedOrder.orderNumber}
-                    </h2>
-                    <Badge
-                      variant="outline"
-                      className="text-[10.5px] border-slate-200 text-slate-700 bg-slate-50 font-semibold"
-                    >
-                      {selectedOrder.type === "DELIVERY" ? "Outbound Delivery" : "Inbound Pickup"}
-                    </Badge>
-                    <Badge
-                      variant={
-                        selectedOrder.status === "DELIVERED" || selectedOrder.status === "CONFIRMED"
-                          ? "success"
-                          : selectedOrder.status === "IN_TRANSIT"
-                          ? "warning"
-                          : "secondary"
-                      }
-                      className="text-[10.5px]"
-                    >
-                      {selectedOrder.status?.replace(/_/g, " ")}
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Customer: <strong>{selectedOrder.customerName || "WMS Tenant"}</strong> • Scheduled:{" "}
-                    {selectedOrder.scheduledDate
-                      ? new Date(selectedOrder.scheduledDate).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "-"}{" "}
-                    {selectedOrder.scheduledTimeSlot ? `(${selectedOrder.scheduledTimeSlot})` : ""}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Progression Timeline (Consistent Stepper) */}
-            <ShipmentStatusStepper
-              status={selectedOrder.status}
-              isDelayed={selectedOrder.isDelayed}
-              delayReason={selectedOrder.delayReason}
-            />
-
-            {/* 2-Column Details Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Left Card: Route & Cargo Details */}
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Route & Cargo Summary
-                </span>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-indigo-600 mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[9.5px] text-slate-400 font-medium block">Origin:</span>
-                      <p className="font-semibold text-slate-800 text-[11.5px] truncate">
-                        {selectedOrder.originAddress || "Origin Logistics Hub"}
-                      </p>
-                      <span className="text-[10.5px] text-slate-500 block">{selectedOrder.originCity}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[9.5px] text-slate-400 font-medium block">Destination:</span>
-                      <p className="font-semibold text-slate-800 text-[11.5px] truncate">
-                        {selectedOrder.destinationAddress || "Recipient Facility"}
-                      </p>
-                      <span className="text-[10.5px] text-slate-500 block">{selectedOrder.destinationCity}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[9.5px] text-slate-400 block font-medium">Cargo:</span>
-                    <p className="font-bold text-slate-800 text-[11px] truncate">
-                      {selectedOrder.goodsSummary || "WMS Cargo Package"}
-                    </p>
-                  </div>
-                  <div className="text-[10.5px] font-mono text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 shrink-0">
-                    {selectedOrder.totalVolumeM3 ? Number(selectedOrder.totalVolumeM3).toFixed(2) : "0.00"} m³ •{" "}
-                    {selectedOrder.totalWeightKg ? Number(selectedOrder.totalWeightKg).toFixed(0) : "0"} kg
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Card: Driver & Vehicle Allocation */}
-              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-2 text-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Assigned Driver & Dedicated Fleet
-                </span>
-
-                {/* Driver */}
-                <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="h-7 w-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold shrink-0">
-                    <User className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[9.5px] text-slate-400 font-medium block">Driver PIC</span>
-                    {selectedOrder.driverName ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-bold text-slate-900 text-xs truncate">{selectedOrder.driverName}</span>
-                        {selectedOrder.driverPhone && (
-                          <a
-                            href={`tel:${selectedOrder.driverPhone}`}
-                            className="text-[10.5px] text-indigo-600 hover:underline font-mono flex items-center gap-0.5 shrink-0"
-                          >
-                            <Phone className="h-3 w-3" />
-                            {selectedOrder.driverPhone}
-                          </a>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[10.5px] text-slate-400 italic">Waiting for central dispatch</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Vehicle */}
-                <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="h-7 w-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
-                    <Truck className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[9.5px] text-slate-400 font-medium block">Dedicated Vehicle</span>
-                    {selectedOrder.vehiclePlate ? (
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-amber-950 bg-amber-100 border border-amber-200 px-1.5 py-0.2 rounded text-[10.5px]">
-                            {selectedOrder.vehiclePlate}
-                          </span>
-                          <span className="text-[10.5px] text-slate-600 truncate">
-                            {selectedOrder.vehicleType?.replace(/_/g, " ")}
-                          </span>
-                        </div>
-                        {selectedOrder.requiresReefer && (
-                          <span className="text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.2 rounded shrink-0">
-                            -18°C Reefer
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[10.5px] text-slate-400 italic">Vehicle unit not yet allocated</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Proof of Delivery (POD) Section (If Delivered) */}
-            {(selectedOrder.status === "DELIVERED" || selectedOrder.status === "CONFIRMED") && (
-              <div className="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-emerald-900 font-bold">
-                  <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <div>
-                    <span>
-                      POD Verified {selectedOrder.recipientName ? `• Received by ${selectedOrder.recipientName}` : ""}
-                    </span>
-                    {selectedOrder.confirmedAt && (
-                      <span className="text-[10.5px] text-emerald-700 font-normal font-mono block">
-                        Timestamp: {new Date(selectedOrder.confirmedAt).toLocaleString("id-ID")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {selectedOrder.proofOfDeliveryUrl && (
-                  <a
-                    href={selectedOrder.proofOfDeliveryUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[11px] text-emerald-800 underline font-semibold flex items-center gap-1 shrink-0"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <span>View Receipt</span>
-                  </a>
-                )}
-              </div>
-            )}
-
-            {/* Modal Footer with Close Button */}
-            <div className="flex items-center justify-end pt-2 border-t border-slate-100">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedOrderId(null)}
-                className="text-xs border-slate-300 hover:bg-slate-100 text-slate-700 h-9 px-4 font-semibold rounded-lg"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===================================================================== */}
-      {/* Inbound Receiving Modal (Admin verifies physical goods arriving)      */}
-      {/* ===================================================================== */}
+      {/* Inbound Receiving Modal */}
       {receivingOrder && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/25"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !isReceiving) {
-              setReceivingOrderId(null);
+        <InboundReceivingModal
+          order={receivingOrder}
+          isSubmitting={isReceiving}
+          error={receivingError}
+          onClose={() => {
+            setReceivingOrderId(null);
+            setReceivingError(null);
+          }}
+          onSubmit={async (data) => {
+            setIsReceiving(true);
+            try {
+              await receiveInboundMutation.mutateAsync({
+                orderId: receivingOrder.id,
+                data: {
+                  receivedQuantity: data.receivedQty,
+                  damagedQuantity: data.damagedQty,
+                  missingQuantity: data.missingQty,
+                  condition: data.condition,
+                  receivingNotes: data.notes || undefined,
+                },
+              });
+
+              toast.success("Inbound Receiving Verified Successfully", {
+                description: `Order #${receivingOrder.orderNumber} is now marked as RECEIVED. Goods are ready for Put-Away.`,
+              });
               setReceivingError(null);
+              setReceivingOrderId(null);
+            } catch (err: any) {
+              const msg =
+                err?.message ||
+                "An unexpected error occurred during receiving. Please check your inputs and try again.";
+              setReceivingError(msg);
+              toast.error("Receiving failed", {
+                description: msg,
+              });
+            } finally {
+              setIsReceiving(false);
             }
           }}
-        >
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 p-4 shrink-0 bg-slate-50/50">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold shrink-0 shadow-sm">
-                  <Boxes className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 leading-tight">
-                    Inbound Goods Receiving Verification
-                  </h2>
-                  <p className="text-xs text-slate-500 font-mono font-medium">
-                    Order #{receivingOrder.orderNumber}
-                  </p>
-                </div>
-              </div>
-              <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full shadow-sm">
-                Dock Receiving
-              </Badge>
-            </div>
+        />
+      )}
 
-            {/* Modal Form */}
-            <form onSubmit={handleReceiveInbound} className="flex flex-col flex-1 overflow-hidden">
-              {(() => {
-                const exp =
-                  receivingOrder.totalPackages ||
-                  (receivingOrder.items && receivingOrder.items.length > 0
-                    ? receivingOrder.items.reduce((s, it) => s + (it.quantity || 0), 0)
-                    : 1);
-                const act = Number(receivedQty) + Number(damagedQty) + Number(missingQty);
-                const isValid = act === exp;
-
-                return (
-                  <>
-                    {/* Scrollable Form Content */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar">
-                      {/* Shipment Info Card */}
-                      <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">Customer / Tenant:</span>
-                          <span className="font-bold text-slate-800">{receivingOrder.customerName || "Fresh Foods"}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">Destination Facility:</span>
-                          <span className="font-semibold text-slate-800">{receivingOrder.destinationAddress}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">Driver & Vehicle:</span>
-                          <span className="font-semibold text-slate-800">
-                            {receivingOrder.driverName || "-"} ({receivingOrder.vehiclePlate || "No Plate"})
-                          </span>
-                        </div>
-                        <div className="flex justify-between pt-1.5 border-t border-slate-200">
-                          <span className="text-slate-700 font-bold">Expected Quantity (Manifest):</span>
-                          <span className="font-bold text-indigo-700 font-mono text-sm">
-                            {exp} Packages / Koli
-                          </span>
-                        </div>
-
-                        {/* Manifest Item Breakdown */}
-                        {receivingOrder.items && receivingOrder.items.length > 0 && (
-                          <div className="space-y-1.5 pt-2 border-t border-slate-200">
-                            <span className="text-[11px] font-bold text-slate-600 block">
-                              Manifest Cargo Breakdown ({receivingOrder.items.length} SKU):
-                            </span>
-                            <div className="space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
-                              {receivingOrder.items.map((item, idx) => (
-                                <div
-                                  key={item.id || idx}
-                                  className="flex justify-between items-center bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]"
-                                >
-                                  <div className="flex items-center gap-1.5 truncate mr-2">
-                                    <span className="font-semibold text-slate-900 truncate">
-                                      {item.name}
-                                    </span>
-                                    {item.barcode && (
-                                      <span className="text-[10px] text-slate-400 font-mono">
-                                        ({item.barcode})
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="font-bold text-indigo-700 font-mono shrink-0">
-                                    {item.quantity} {item.unit || "Packages"}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Physical Count Verification Inputs */}
-                      <div>
-                        <span className="text-[11px] font-bold text-slate-700 block mb-1.5">
-                          Physical Count Verification:
-                        </span>
-                        <div className="grid grid-cols-3 gap-2.5">
-                          <div>
-                            <label className="text-[10px] font-semibold text-slate-600 block mb-1">
-                              Received (Good)
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={receivedQty}
-                              onChange={(e) => {
-                                setReceivedQty(Math.max(0, parseInt(e.target.value) || 0));
-                                setReceivingError(null);
-                              }}
-                              className="w-full h-9 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-semibold text-slate-600 block mb-1">
-                              Damaged
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={damagedQty}
-                              onChange={(e) => {
-                                setDamagedQty(Math.max(0, parseInt(e.target.value) || 0));
-                                setReceivingError(null);
-                              }}
-                              className="w-full h-9 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-rose-600 focus:outline-none focus:border-rose-600"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-semibold text-slate-600 block mb-1">
-                              Missing / Short
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={missingQty}
-                              onChange={(e) => {
-                                setMissingQty(Math.max(0, parseInt(e.target.value) || 0));
-                                setReceivingError(null);
-                              }}
-                              className="w-full h-9 px-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-amber-600 focus:outline-none focus:border-amber-600"
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Realtime Count Validation Badge */}
-                      <div
-                        className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
-                          isValid
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                            : "bg-rose-50 text-rose-800 border border-rose-200"
-                        }`}
-                      >
-                        {isValid ? (
-                          <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
-                        )}
-                        <span className="font-medium">
-                          {isValid
-                            ? `✓ Verification Match: ${act} of ${exp} total items accounted for.`
-                            : `! Count Mismatch: Total counted (${act}) does not match expected manifest (${exp}).`}
-                        </span>
-                      </div>
-
-                      {/* Cargo Condition */}
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                          Overall Cargo Condition
-                        </label>
-                        <select
-                          value={receivingCondition}
-                          onChange={(e) => setReceivingCondition(e.target.value)}
-                          className="w-full h-9 px-3 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600"
-                        >
-                          <option value="GOOD">GOOD — Intact seals, normal temperature & packaging</option>
-                          <option value="PARTIAL">PARTIAL — Minor issues recorded but acceptable for put-away</option>
-                          <option value="DAMAGED">DAMAGED — Damaged boxes/seals detected</option>
-                        </select>
-                      </div>
-
-                      {/* Inspection Notes */}
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                          Receiving Dock Inspection Notes
-                        </label>
-                        <textarea
-                          rows={2}
-                          placeholder="Contoh: Segel kargo utuh, temperatur cold storage -19.4°C terverifikasi optimal saat pembongkaran."
-                          value={receivingNotes}
-                          onChange={(e) => setReceivingNotes(e.target.value)}
-                          className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 resize-none"
-                        />
-                      </div>
-
-                      {/* Inline Error Alert Banner */}
-                      {receivingError && (
-                        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-start gap-2 animate-in fade-in">
-                          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                          <div className="space-y-0.5">
-                            <span className="font-bold block">Receiving Submission Error</span>
-                            <span className="text-[11px] text-rose-700">{receivingError}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Modal Sticky Footer */}
-                    <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-2.5 shrink-0 rounded-b-2xl">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={isReceiving}
-                        onClick={() => {
-                          setReceivingOrderId(null);
-                          setReceivingError(null);
-                        }}
-                        className="text-xs h-9 px-4 rounded-lg border-slate-300 hover:bg-slate-100 text-slate-700 font-medium"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isReceiving || !isValid}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 rounded-lg flex items-center gap-1.5 shadow-sm"
-                      >
-                        {isReceiving ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            <span>Verifying & Receiving...</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                            <span>Confirm Receiving & Staging</span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </>
-                );
-              })()}
-            </form>
-          </div>
-        </div>
+      {/* Customer Communication / Order Message Composer Modal */}
+      {messagingOrder && (
+        <OrderMessageModal
+          order={messagingOrder}
+          isReeferUnavailable={availableReeferCount === 0}
+          onClose={() => setMessagingOrderId(null)}
+        />
       )}
     </PageContainer>
   );

@@ -144,6 +144,11 @@ export function ProfileView({ initialTab = "profile" }: ProfileViewProps) {
       return;
     }
 
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setPasswordError("New password cannot be the same as your current password.");
+      return;
+    }
+
     try {
       await changePassword({
         currentPass: passwordData.currentPassword,

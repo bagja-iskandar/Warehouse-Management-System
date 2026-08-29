@@ -16,6 +16,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
+import { UserRole } from '@prisma/client';
 import { CreateGoodsDto } from './dto/create-goods.dto';
 import { GoodsQueryDto } from './dto/goods-query.dto';
 import { GoodsDetailResponseDto, GoodsListItemDto } from './dto/goods-response.dto';
@@ -33,26 +34,26 @@ export class GoodsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Mendaftarkan Master Barang Baru (SKU Registration)',
+    summary: 'Register New Inventory Item (SKU Registration)',
     description:
-      'Mendaftarkan barang baru dengan kalkulasi volume server-side (P x L x T / 10^6 x Qty), otomasi estimasi tarif sewa bulanan, dan penjanaan QR/Barcode unik.',
+      'Registers a new goods item with server-side volume calculation (L x W x H / 10^6 x Qty), automated rental fee estimation, and unique QR/Barcode generation.',
   })
   @ApiResponse({
     status: 201,
-    description: 'Barang berhasil didaftarkan',
+    description: 'Goods registered successfully',
     type: GoodsDetailResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi input gagal atau data tidak lengkap',
+    description: 'Validation failed or incomplete payload',
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   @ApiResponse({
     status: 403,
-    description: 'Peran akun tidak memiliki izin mendaftarkan barang',
+    description: 'Account role is not authorized to register goods',
   })
   async create(
     @Body() dto: CreateGoodsDto,
@@ -60,7 +61,7 @@ export class GoodsController {
   ): Promise<{ message: string; data: GoodsDetailResponseDto }> {
     const data = await this.goodsService.create(dto, currentUser);
     return {
-      message: 'Barang berhasil didaftarkan ke sistem',
+      message: 'Goods registered successfully',
       data,
     };
   }
@@ -68,35 +69,35 @@ export class GoodsController {
   @Patch(':id/status')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Memperbarui Status Siklus Penyimpanan Barang (State Machine Transition)',
+    summary: 'Update Goods Storage Status (State Machine Transition)',
     description:
-      'Mengubah status barang (DRAFT -> PENDING_PICKUP -> STORED -> DELIVERED) dengan alokasi slot rak, manajemen kapasitas gudang, dan pencatatan jejak audit mutasi.',
+      'Transitions goods lifecycle status (DRAFT -> PENDING_PICKUP -> STORED -> DELIVERED) with rack slot allocation, capacity checks, and audit mutation logs.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik UUID barang atau Barcode/SKU',
+    description: 'Unique goods UUID or Barcode/SKU',
     example: 'brg-001',
   })
   @ApiResponse({
     status: 200,
-    description: 'Status barang berhasil diperbarui',
+    description: 'Goods status updated successfully',
     type: GoodsDetailResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Transisi status tidak valid atau kapasitas slot tidak mencukupi',
+    description: 'Invalid status transition or insufficient slot capacity',
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   @ApiResponse({
     status: 403,
-    description: 'Peran akun tidak memiliki izin untuk transisi status ini',
+    description: 'Account role is not authorized for this status transition',
   })
   @ApiResponse({
     status: 404,
-    description: 'Barang atau slot rak tidak ditemukan',
+    description: 'Goods or rack slot not found',
   })
   async updateStatus(
     @Param('id') id: string,
@@ -105,7 +106,7 @@ export class GoodsController {
   ): Promise<{ message: string; data: GoodsDetailResponseDto }> {
     const data = await this.goodsService.updateStatus(id, dto, currentUser);
     return {
-      message: 'Status barang berhasil diperbarui',
+      message: 'Goods status updated successfully',
       data,
     };
   }
@@ -114,31 +115,31 @@ export class GoodsController {
   @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Pemindahan Barang Antar Slot Rak Penyimpanan (Rack Transfer / Goods Movement)',
+    summary: 'Transfer Goods Between Storage Rack Slots (Rack Transfer)',
     description:
-      'Memindahkan barang yang berstatus STORED ke slot rak tujuan lain dalam gudang yang sama, memvalidasi kesesuaian zona suhu dan kapasitas kubik m3, memperbarui utilisasi slot rak secara atomik, dan mencatat jejak audit mutasi.',
+      'Transfers STORED goods to another compatible rack slot within the same warehouse, validating temperature zone and volume capacity.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik UUID barang atau Barcode/SKU',
+    description: 'Unique goods UUID or Barcode/SKU',
     example: 'brg-001',
   })
   @ApiResponse({
     status: 200,
-    description: 'Barang berhasil dipindahkan ke slot rak tujuan',
+    description: 'Goods transferred to destination rack slot successfully',
     type: GoodsDetailResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi pemindahan gagal (slot tidak kompatibel, kapasitas tidak mencukupi, dll)',
+    description: 'Transfer validation failed (slot incompatible, insufficient capacity, etc.)',
   })
   @ApiResponse({
     status: 403,
-    description: 'Hanya Admin yang berwenang melakukan pemindahan rak',
+    description: 'Only Admins are authorized to perform rack transfers',
   })
   @ApiResponse({
     status: 404,
-    description: 'Barang atau slot rak tujuan tidak ditemukan',
+    description: 'Goods or target rack slot not found',
   })
   async transferSlot(
     @Param('id') id: string,
@@ -147,7 +148,7 @@ export class GoodsController {
   ): Promise<{ message: string; data: GoodsDetailResponseDto }> {
     const data = await this.goodsService.transferSlot(id, dto, currentUser);
     return {
-      message: 'Barang berhasil dipindahkan ke slot rak tujuan',
+      message: 'Goods transferred to target rack slot successfully',
       data,
     };
   }
@@ -155,23 +156,23 @@ export class GoodsController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Daftar Master Barang (SKU / Inventory List)',
+    summary: 'Get Goods Inventory List (SKU Directory)',
     description:
-      'Mengambil daftar master barang dengan dukungan paginasi, pencarian nama/barcode, filtering kategori, status penyimpanan, dan isolasi data per tenant.',
+      'Retrieves master inventory list with pagination, search, category filtering, and tenant isolation.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Data master barang berhasil diambil',
+    description: 'Goods directory retrieved successfully',
     type: [GoodsListItemDto],
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   async findAll(@Query() query: GoodsQueryDto, @CurrentUser() currentUser: AuthenticatedUser) {
     const result = await this.goodsService.findAll(query, currentUser);
     return {
-      message: 'Data barang berhasil diambil',
+      message: 'Goods retrieved successfully',
       data: {
         items: result.items,
         page: result.meta.page,
@@ -183,15 +184,16 @@ export class GoodsController {
   }
 
   @Get('mutations')
+  @Roles(UserRole.ADMIN, UserRole.CUSTOMER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Riwayat Log Mutasi Barang Milik Customer (Audit Trail)',
+    summary: 'Get Goods Mutation History Log (Audit Trail)',
     description:
-      'Mengambil jejak audit mutasi status kargo barang (inbound, stored, inspection, outbound) milik akun customer yang terautentikasi.',
+      'Retrieves mutation audit history for cargo inventory belonging to the authenticated tenant.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Data riwayat mutasi barang berhasil diambil',
+    description: 'Goods mutation history retrieved successfully',
   })
   async findMutations(
     @CurrentUser() currentUser: AuthenticatedUser,
@@ -199,7 +201,7 @@ export class GoodsController {
   ) {
     const data = await this.goodsService.findMutations(currentUser, customerId);
     return {
-      message: 'Riwayat mutasi barang berhasil diambil',
+      message: 'Goods mutation history retrieved successfully',
       data,
     };
   }
@@ -207,28 +209,27 @@ export class GoodsController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Detail Barang & Histori Mutasi Gudang',
+    summary: 'Get Goods Detail & Warehouse Mutation History',
     description:
-      'Mengambil data detail lengkap barang berdasarkan ID atau Barcode, termasuk dimensi, kubikasi m3, slot rak, dan jejak audit mutasi.',
+      'Retrieves detailed goods info by ID or Barcode, including dimensions, volume, assigned rack slot, and audit history.',
   })
   @ApiParam({
     name: 'id',
-    description:
-      'ID unik UUID barang (misal: brg-001) atau Barcode/SKU (misal: BRG-2026-FROZEN-001)',
+    description: 'Unique goods UUID (e.g. brg-001) or Barcode/SKU (e.g. BRG-2026-FROZEN-001)',
     example: 'brg-001',
   })
   @ApiResponse({
     status: 200,
-    description: 'Detail barang berhasil diambil',
+    description: 'Goods detail retrieved successfully',
     type: GoodsDetailResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   @ApiResponse({
     status: 404,
-    description: 'Barang tidak ditemukan atau bukan milik akun Anda',
+    description: 'Goods not found or does not belong to your account',
   })
   async findById(
     @Param('id') id: string,
@@ -236,7 +237,7 @@ export class GoodsController {
   ): Promise<{ message: string; data: GoodsDetailResponseDto }> {
     const data = await this.goodsService.findById(id, currentUser);
     return {
-      message: 'Detail data barang berhasil diambil',
+      message: 'Goods detail retrieved successfully',
       data,
     };
   }

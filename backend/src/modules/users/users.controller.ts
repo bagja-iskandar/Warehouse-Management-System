@@ -32,24 +32,24 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Daftar Seluruh Pelanggan & Tenant (Admin Only)',
+    summary: 'Get All Customers & Tenants Directory (Admin Only)',
     description:
-      'Mengambil daftar seluruh akun Customer/Tenant beserta statistik volume sewa gudang dan status tagihan faktur.',
+      'Retrieves all Customer accounts with storage rental volume statistics and invoice payment statuses.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Daftar customer berhasil diambil',
+    description: 'Customers directory retrieved successfully',
   })
   @ApiResponse({
     status: 403,
-    description: 'Hanya Admin yang berhak mengakses direktori customer',
+    description: 'Only Admins are authorized to access customer directory',
   })
   async findCustomers(
     @CurrentUser() currentUser: AuthenticatedUser,
   ): Promise<{ message: string; data: CustomerDetailDto[] }> {
     const data = await this.usersService.findCustomers(currentUser);
     return {
-      message: 'Daftar customer berhasil diambil',
+      message: 'Customers retrieved successfully',
       data,
     };
   }
@@ -57,35 +57,35 @@ export class UsersController {
   @Patch(':id/profile')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Memperbarui Profil Pengguna (Update Profile)',
+    summary: 'Update User Profile',
     description:
-      'Mengubah data profil pengguna (nama, kontak, perusahaan, alamat, avatar). Hanya pemilik akun atau Admin yang diizinkan melakukan perubahan.',
+      'Modifies user profile fields (name, contact, company, address, avatar). Only account owner or Admin is authorized.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik pengguna (misal: usr-admin-1 atau UUID)',
+    description: 'Unique user ID (e.g. usr-admin-1 or UUID)',
     example: 'usr-admin-1',
   })
   @ApiResponse({
     status: 200,
-    description: 'Profil pengguna berhasil diperbarui',
+    description: 'User profile updated successfully',
     type: UserProfileDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi form gagal atau data tidak valid',
+    description: 'Validation failed or invalid data',
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   @ApiResponse({
     status: 403,
-    description: 'Tidak diizinkan mengubah data profil pengguna lain',
+    description: 'Not allowed to modify another user profile',
   })
   @ApiResponse({
     status: 404,
-    description: 'Pengguna tidak ditemukan',
+    description: 'User not found',
   })
   async updateProfile(
     @Param('id') id: string,
@@ -94,7 +94,7 @@ export class UsersController {
   ): Promise<{ message: string; data: UserProfileDto }> {
     const data = await this.usersService.updateProfile(id, dto, currentUser);
     return {
-      message: 'Profil pengguna berhasil diperbarui',
+      message: 'User profile updated successfully',
       data,
     };
   }
@@ -102,31 +102,31 @@ export class UsersController {
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Memperbarui Data Pengguna / Customer (Admin / Self)',
+    summary: 'Update User / Customer Record (Admin / Self)',
     description:
-      'Mengubah data lengkap pengguna (nama, email, nomor kontak, perusahaan, alamat, dan status akun). Perubahan status hanya diizinkan untuk Admin.',
+      'Updates comprehensive user fields (name, email, phone, company, address, and account status). Status changes require Admin role.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik pengguna',
+    description: 'Unique user ID',
     example: 'd3037ec9-c19c-455a-9e0e-9e57309d4b5b',
   })
   @ApiResponse({
     status: 200,
-    description: 'Data pengguna berhasil diperbarui',
+    description: 'User record updated successfully',
     type: UserProfileDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi gagal atau email sudah terdaftar',
+    description: 'Validation failed or email already registered',
   })
   @ApiResponse({
     status: 403,
-    description: 'Akses ditolak',
+    description: 'Access denied',
   })
   @ApiResponse({
     status: 404,
-    description: 'Pengguna tidak ditemukan',
+    description: 'User not found',
   })
   async updateUser(
     @Param('id') id: string,
@@ -135,7 +135,7 @@ export class UsersController {
   ): Promise<{ message: string; data: UserProfileDto }> {
     const data = await this.usersService.updateUser(id, dto, currentUser);
     return {
-      message: 'Data pengguna berhasil diperbarui',
+      message: 'User record updated successfully',
       data,
     };
   }
@@ -144,30 +144,30 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Menghapus Akun Pengguna / Customer Secara Permanen (Admin Only)',
+    summary: 'Permanently Delete User Account (Admin Only)',
     description:
-      'Menghapus akun pengguna beserta seluruh relasi dependensi (barang, faktur, mutasi, pesanan) secara transaksional.',
+      'Deletes user account with cascading dependency clean-up (goods, invoices, mutations, orders) in an atomic transaction.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik pengguna yang akan dihapus',
+    description: 'Unique ID of user to delete',
     example: 'd3037ec9-c19c-455a-9e0e-9e57309d4b5b',
   })
   @ApiResponse({
     status: 200,
-    description: 'Pengguna berhasil dihapus',
+    description: 'User deleted successfully',
   })
   @ApiResponse({
     status: 400,
-    description: 'Tidak dapat menghapus akun Admin yang sedang aktif',
+    description: 'Cannot delete the active Admin account currently in use',
   })
   @ApiResponse({
     status: 403,
-    description: 'Hanya Admin yang berhak menghapus akun pengguna',
+    description: 'Only Admins are authorized to delete user accounts',
   })
   @ApiResponse({
     status: 404,
-    description: 'Pengguna tidak ditemukan',
+    description: 'User not found',
   })
   async deleteUser(
     @Param('id') id: string,
@@ -180,25 +180,24 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Daftar Seluruh Pengguna (Admin Only)',
-    description:
-      'Mengambil daftar seluruh pengguna terdaftar dalam sistem dengan rincian peran (Admin, Customer, Driver).',
+    summary: 'Get All Users (Admin Only)',
+    description: 'Retrieves all registered users with role breakdown (Admin, Customer, Driver).',
   })
   @ApiResponse({
     status: 200,
-    description: 'Daftar pengguna berhasil diambil',
+    description: 'Users retrieved successfully',
     type: [UserProfileDto],
   })
   @ApiResponse({
     status: 403,
-    description: 'Hanya Admin yang berhak melihat daftar seluruh pengguna',
+    description: 'Only Admins are authorized to view all users',
   })
   async findAll(
     @CurrentUser() currentUser: AuthenticatedUser,
   ): Promise<{ message: string; data: UserProfileDto[] }> {
     const data = await this.usersService.findAll(currentUser);
     return {
-      message: 'Daftar pengguna berhasil diambil',
+      message: 'Users retrieved successfully',
       data,
     };
   }
@@ -206,27 +205,27 @@ export class UsersController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Data Detail Pengguna Berdasarkan ID',
+    summary: 'Get User Detail By ID',
     description:
-      'Mengambil informasi lengkap profil pengguna tertentu. Pengguna hanya dapat melihat data dirinya sendiri kecuali Admin.',
+      'Retrieves full user profile by ID. Users can only view their own profile unless Admin.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik pengguna',
+    description: 'Unique user ID',
     example: 'usr-admin-1',
   })
   @ApiResponse({
     status: 200,
-    description: 'Detail pengguna berhasil diambil',
+    description: 'User detail retrieved successfully',
     type: UserProfileDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Tidak diizinkan melihat data profil pengguna lain',
+    description: 'Not allowed to view another user profile',
   })
   @ApiResponse({
     status: 404,
-    description: 'Pengguna tidak ditemukan',
+    description: 'User not found',
   })
   async findById(
     @Param('id') id: string,
@@ -234,7 +233,7 @@ export class UsersController {
   ): Promise<{ message: string; data: UserProfileDto }> {
     const data = await this.usersService.findById(id, currentUser);
     return {
-      message: 'Detail pengguna berhasil diambil',
+      message: 'User detail retrieved successfully',
       data,
     };
   }

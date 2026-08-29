@@ -11,11 +11,12 @@ import {
   UserProfileDto,
 } from './dto/auth-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ConfirmPasswordResetDto } from './dto/confirm-reset.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RequestPasswordResetDto } from './dto/request-reset.dto';
 import { AuthenticatedUser } from './interfaces/jwt-payload.interface';
 
 @ApiTags('Authentication')
@@ -27,23 +28,23 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Autentikasi Pengguna & Penerbitan Token (Login)',
+    summary: 'User Authentication & Token Issuance (Login)',
     description:
-      'Memverifikasi kredensial email dan password pengguna, lalu menerbitkan JWT Access Token dan Refresh Token.',
+      'Verifies email credentials and password, then issues JWT Access Token and Refresh Token.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Autentikasi berhasil',
+    description: 'Authentication successful',
     type: LoginResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Kredensial tidak valid atau akun disuspend',
+    description: 'Invalid credentials or suspended account',
   })
   async login(@Body() loginDto: LoginDto): Promise<{ message: string; data: LoginResponseDto }> {
     const result = await this.authService.login(loginDto);
     return {
-      message: 'Login berhasil',
+      message: 'Login successful',
       data: result,
     };
   }
@@ -52,29 +53,29 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Registrasi Akun Customer Baru (Customer Onboarding)',
+    summary: 'Register New Customer Account (Customer Onboarding)',
     description:
-      'Mendaftarkan profil customer perusahaan baru, menyimpan password terenkripsi, dan langsung menerbitkan JWT Access Token dan Refresh Token.',
+      'Registers a new corporate customer profile, hashes password, and issues JWT Access Token and Refresh Token.',
   })
   @ApiResponse({
     status: 201,
-    description: 'Registrasi berhasil dan token diterbitkan',
+    description: 'Registration successful and tokens issued',
     type: LoginResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi form gagal atau data tidak lengkap',
+    description: 'Validation failed or incomplete data',
   })
   @ApiResponse({
     status: 409,
-    description: 'Email perusahaan sudah terdaftar dalam sistem',
+    description: 'Email is already registered in the system',
   })
   async register(
     @Body() registerDto: RegisterCustomerDto,
   ): Promise<{ message: string; data: LoginResponseDto }> {
     const result = await this.authService.registerCustomer(registerDto);
     return {
-      message: 'Registrasi customer berhasil',
+      message: 'Customer registration successful',
       data: result,
     };
   }
@@ -83,25 +84,24 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Pembaruan Access Token (Token Rotation)',
-    description:
-      'Memperbarui Access Token yang telah kedaluwarsa menggunakan Refresh Token yang valid.',
+    summary: 'Renew Access Token (Token Rotation)',
+    description: 'Renews an expired Access Token using a valid Refresh Token.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Pembaruan token berhasil',
+    description: 'Token renewal successful',
     type: RefreshTokenResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Refresh token tidak valid atau telah dicabut',
+    description: 'Refresh token invalid or revoked',
   })
   async refresh(
     @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<{ message: string; data: RefreshTokenResponseDto }> {
     const result = await this.authService.refreshTokens(refreshTokenDto);
     return {
-      message: 'Pembaruan token berhasil',
+      message: 'Token renewal successful',
       data: result,
     };
   }
@@ -111,17 +111,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Pengakhiran Sesi & Revoke Refresh Token (Logout)',
-    description: 'Mencabut refresh token pengguna dan mengakhiri sesi aktif dari perangkat.',
+    summary: 'Session Termination & Revoke Refresh Token (Logout)',
+    description: 'Revokes user refresh token and terminates active session from device.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Logout berhasil dan token dicabut',
+    description: 'Logout successful and token revoked',
     type: LogoutResponseDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   async logout(
     @CurrentUser('id') userId: string,
@@ -139,24 +139,24 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Mendapatkan Profil Pengguna Terotentikasi (Session Check)',
-    description: 'Mengembalikan data profil lengkap pengguna yang saat ini sedang login.',
+    summary: 'Get Authenticated User Profile (Session Check)',
+    description: 'Returns the full profile of the currently logged-in user.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Profil pengguna berhasil diambil',
+    description: 'User profile retrieved successfully',
     type: UserProfileDto,
   })
   @ApiResponse({
     status: 401,
-    description: 'Token tidak valid atau tidak disertakan',
+    description: 'Unauthorized or missing token',
   })
   async getMe(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<{ message: string; data: UserProfileDto }> {
     const profile = await this.authService.getProfile(user.id);
     return {
-      message: 'Profil pengguna berhasil diambil',
+      message: 'User profile retrieved successfully',
       data: profile,
     };
   }
@@ -166,21 +166,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Mengubah Password Pengguna Terotentikasi (Change Password)',
+    summary: 'Change Authenticated User Password',
     description:
-      'Memverifikasi password saat ini dan memperbarui dengan password baru. Merevoke seluruh refresh token aktif untuk keamanan sesi.',
+      'Verifies current password and updates with new password. Revokes active refresh tokens for session security.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Password berhasil diperbarui',
+    description: 'Password updated successfully',
   })
   @ApiResponse({
     status: 400,
-    description: 'Password baru sama dengan password lama atau validasi gagal',
+    description: 'New password same as old password or validation failed',
   })
   @ApiResponse({
     status: 401,
-    description: 'Password saat ini tidak valid atau token tidak valid',
+    description: 'Current password invalid or unauthorized',
   })
   async changePassword(
     @CurrentUser('id') userId: string,
@@ -194,25 +194,56 @@ export class AuthController {
   }
 
   @Public()
-  @Post('reset-password')
+  @Post('request-reset')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Atur Ulang Password Pengguna (Direct Password Reset)',
+    summary: 'Request Password Reset Token (Forgot Password - Step 1)',
     description:
-      'Mengatur ulang kata sandi pengguna terdaftar secara langsung melalui email terverifikasi.',
+      'Generates a cryptographically-secure one-time reset token (1-hour TTL) for the registered email. ' +
+      'Always returns a generic success response to prevent email enumeration attacks. ' +
+      'NOTE: In production, the token must be delivered via email/SMS. ' +
+      'In development mode, the token is returned in the response body for integration testing.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Password berhasil diatur ulang',
+    description: 'Reset token generated (or email not found - same response for security)',
+  })
+  async requestReset(@Body() dto: RequestPasswordResetDto): Promise<{
+    message: string;
+    data: { success: boolean; message: string; resetToken?: string };
+  }> {
+    const result = await this.authService.requestPasswordReset(dto.email);
+    return {
+      message: result.message,
+      data: result,
+    };
+  }
+
+  @Public()
+  @Post('confirm-reset')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Confirm Password Reset with Token (Forgot Password - Step 2)',
+    description:
+      'Validates the one-time reset token, updates the user password, marks the token as used, ' +
+      'and revokes all active refresh tokens (sessions) for the account.',
   })
   @ApiResponse({
-    status: 404,
-    description: 'Email tidak ditemukan dalam sistem',
+    status: 200,
+    description: 'Password reset successful',
   })
-  async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
+  @ApiResponse({
+    status: 400,
+    description: 'Token is invalid, expired, or already used',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'User account is suspended',
+  })
+  async confirmReset(
+    @Body() dto: ConfirmPasswordResetDto,
   ): Promise<{ message: string; data: { success: boolean; message: string } }> {
-    const result = await this.authService.resetPassword(resetPasswordDto);
+    const result = await this.authService.confirmPasswordReset(dto.token, dto.newPassword);
     return {
       message: result.message,
       data: result,

@@ -14,6 +14,39 @@ export type OrderStatus =
   | "DELAYED"
   | "CANCELLED";
 
+export type OrderMessageType =
+  | "DRIVER_PENDING"
+  | "REEFER_UNAVAILABLE"
+  | "DELIVERY_DELAYED"
+  | "DRIVER_ASSIGNED"
+  | "VEHICLE_ASSIGNED"
+  | "SCHEDULE_CHANGED"
+  | "CUSTOM";
+
+export interface DeliveryOrderMessage {
+  id: string;
+  orderId: string;
+  customerId: string;
+  senderId?: string | null;
+  senderName: string;
+  senderRole: string;
+  messageType: OrderMessageType;
+  title: string;
+  content: string;
+  channel: "IN_APP" | "EMAIL" | "SMS" | "WHATSAPP";
+  status: "SENT" | "DELIVERED" | "FAILED";
+  isRead: boolean;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface CreateOrderMessagePayload {
+  messageType: OrderMessageType;
+  title: string;
+  content: string;
+  channel?: "IN_APP" | "EMAIL" | "SMS" | "WHATSAPP";
+}
+
 export interface Vehicle {
   id: string;
   plateNumber: string; // e.g. "B 9821 WMS"
@@ -24,6 +57,7 @@ export interface Vehicle {
   hasRefrigeration: boolean;
   minTempCelsius?: number;
   status: "AVAILABLE" | "IN_SERVICE" | "MAINTENANCE";
+  activeOrdersCount?: number;
   currentDriverId?: string;
   currentDriverName?: string;
   locationCity: string;
@@ -86,6 +120,11 @@ export interface DeliveryOrder {
   confirmedByAdmin?: boolean;
   confirmedAt?: string;
 
+  unreadMessagesCount?: number;
+  latestMessage?: DeliveryOrderMessage | null;
+  messages?: DeliveryOrderMessage[];
+
   createdAt: string;
   updatedAt: string;
 }
+

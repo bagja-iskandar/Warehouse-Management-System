@@ -1,5 +1,10 @@
-import { mockDb } from "@/mock/db/mock-db";
-import { DeliveryOrder, DeliveryOrderItem, Vehicle } from "@/types";
+import {
+  DeliveryOrder,
+  DeliveryOrderItem,
+  DeliveryOrderMessage,
+  CreateOrderMessagePayload,
+  Vehicle,
+} from "@/types";
 import { apiClient } from "@/lib/api-client";
 
 export interface ILogisticsService {
@@ -69,6 +74,15 @@ export interface ILogisticsService {
       receivingNotes?: string;
     }
   ): Promise<DeliveryOrder>;
+  getOrderMessages(orderId: string): Promise<DeliveryOrderMessage[]>;
+  createOrderMessage(
+    orderId: string,
+    payload: CreateOrderMessagePayload
+  ): Promise<DeliveryOrderMessage>;
+  markOrderMessageAsRead(
+    orderId: string,
+    messageId: string
+  ): Promise<DeliveryOrderMessage>;
 }
 
 /**
@@ -282,6 +296,40 @@ export class HttpLogisticsService implements ILogisticsService {
     return this.mapBackendOrderToFrontend(res);
   }
 
+  async getOrderMessages(orderId: string): Promise<DeliveryOrderMessage[]> {
+    const res = await apiClient<DeliveryOrderMessage[]>(
+      `/logistics/orders/${orderId}/messages`
+    );
+    return res || [];
+  }
+
+  async createOrderMessage(
+    orderId: string,
+    payload: CreateOrderMessagePayload
+  ): Promise<DeliveryOrderMessage> {
+    const res = await apiClient<DeliveryOrderMessage>(
+      `/logistics/orders/${orderId}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res;
+  }
+
+  async markOrderMessageAsRead(
+    orderId: string,
+    messageId: string
+  ): Promise<DeliveryOrderMessage> {
+    const res = await apiClient<DeliveryOrderMessage>(
+      `/logistics/orders/${orderId}/messages/${messageId}/read`,
+      {
+        method: "PATCH",
+      }
+    );
+    return res;
+  }
+
   private mapBackendOrderToFrontend(raw: any): DeliveryOrder {
     const mappedItems: DeliveryOrderItem[] =
       Array.isArray(raw.items) && raw.items.length > 0
@@ -352,6 +400,9 @@ export class HttpLogisticsService implements ILogisticsService {
       confirmedByDriver: Boolean(raw.confirmedByDriver || !!raw.proofOfDeliveryUrl),
       confirmedByAdmin: Boolean(raw.confirmedByAdmin),
       confirmedAt: raw.confirmedAt || undefined,
+      unreadMessagesCount: Number(raw.unreadMessagesCount || 0),
+      latestMessage: raw.latestMessage || null,
+      messages: raw.messages || [],
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       // Pass through full relations if returned from backend
@@ -363,78 +414,4 @@ export class HttpLogisticsService implements ILogisticsService {
   }
 }
 
-/**
- * In-Memory Mock Implementation (Local Development & Offline Testing)
- */
-export class MockLogisticsService implements ILogisticsService {
-  async getOrders(
-    driverId?: string,
-    customerId?: string
-  ): Promise<DeliveryOrder[]> {
-    return mockDb.getOrders(driverId, customerId);
-  }
-
-  async getOrderById(id: string): Promise<DeliveryOrder | null> {
-    const orders = await mockDb.getOrders();
-    return orders.find((o) => o.id === id || o.orderNumber === id) || null;
-  }
-
-  async getVehicles(): Promise<Vehicle[]> {
-    return mockDb.getVehicles();
-  }
-
-  async assignVehicle(
-    vehicleId: string,
-    driverId: string,
-    driverName?: string
-  ): Promise<Vehicle> {
-    return mockDb.assignVehicleDriver(vehicleId, driverId, driverName || "Driver");
-  }
-
-  async updateOrderStatus(
-    orderId: string,
-    status: DeliveryOrder["status"]
-  ): Promise<DeliveryOrder> {
-    return mockDb.updateOrderStatus(orderId, status);
-  }
-
-  async createOrder(order: Partial<DeliveryOrder>): Promise<DeliveryOrder> {
-    return mockDb.createOrder(order as DeliveryOrder);
-  }
-
-  async submitPod(
-    orderId: string,
-    data: {
-      recipientName: string;
-      photoUrl: string;
-      signatureData: string;
-      rating?: number;
-      note?: string;
-    }
-  ): Promise<DeliveryOrder> {
-    const updated = await mockDb.updateOrderStatus(orderId, "DELIVERED");
-    return {
-      ...updated,
-      proofOfDeliveryUrl: data.photoUrl,
-    };
-  }
-
-  async receiveInboundOrder(
-    orderId: string,
-    data: {
-      receivedQuantity: number;
-      damagedQuantity: number;
-      missingQuantity: number;
-      condition: string;
-      receivingNotes?: string;
-    }
-  ): Promise<DeliveryOrder> {
-    return mockDb.updateOrderStatus(orderId, "DELIVERED");
-  }
-}
-
-// Service Factory / Dependency Injection Selection
-const isMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-export const logisticsService: ILogisticsService = isMock
-  ? new MockLogisticsService()
-  : new HttpLogisticsService();
+export const logisticsService: ILogisticsService = new HttpLogisticsService();

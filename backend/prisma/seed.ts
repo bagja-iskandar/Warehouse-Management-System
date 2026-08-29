@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed for WMS Nusantara...');
 
-  // 1. Clean existing records in reverse dependency order
-  console.log('🧹 Cleaning existing tables...');
+  // 1. Clean existing records in reverse dependency order (excluding users to protect passwords)
+  console.log('🧹 Cleaning existing transactional tables...');
   await prisma.auditLog.deleteMany();
   await prisma.systemNotification.deleteMany();
   await prisma.telemetryLog.deleteMany();
@@ -22,15 +22,16 @@ async function main() {
   await prisma.warehouse.deleteMany();
   await prisma.vehicle.deleteMany();
   await prisma.refreshToken.deleteMany();
-  await prisma.user.deleteMany();
 
-  // 2. Seed Users
-  console.log('👤 Seeding Users...');
-  // Standard development password for all seed accounts: "Password123!"
+  // 2. Seed Users (Idempotent: Only creates if user does not already exist, preserving passwords)
+  console.log('👤 Seeding Users (Preserving existing user accounts & passwords)...');
+  // Standard development password for fresh accounts: "Password123!"
   const standardPasswordHash = await bcrypt.hash('Password123!', 10);
 
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@wms.id' },
+    update: {},
+    create: {
       id: 'usr-admin-1',
       name: 'Budi Santoso (Admin)',
       email: 'admin@wms.id',
@@ -44,8 +45,10 @@ async function main() {
     },
   });
 
-  const customer1 = await prisma.user.create({
-    data: {
+  const customer1 = await prisma.user.upsert({
+    where: { email: 'customer@freshfoods.id' },
+    update: {},
+    create: {
       id: 'usr-cust-1',
       name: 'Siti Rahma (Customer - Fresh Foods)',
       email: 'customer@freshfoods.id',
@@ -59,8 +62,10 @@ async function main() {
     },
   });
 
-  const customer2 = await prisma.user.create({
-    data: {
+  const customer2 = await prisma.user.upsert({
+    where: { email: 'michael@megafurniture.co.id' },
+    update: {},
+    create: {
       id: 'usr-cust-2',
       name: 'Michael Tan (Customer - Mega Furniture)',
       email: 'michael@megafurniture.co.id',
@@ -73,8 +78,10 @@ async function main() {
     },
   });
 
-  const driver1 = await prisma.user.create({
-    data: {
+  const driver1 = await prisma.user.upsert({
+    where: { email: 'driver@wms.id' },
+    update: {},
+    create: {
       id: 'usr-driver-1',
       name: 'Agus Pratama (Driver)',
       email: 'driver@wms.id',
@@ -89,8 +96,10 @@ async function main() {
     },
   });
 
-  const driver2 = await prisma.user.create({
-    data: {
+  const driver2 = await prisma.user.upsert({
+    where: { email: 'dedi.driver@wms.id' },
+    update: {},
+    create: {
       id: 'usr-driver-2',
       name: 'Dedi Kurniawan (Driver)',
       email: 'dedi.driver@wms.id',

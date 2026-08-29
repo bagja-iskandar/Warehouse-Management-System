@@ -33,10 +33,11 @@ function DigitalPodContent() {
   const { data: allOrders } = useDeliveryOrders();
   const activeFallbackOrder = allOrders?.find(
     (o) =>
-      o.status === "ARRIVED_DESTINATION" ||
-      o.status === "IN_TRANSIT" ||
-      o.status === "PICKED_UP" ||
-      o.status === "DRIVER_ASSIGNED"
+      o.type === "DELIVERY" &&
+      (o.status === "ARRIVED_DESTINATION" ||
+        o.status === "IN_TRANSIT" ||
+        o.status === "PICKED_UP" ||
+        o.status === "DRIVER_ASSIGNED")
   );
 
   const orderId = explicitOrderId || activeFallbackOrder?.id || "";
@@ -59,11 +60,19 @@ function DigitalPodContent() {
 
   const orderNumber = order?.orderNumber || activeFallbackOrder?.orderNumber || "DO-ACTIVE";
   const destination = order?.destinationAddress || activeFallbackOrder?.destinationAddress || "Destination Drop-off Facility";
+  const isInboundPickup = order?.type === "PICKUP" || activeFallbackOrder?.type === "PICKUP";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderId) {
       toast.error("No active order selected for POD upload.");
+      return;
+    }
+
+    if (isInboundPickup) {
+      toast.error("Inbound Shipments Do Not Require POD", {
+        description: "Inbound pickup shipments are received and verified by Warehouse Admins at the receiving dock.",
+      });
       return;
     }
 
@@ -115,7 +124,26 @@ function DigitalPodContent() {
         }
       />
 
-      {isSubmitted ? (
+      {isInboundPickup ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center max-w-xl mx-auto shadow-sm space-y-4 animate-in zoom-in-95">
+          <div className="h-16 w-16 rounded-full bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
+            <ClipboardList className="h-9 w-9" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-900">
+            Inbound Shipment Receiving
+          </h2>
+          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+            Order <strong className="text-slate-800 font-mono">#{orderNumber}</strong> is an Inbound Pickup shipment. Inbound shipments do not require customer Proof of Delivery. Receiving and physical verification are handled by Warehouse Admins upon dock arrival.
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link href="/driver/tasks">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-9">
+                Return to Tasks Queue →
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : isSubmitted ? (
         <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center max-w-xl mx-auto shadow-sm space-y-4 animate-in zoom-in-95">
           <div className="h-16 w-16 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
             <CheckCircle2 className="h-9 w-9" />

@@ -6,24 +6,24 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 export class OrderQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     enum: OrderStatus,
-    description: 'Filter berdasarkan status pengiriman Delivery Order',
+    description: 'Filter by Delivery Order lifecycle status',
     example: OrderStatus.PENDING_ASSIGNMENT,
   })
   @IsOptional()
-  @IsEnum(OrderStatus, { message: 'Status order tidak valid' })
+  @IsEnum(OrderStatus, { message: 'Invalid order status' })
   status?: OrderStatus;
 
   @ApiPropertyOptional({
     enum: OrderType,
-    description: 'Filter berdasarkan jenis order (PICKUP / DELIVERY)',
+    description: 'Filter by order type (PICKUP / DELIVERY)',
     example: OrderType.PICKUP,
   })
   @IsOptional()
-  @IsEnum(OrderType, { message: 'Tipe order tidak valid' })
+  @IsEnum(OrderType, { message: 'Invalid order type' })
   type?: OrderType;
 
   @ApiPropertyOptional({
-    description: 'Filter berdasarkan tanggal pengiriman (format YYYY-MM-DD)',
+    description: 'Filter by scheduled delivery date (format YYYY-MM-DD)',
     example: '2026-08-01',
   })
   @IsOptional()
@@ -31,7 +31,7 @@ export class OrderQueryDto extends PaginationQueryDto {
   scheduledDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter order milik Customer tertentu (Hanya berlaku untuk peran ADMIN)',
+    description: 'Filter orders belonging to a specific Customer (Admin role only)',
     example: 'usr-cust-1',
   })
   @IsOptional()
@@ -39,7 +39,7 @@ export class OrderQueryDto extends PaginationQueryDto {
   customerId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter order yang ditugaskan ke Driver tertentu',
+    description: 'Filter orders assigned to a specific Driver',
     example: 'usr-driver-1',
   })
   @IsOptional()
@@ -47,7 +47,7 @@ export class OrderQueryDto extends PaginationQueryDto {
   driverId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter order berdasarkan fasilitas gudang penyimpanan barang',
+    description: 'Filter orders by warehouse storage facility',
     example: 'wh-jkt-central',
   })
   @IsOptional()

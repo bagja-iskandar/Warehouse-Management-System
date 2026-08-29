@@ -413,7 +413,10 @@ export class OperationalCountsDto {
   @ApiProperty({ example: 3, description: 'Unread system notifications count' })
   unreadNotificationsCount: number;
 
-  @ApiProperty({ example: 1, description: 'Active delivery tasks assigned to the authenticated driver' })
+  @ApiProperty({
+    example: 1,
+    description: 'Active delivery tasks assigned to the authenticated driver',
+  })
   driverActiveTasksCount: number;
 
   @ApiProperty({ example: 20 })
@@ -425,10 +428,12 @@ export class OperationalCountsDto {
   @ApiProperty({ example: 1 })
   customerInTransitDeliveriesCount: number;
 
-  @ApiProperty({ example: 1, description: 'Unpaid or overdue invoices for the authenticated customer' })
+  @ApiProperty({
+    example: 1,
+    description: 'Unpaid or overdue invoices for the authenticated customer',
+  })
   customerUnpaidInvoicesCount: number;
 
   @ApiProperty({ example: 0, description: 'Invoices under review for the authenticated customer' })
   customerUnderReviewInvoicesCount: number;
 }
-

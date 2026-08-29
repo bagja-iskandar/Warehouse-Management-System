@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserProfile, UserRole } from "@/types";
-import { SEED_USERS } from "@/mock/seed/users.seed";
 import { getStoredAccessToken, clearStoredTokens } from "@/lib/api-client";
 
 interface AuthStoreState {
@@ -32,8 +31,9 @@ export const useAuthStore = create<AuthStoreState>()(
             (typeof window !== "undefined" ? getStoredAccessToken() : null),
         }),
       setRole: (role) => {
-        const found = SEED_USERS.find((u) => u.role === role) || null;
-        set({ user: found, isAuthenticated: !!found });
+        set((state) => ({
+          user: state.user ? { ...state.user, role } : null,
+        }));
       },
       logout: () => {
         clearStoredTokens();

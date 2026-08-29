@@ -19,6 +19,8 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateDeliveryOrderDto } from './dto/create-order.dto';
+import { CreateOrderMessageDto } from './dto/create-order-message.dto';
+import { OrderMessageResponseDto } from './dto/order-message-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { DeliveryOrderDetailResponseDto, DeliveryOrderListItemDto } from './dto/order-response.dto';
 import { ReceiveInboundDto } from './dto/receive-inbound.dto';
@@ -65,18 +67,17 @@ export class LogisticsController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Menugaskan Pengemudi ke Kendaraan Armada (Admin Only)',
-    description:
-      'Menetapkan pengemudi (Driver) resmi ke unit kendaraan tertentu dan mengubah status menjadi IN_SERVICE.',
+    summary: 'Assign Driver to Fleet Vehicle (Admin Only)',
+    description: 'Assigns an active Driver to a fleet vehicle and sets status to IN_SERVICE.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Penugasan driver ke kendaraan berhasil',
+    description: 'Driver assigned to vehicle successfully',
     type: VehicleResponseDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Hanya Admin yang berhak menugaskan pengemudi',
+    description: 'Only Admins are authorized to assign drivers',
   })
   async assignDriver(
     @Body() dto: AssignDriverDto,
@@ -84,7 +85,7 @@ export class LogisticsController {
   ): Promise<{ message: string; data: VehicleResponseDto }> {
     const data = await this.logisticsService.assignDriver(dto, currentUser);
     return {
-      message: 'Penugasan driver ke kendaraan berhasil',
+      message: 'Driver assigned to vehicle successfully',
       data,
     };
   }
@@ -96,13 +97,13 @@ export class LogisticsController {
   @Get('orders')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Daftar Delivery Order (Inbound & Outbound)',
+    summary: 'Get Delivery Orders Directory (Inbound & Outbound)',
     description:
-      'Mengambil daftar surat jalan / order pengiriman dengan paginasi, filter status, dan isolasi per tenant (Customer/Driver/Admin).',
+      'Retrieves delivery orders with pagination, status filters, and tenant isolation (Customer/Driver/Admin).',
   })
   @ApiResponse({
     status: 200,
-    description: 'Daftar delivery order berhasil diambil',
+    description: 'Delivery orders retrieved successfully',
     type: [DeliveryOrderListItemDto],
   })
   async findAllOrders(
@@ -111,7 +112,7 @@ export class LogisticsController {
   ) {
     const result = await this.logisticsService.findAllOrders(query, currentUser);
     return {
-      message: 'Daftar delivery order berhasil diambil',
+      message: 'Delivery orders retrieved successfully',
       data: {
         items: result.items,
         page: result.meta.page,
@@ -125,23 +126,23 @@ export class LogisticsController {
   @Get('orders/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mendapatkan Detail Delivery Order & Kargo',
+    summary: 'Get Delivery Order Detail & Cargo Items',
     description:
-      'Mengambil informasi lengkap surat jalan pengiriman beserta daftar SKU barang yang dimuat, detail kendaraan, dan pengemudi.',
+      'Retrieves full delivery order details including cargo manifest, fleet vehicle, and driver info.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik UUID order atau Nomor Surat Jalan (misal: ORD-2026-092)',
+    description: 'Unique order UUID or Order Number (e.g. ORD-2026-092)',
     example: 'ord-01',
   })
   @ApiResponse({
     status: 200,
-    description: 'Detail delivery order berhasil diambil',
+    description: 'Delivery order detail retrieved successfully',
     type: DeliveryOrderDetailResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Delivery order tidak ditemukan atau bukan milik akun Anda',
+    description: 'Delivery order not found or does not belong to your account',
   })
   async findOrderById(
     @Param('id') id: string,
@@ -149,7 +150,7 @@ export class LogisticsController {
   ): Promise<{ message: string; data: DeliveryOrderDetailResponseDto }> {
     const data = await this.logisticsService.findOrderById(id, currentUser);
     return {
-      message: 'Detail delivery order berhasil diambil',
+      message: 'Delivery order detail retrieved successfully',
       data,
     };
   }
@@ -157,18 +158,18 @@ export class LogisticsController {
   @Post('orders')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Membuat Surat Jalan / Delivery Order Baru',
+    summary: 'Create New Delivery Order / Manifest',
     description:
-      'Membuat order pengiriman (Pick-up atau Delivery) dengan kalkulasi kapasitas muatan otomatis dan validasi wajib armada Reefer Truck untuk komoditas Cold Storage.',
+      'Creates a new shipment request (Pickup or Delivery) with automated capacity checks and Reefer Truck validation for Cold Storage commodities.',
   })
   @ApiResponse({
     status: 201,
-    description: 'Delivery order berhasil dibuat',
+    description: 'Delivery order created successfully',
     type: DeliveryOrderDetailResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Validasi muatan gagal atau kargo Cold Storage tidak menggunakan Reefer Truck',
+    description: 'Payload validation failed or Cold Storage cargo requires Reefer Truck',
   })
   async createOrder(
     @Body() dto: CreateDeliveryOrderDto,
@@ -176,7 +177,7 @@ export class LogisticsController {
   ): Promise<{ message: string; data: DeliveryOrderDetailResponseDto }> {
     const data = await this.logisticsService.createOrder(dto, currentUser);
     return {
-      message: 'Delivery order berhasil dibuat',
+      message: 'Delivery order created successfully',
       data,
     };
   }
@@ -184,23 +185,23 @@ export class LogisticsController {
   @Patch('orders/:id/status')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Memperbarui Status Alur Pengiriman Logistik (State Machine)',
+    summary: 'Update Delivery Order Status (State Machine)',
     description:
-      'Mengubah status pengiriman (PENDING -> DRIVER_ASSIGNED -> EN_ROUTE -> PICKED_UP -> IN_TRANSIT -> ARRIVED -> DELIVERED).',
+      'Transitions shipment lifecycle status (PENDING -> DRIVER_ASSIGNED -> EN_ROUTE -> PICKED_UP -> IN_TRANSIT -> ARRIVED -> DELIVERED).',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik UUID order atau Nomor Surat Jalan',
+    description: 'Unique order UUID or Order Number',
     example: 'ord-01',
   })
   @ApiResponse({
     status: 200,
-    description: 'Status delivery order berhasil diperbarui',
+    description: 'Delivery order status updated successfully',
     type: DeliveryOrderDetailResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Transisi status tidak valid dalam state machine',
+    description: 'Invalid status transition in state machine',
   })
   async updateOrderStatus(
     @Param('id') id: string,
@@ -209,7 +210,7 @@ export class LogisticsController {
   ): Promise<{ message: string; data: DeliveryOrderDetailResponseDto }> {
     const data = await this.logisticsService.updateOrderStatus(id, dto, currentUser);
     return {
-      message: 'Status delivery order berhasil diperbarui',
+      message: 'Delivery order status updated successfully',
       data,
     };
   }
@@ -217,18 +218,18 @@ export class LogisticsController {
   @Post('orders/:id/pod')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Mengunggah Bukti Serah Terima Digital POD (Proof of Delivery)',
+    summary: 'Submit Digital Proof of Delivery (POD)',
     description:
-      'Mengirimkan tanda tangan digital penerima, foto kargo MinIO/S3, dan rating pengemudi untuk menyelesaikan pengiriman (DELIVERED) dan membebaskan armada.',
+      'Submits recipient digital signature, photo proof, and driver rating to mark delivery as DELIVERED and release the fleet vehicle.',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik UUID order atau Nomor Surat Jalan',
+    description: 'Unique order UUID or Order Number',
     example: 'ord-01',
   })
   @ApiResponse({
     status: 200,
-    description: 'Bukti serah terima Digital POD berhasil diunggah',
+    description: 'Proof of Delivery submitted successfully',
     type: DeliveryOrderDetailResponseDto,
   })
   async submitPod(
@@ -238,7 +239,7 @@ export class LogisticsController {
   ): Promise<{ message: string; data: DeliveryOrderDetailResponseDto }> {
     const data = await this.logisticsService.submitPod(id, dto, currentUser);
     return {
-      message: 'Bukti serah terima Digital POD berhasil diunggah',
+      message: 'Proof of Delivery submitted successfully',
       data,
     };
   }
@@ -247,18 +248,18 @@ export class LogisticsController {
   @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Menerima dan Memverifikasi Barang Inbound di Gudang (Admin Receiving)',
+    summary: 'Receive and Verify Inbound Goods at Warehouse (Admin Receiving)',
     description:
-      'Memverifikasi kuantitas fisik (Received, Damaged, Missing) dan kondisi barang kargo yang tiba di loading dock. Mengalihkan status order menjadi DELIVERED dan status barang menjadi INSPECTING (Put-Away Pending).',
+      'Verifies physical cargo count (Received, Damaged, Missing) and cargo condition upon loading dock arrival. Transitions order to DELIVERED and goods to INSPECTING (Put-Away Pending).',
   })
   @ApiParam({
     name: 'id',
-    description: 'ID unik UUID order atau Nomor Surat Jalan',
+    description: 'Unique order UUID or Order Number',
     example: 'ord-01',
   })
   @ApiResponse({
     status: 200,
-    description: 'Penerimaan barang inbound berhasil diverifikasi',
+    description: 'Inbound goods receiving verified successfully',
     type: DeliveryOrderDetailResponseDto,
   })
   async receiveInboundOrder(
@@ -268,7 +269,102 @@ export class LogisticsController {
   ): Promise<{ message: string; data: DeliveryOrderDetailResponseDto }> {
     const data = await this.logisticsService.receiveInboundOrder(id, dto, currentUser);
     return {
-      message: 'Penerimaan barang inbound berhasil diverifikasi',
+      message: 'Inbound goods receiving verified successfully',
+      data,
+    };
+  }
+
+  // ===========================================================================
+  // 3. CUSTOMER ORDER MESSAGES & COMMUNICATIONS
+  // ===========================================================================
+
+  @Post('orders/:id/messages')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Send Communication Message / Status Update to Customer (Admin Only)',
+    description:
+      'Creates an operational message for the customer regarding the delivery order (e.g. Reefer Unavailable, Driver Assignment Pending, Delay), persists it to message history, and delivers an In-App System Notification.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique order UUID or Order Number',
+    example: 'ord-01',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Customer message sent successfully',
+    type: OrderMessageResponseDto,
+  })
+  async createOrderMessage(
+    @Param('id') id: string,
+    @Body() dto: CreateOrderMessageDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: OrderMessageResponseDto }> {
+    const data = await this.logisticsService.createOrderMessage(id, dto, currentUser);
+    return {
+      message: 'Customer message sent successfully',
+      data,
+    };
+  }
+
+  @Get('orders/:id/messages')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get Order Communication & Message History',
+    description:
+      'Retrieves the chronological communication log between dispatchers and customer for a specific delivery order.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique order UUID or Order Number',
+    example: 'ord-01',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Order messages retrieved successfully',
+    type: [OrderMessageResponseDto],
+  })
+  async findOrderMessages(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: OrderMessageResponseDto[] }> {
+    const data = await this.logisticsService.findOrderMessages(id, currentUser);
+    return {
+      message: 'Order messages retrieved successfully',
+      data,
+    };
+  }
+
+  @Patch('orders/:id/messages/:messageId/read')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mark Order Communication Message as Read',
+    description: 'Marks a specific delivery order message as viewed/read by the customer.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique order UUID or Order Number',
+    example: 'ord-01',
+  })
+  @ApiParam({
+    name: 'messageId',
+    description: 'Unique message UUID',
+    example: 'msg-uuid-001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Order message marked as read successfully',
+    type: OrderMessageResponseDto,
+  })
+  async markOrderMessageAsRead(
+    @Param('id') id: string,
+    @Param('messageId') messageId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<{ message: string; data: OrderMessageResponseDto }> {
+    const data = await this.logisticsService.markOrderMessageAsRead(id, messageId, currentUser);
+    return {
+      message: 'Order message marked as read successfully',
       data,
     };
   }

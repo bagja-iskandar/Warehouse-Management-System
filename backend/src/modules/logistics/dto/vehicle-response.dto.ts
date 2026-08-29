@@ -32,6 +32,12 @@ export class VehicleResponseDto {
   @ApiProperty({ enum: VehicleStatus, example: 'IN_SERVICE' })
   status: VehicleStatus;
 
+  @ApiPropertyOptional({
+    example: 0,
+    description: 'Jumlah order aktif yang sedang dijalankan armada',
+  })
+  activeOrdersCount?: number;
+
   @ApiPropertyOptional({ example: 'usr-driver-1' })
   currentDriverId?: string | null;
 

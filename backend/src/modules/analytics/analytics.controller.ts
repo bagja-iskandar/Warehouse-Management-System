@@ -6,7 +6,12 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { AnalyticsService } from './analytics.service';
-import { AdminOverviewDto, CustomerSummaryDto, DriverSummaryDto, OperationalCountsDto } from './dto/analytics.dto';
+import {
+  AdminOverviewDto,
+  CustomerSummaryDto,
+  DriverSummaryDto,
+  OperationalCountsDto,
+} from './dto/analytics.dto';
 
 @ApiTags('Analytics & Operational KPIs')
 @ApiBearerAuth('JWT-auth')
