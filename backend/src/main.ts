@@ -133,7 +133,7 @@ async function bootstrap() {
     res.json(swaggerDocument);
   });
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   pinoLogger.log(`=======================================================`);
   pinoLogger.log(`🚀 WMS Nusantara Backend Service is running!`);
