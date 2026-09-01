@@ -45,6 +45,7 @@ export function RegisterForm() {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -97,22 +98,11 @@ export function RegisterForm() {
       return;
     }
 
-    try {
-      await register({
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone.trim(),
-        companyName: formData.companyName.trim(),
-        address: formData.address.trim(),
-        password: formData.password,
-      });
-      setIsSuccess(true);
-    } catch (err: unknown) {
-      const error = err as Error;
-      setValidationError(
-        error.message || "Failed to register customer account. Please try again."
-      );
-    }
+    // Demo-only simulation: validate form, simulate network delay, show success, NO DB INSERT
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    setIsSubmitting(false);
+    setIsSuccess(true);
   };
 
   return (
@@ -160,17 +150,17 @@ export function RegisterForm() {
               <CheckCircle2 className="h-7 w-7" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">
-              Registration Successful!
+              Customer created successfully.
             </h3>
             <p className="text-xs text-slate-600">
-              Your corporate customer account has been created. Redirecting to Customer Portal...
+              Registration validated in demo mode. Please use the designated Customer demo persona to explore all tenant features.
             </p>
             <div className="pt-2">
               <Link
-                href="/customer/dashboard"
+                href="/login"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 underline"
               >
-                Click here if not redirected automatically
+                Go to Sign In & Try Customer Persona →
               </Link>
             </div>
           </div>
@@ -397,13 +387,13 @@ export function RegisterForm() {
             {/* Submit Action CTA */}
             <Button
               type="submit"
-              disabled={isRegistering}
+              disabled={isSubmitting}
               className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isRegistering ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Creating Customer Account...</span>
+                  <span>Validating Registration...</span>
                 </>
               ) : (
                 <>

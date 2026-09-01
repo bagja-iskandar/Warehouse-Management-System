@@ -366,6 +366,15 @@ export class BillingService {
       );
     }
 
+    // 0. Enforce Demo Portfolio Limit (Maximum 10 Payments)
+    const MAX_DEMO_PAYMENTS_LIMIT = 10;
+    const currentPaymentsCount = await this.prisma.payment.count();
+    if (currentPaymentsCount >= MAX_DEMO_PAYMENTS_LIMIT) {
+      throw new BadRequestException(
+        `Demo limit reached. Maximum ${MAX_DEMO_PAYMENTS_LIMIT} payments are allowed in this demo environment.`,
+      );
+    }
+
     // Calculate penalty and current total
     const penaltyCalc = this.calculatePenalty(invoice.subtotal, invoice.dueDate, invoice.status);
 

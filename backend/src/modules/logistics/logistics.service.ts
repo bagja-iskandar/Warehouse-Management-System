@@ -655,6 +655,15 @@ export class LogisticsService {
     dto: CreateDeliveryOrderDto,
     currentUser: AuthenticatedUser,
   ): Promise<DeliveryOrderDetailResponseDto> {
+    // 0. Enforce Demo Portfolio Limit (Maximum 10 Delivery Orders)
+    const MAX_DEMO_ORDERS_LIMIT = 10;
+    const currentOrdersCount = await this.prisma.deliveryOrder.count();
+    if (currentOrdersCount >= MAX_DEMO_ORDERS_LIMIT) {
+      throw new BadRequestException(
+        `Demo limit reached. Maximum ${MAX_DEMO_ORDERS_LIMIT} delivery orders are allowed in this demo environment.`,
+      );
+    }
+
     // 1. Determine order owner
     let targetCustomerId: string;
     if (currentUser.role === UserRole.CUSTOMER) {

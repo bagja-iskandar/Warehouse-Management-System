@@ -83,6 +83,15 @@ export class GoodsService {
     dto: CreateGoodsDto,
     currentUser: AuthenticatedUser,
   ): Promise<GoodsDetailResponseDto> {
+    // 0. Enforce Demo Portfolio Limit (Maximum 10 Goods)
+    const MAX_DEMO_GOODS_LIMIT = 10;
+    const currentGoodsCount = await this.prisma.goodsItem.count();
+    if (currentGoodsCount >= MAX_DEMO_GOODS_LIMIT) {
+      throw new BadRequestException(
+        `Demo limit reached. Maximum ${MAX_DEMO_GOODS_LIMIT} goods items are allowed in this demo environment.`,
+      );
+    }
+
     // 1. Tentukan pemilik barang (Customer ID) berdasarkan hak akses peran
     let targetCustomerId: string;
     if (currentUser.role === UserRole.CUSTOMER) {

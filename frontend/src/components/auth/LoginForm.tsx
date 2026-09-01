@@ -65,6 +65,23 @@ export function LoginForm() {
     }
   };
 
+  const handleQuickLogin = async (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword("123456");
+    setValidationError(null);
+    try {
+      await login({
+        email: demoEmail,
+        password: "123456",
+      });
+    } catch (err: unknown) {
+      const error = err as Error;
+      setValidationError(
+        error.message || "Failed to sign in with demo account. Please try again."
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8">
       {/* Centered Login Card */}
@@ -219,6 +236,48 @@ export function LoginForm() {
             )}
           </Button>
         </form>
+
+        {/* Quick Demo Persona Access */}
+        <div className="mt-5 pt-4 border-t border-slate-100 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Try Demo Persona
+            </span>
+            <span className="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100/80 px-2 py-0.5 rounded-full font-semibold">
+              Instant Review
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleQuickLogin("admin@wms.id")}
+              className="h-9 px-2 text-xs font-semibold rounded-xl border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 text-slate-700 transition-all cursor-pointer"
+            >
+              Login as Admin
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleQuickLogin("driver@wms.id")}
+              className="h-9 px-2 text-xs font-semibold rounded-xl border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 text-slate-700 transition-all cursor-pointer"
+            >
+              Login as Driver
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => handleQuickLogin("customer@wms.id")}
+              className="h-9 px-2 text-xs font-semibold rounded-xl border-slate-200 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 text-slate-700 transition-all cursor-pointer"
+            >
+              Login as Customer
+            </Button>
+          </div>
+        </div>
 
         {/* Register Customer Link */}
         <div className="mt-5 pt-4 border-t border-slate-100 text-center">

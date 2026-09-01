@@ -652,6 +652,15 @@ export class WarehouseService {
       );
     }
 
+    // 0. Enforce Demo Portfolio Limit (Maximum 10 Invoices)
+    const MAX_DEMO_INVOICES_LIMIT = 10;
+    const currentInvoiceCount = await this.prisma.invoice.count();
+    if (currentInvoiceCount >= MAX_DEMO_INVOICES_LIMIT) {
+      throw new BadRequestException(
+        `Demo limit reached. Maximum ${MAX_DEMO_INVOICES_LIMIT} invoices/rentals are allowed in this demo environment.`,
+      );
+    }
+
     // 1. Validate warehouse facility existence
     const warehouse = await this.prisma.warehouse.findFirst({
       where: {

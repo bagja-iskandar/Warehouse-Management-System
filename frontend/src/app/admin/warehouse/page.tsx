@@ -55,86 +55,47 @@ interface HubFacility {
   activeTenantsCount: number;
 }
 
-const HUBS_DATA: HubFacility[] = [
-  {
-    id: "hub-ckg",
-    code: "WH-CKG-01",
-    name: "Cakung Logistics Central Hub",
-    location: "Pulo Gadung Industrial Estate, East Jakarta",
-    picName: "Hendra Wijaya (0812-3344-5566)",
-    status: "NORMAL",
-    totalCapacityM3: 5000,
-    usedCapacityM3: 3150,
-    coldCapacityM3: 2000,
-    coldUsedM3: 1700,
-    coldTemp: "-18.4°C",
-    standardCapacityM3: 3000,
-    standardUsedM3: 1450,
-    standardTemp: "24.0°C",
-    totalSlots: 40,
-    occupiedSlots: 35,
-    activeTenantsCount: 4,
-  },
-  {
-    id: "hub-bdg",
-    code: "WH-BDG-01",
-    name: "West Java Distribution Hub Gedebage",
-    location: "Gedebage Integrated Logistics Area, Bandung",
-    picName: "Asep Sunandar (0813-7788-9900)",
-    status: "NORMAL",
-    totalCapacityM3: 3000,
-    usedCapacityM3: 1400,
-    coldCapacityM3: 1000,
-    coldUsedM3: 600,
-    coldTemp: "-20.1°C",
-    standardCapacityM3: 2000,
-    standardUsedM3: 800,
-    standardTemp: "22.5°C",
-    totalSlots: 25,
-    occupiedSlots: 14,
-    activeTenantsCount: 2,
-  },
-];
-
 export default function WarehouseOverviewPage() {
   const { data: liveWarehouses, isFetching, refetch } = useWarehouses();
   const [selectedTab, setSelectedTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const activeHubs: HubFacility[] =
-    liveWarehouses && liveWarehouses.length > 0
-      ? liveWarehouses.map((w) => ({
-          id: w.id,
-          code: w.code,
-          name: w.name,
-          location: `${w.address}, ${w.city}`,
-          picName: `${w.managerName} (${w.contactPhone})`,
-          status: "NORMAL" as const,
-          totalCapacityM3: w.totalCapacityM3,
-          usedCapacityM3: w.usedCapacityM3,
-          coldCapacityM3: w.zones?.coldStorageCapacityM3 || 0,
-          coldUsedM3: Math.round(
-            (w.zones?.coldStorageCapacityM3 || 0) *
-              (w.usedCapacityM3 / (w.totalCapacityM3 || 1))
-          ),
-          coldTemp: "-18.4°C",
-          standardCapacityM3: w.zones?.standardCapacityM3 || 0,
-          standardUsedM3: Math.round(
-            (w.zones?.standardCapacityM3 || 0) *
-              (w.usedCapacityM3 / (w.totalCapacityM3 || 1))
-          ),
-          standardTemp: "24.0°C",
-          totalSlots: w.slotsCount || 0,
-          occupiedSlots: w.occupiedSlotsCount || 0,
-          activeTenantsCount: 4,
-        }))
-      : HUBS_DATA;
+  const activeHubs: HubFacility[] = (liveWarehouses || []).map((w) => {
+    const rawSlots = w.slots || [];
+    const activeTenants = new Set(
+      rawSlots.flatMap((s) => (s.storedGoods || []).map((g) => g.customerId)).filter(Boolean)
+    );
+
+    return {
+      id: w.id,
+      code: w.code,
+      name: w.name,
+      location: `${w.address}, ${w.city}`,
+      picName: `${w.managerName} (${w.contactPhone})`,
+      status: "NORMAL" as const,
+      totalCapacityM3: Number(w.totalCapacityM3 || 0),
+      usedCapacityM3: Number(w.usedCapacityM3 || 0),
+      coldCapacityM3: Number(w.zones?.coldStorageCapacityM3 || 0),
+      coldUsedM3: Math.round(
+        Number(w.zones?.coldStorageCapacityM3 || 0) *
+          (Number(w.usedCapacityM3 || 0) / (Number(w.totalCapacityM3) || 1))
+      ),
+      coldTemp: "-18.4°C",
+      standardCapacityM3: Number(w.zones?.standardCapacityM3 || 0),
+      standardUsedM3: Math.round(
+        Number(w.zones?.standardCapacityM3 || 0) *
+          (Number(w.usedCapacityM3 || 0) / (Number(w.totalCapacityM3) || 1))
+      ),
+      standardTemp: "24.0°C",
+      totalSlots: w.slotsCount || rawSlots.length || 0,
+      occupiedSlots: w.occupiedSlotsCount || 0,
+      activeTenantsCount: activeTenants.size,
+    };
+  });
 
   const filteredHubs = activeHubs.filter((hub) => {
     const matchTab =
-      selectedTab === "ALL" ||
-      (selectedTab === "CKG" && hub.code === "WH-CKG-01") ||
-      (selectedTab === "BDG" && hub.code === "WH-BDG-01");
+      selectedTab === "ALL" || selectedTab === hub.code || selectedTab === hub.id;
     const matchSearch =
       hub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       hub.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -277,30 +238,34 @@ export default function WarehouseOverviewPage() {
         >
           All Facilities ({activeHubs.length})
         </button>
-        <button
-          onClick={() => setSelectedTab("CKG")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-            selectedTab === "CKG"
-              ? "bg-indigo-600 text-white shadow-xs"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Jakarta Hub (Cakung)
-        </button>
-        <button
-          onClick={() => setSelectedTab("BDG")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-            selectedTab === "BDG"
-              ? "bg-sky-600 text-white shadow-xs"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Bandung Hub (Gedebage)
-        </button>
+        {activeHubs.map((hub) => (
+          <button
+            key={hub.id}
+            onClick={() => setSelectedTab(hub.code)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              selectedTab === hub.code
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {hub.name} ({hub.code})
+          </button>
+        ))}
       </FilterBar>
 
-      {/* 4. Main Section: Facility Hub Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 4. Main Section: Facility Hub Cards Grid or Empty State */}
+      {filteredHubs.length === 0 ? (
+        <EmptyState
+          title="No Facilities Found"
+          description={
+            searchQuery || selectedTab !== "ALL"
+              ? "No warehouse facilities match the selected filter criteria."
+              : "No warehouse facilities are registered in PostgreSQL yet."
+          }
+          icon={Building2}
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredHubs.map((hub) => {
           const hubUtil = hub.totalCapacityM3 > 0 ? (hub.usedCapacityM3 / hub.totalCapacityM3) * 100 : 0;
           return (
@@ -381,7 +346,8 @@ export default function WarehouseOverviewPage() {
             </SectionCard>
           );
         })}
-      </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

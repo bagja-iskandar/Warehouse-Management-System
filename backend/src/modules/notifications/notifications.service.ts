@@ -61,6 +61,50 @@ export class NotificationsService {
     tx?: Prisma.TransactionClient,
   ): Promise<NotificationResponseDto> {
     const client = tx || this.prisma;
+
+    // 1. Deduplication / Throttling: Ignore identical notification within 60s window
+    const throttleWindow = new Date(Date.now() - 60 * 1000);
+    const existingRecent = await client.systemNotification.findFirst({
+      where: {
+        recipientUserId: input.recipientUserId,
+        category: input.category,
+        title: input.title,
+        message: input.message,
+        createdAt: { gte: throttleWindow },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingRecent) {
+      this.logger.debug(
+        `Throttled duplicate notification to user '${input.recipientUserId}': ${input.title}`,
+      );
+      return this.mapToDto(existingRecent);
+    }
+
+    // 2. Bounded Retention: Maximum 50 notifications per user (clean up oldest)
+    const MAX_NOTIFICATIONS_PER_USER = 50;
+    const currentCount = await client.systemNotification.count({
+      where: { recipientUserId: input.recipientUserId },
+    });
+
+    if (currentCount >= MAX_NOTIFICATIONS_PER_USER) {
+      const excessCount = currentCount - MAX_NOTIFICATIONS_PER_USER + 1;
+      const oldestNotifs = await client.systemNotification.findMany({
+        where: { recipientUserId: input.recipientUserId },
+        orderBy: { createdAt: 'asc' },
+        take: excessCount,
+        select: { id: true },
+      });
+
+      if (oldestNotifs.length > 0) {
+        await client.systemNotification.deleteMany({
+          where: { id: { in: oldestNotifs.map((n) => n.id) } },
+        });
+      }
+    }
+
+    // 3. Create single clean notification record
     const created = await client.systemNotification.create({
       data: {
         recipientUserId: input.recipientUserId,
