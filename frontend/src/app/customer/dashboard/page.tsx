@@ -221,9 +221,10 @@ export default function CustomerDashboardPage() {
         </div>
       )}
 
-      {/* 3. 4 KPI Metric Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 3. 4 KPI Metric Summary Cards (Compact) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <DashboardMetricCard
+          compact={true}
           label="Active Rented Storage"
           value={`${rentedSpace} m³`}
           subvalue="Rented"
@@ -231,12 +232,12 @@ export default function CustomerDashboardPage() {
           theme="emerald"
           progress={{ value: utilPct }}
           badge={
-            <span className="font-bold text-emerald-600 font-mono text-xs">
+            <span className="font-bold text-emerald-600 font-mono text-[11px]">
               {utilPct.toFixed(1)}% Used
             </span>
           }
           subtext={
-            <span className="flex items-center justify-between text-[11px]">
+            <span className="flex items-center justify-between text-[10px]">
               <span className="text-slate-500">{usedSpace} m³ Occupied</span>
               <span className="font-semibold text-emerald-600">Remaining {remainingSpace} m³</span>
             </span>
@@ -244,24 +245,26 @@ export default function CustomerDashboardPage() {
         />
 
         <DashboardMetricCard
+          compact={true}
           label="My Stored Cargo & SKUs"
           value={`${totalSkus} SKUs`}
-          subvalue={`(${totalPackages} Packages)`}
+          subvalue={`(${totalPackages} Pkgs)`}
           icon={Boxes}
           theme="indigo"
           badge={
-            <span className="text-xs text-indigo-800 bg-indigo-100 font-semibold px-2 py-0.5 rounded-md">
-              Verified Stored
+            <span className="text-[10px] text-indigo-800 bg-indigo-50 font-semibold px-2 py-0.5 rounded-md border border-indigo-100">
+              Verified
             </span>
           }
           subtext={
-            <span className="text-[11px] text-slate-500">
-              Total volume: {usedSpace.toFixed(2)} m³ active in warehouse
+            <span className="text-[10px] text-slate-500">
+              Total volume: {usedSpace.toFixed(2)} m³ active
             </span>
           }
         />
 
         <DashboardMetricCard
+          compact={true}
           label="Cold Storage Telemetry"
           value={
             rentedSpace > 0 && currentTemp != null
@@ -272,23 +275,24 @@ export default function CustomerDashboardPage() {
           theme="sky"
           badge={
             rentedSpace > 0 && currentTemp != null ? (
-              <Badge className="bg-sky-100 text-sky-800 hover:bg-sky-100 text-[10px] py-0 font-semibold">
+              <Badge className="bg-sky-100 text-sky-800 hover:bg-sky-100 text-[9.5px] py-0 font-semibold">
                 Optimal (-18°C ~ -20°C)
               </Badge>
             ) : (
-              <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[10px] py-0 font-semibold">
+              <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[9.5px] py-0 font-semibold">
                 No Sensor Feed
               </Badge>
             )
           }
           subtext={
-            <span className="text-[11px] text-slate-500 block truncate">
-              {storageLocation ? `Location: ${storageLocation}` : "No leased storage zone"}
+            <span className="text-[10px] text-slate-500 block truncate">
+              {storageLocation ? `${storageLocation}` : "No leased storage zone"}
             </span>
           }
         />
 
         <DashboardMetricCard
+          compact={true}
           label="Monthly Rental Billing"
           value={`Rp ${monthlyBilling.toLocaleString("id-ID")}`}
           icon={Receipt}
@@ -296,7 +300,7 @@ export default function CustomerDashboardPage() {
           badge={
             invoiceNumber ? (
               <Badge
-                className={`text-[10px] font-semibold ${
+                className={`text-[9.5px] font-semibold ${
                   invoiceStatus === "PAID"
                     ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
                     : "bg-amber-100 text-amber-900 hover:bg-amber-100"
@@ -305,31 +309,113 @@ export default function CustomerDashboardPage() {
                 {invoiceStatus}
               </Badge>
             ) : (
-              <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[10px] py-0 font-semibold">
+              <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[9.5px] py-0 font-semibold">
                 No Invoices
               </Badge>
             )
           }
           subtext={
-            <span className="text-[11px] text-slate-500 font-mono">
-              {invoiceNumber ? `Invoice #${invoiceNumber}` : "Zero active billing balance"}
+            <span className="text-[10px] text-slate-500 font-mono">
+              {invoiceNumber ? `Invoice #${invoiceNumber}` : "Zero active balance"}
             </span>
           }
         />
       </div>
 
-      {/* 4. Main Operational Grid: 8 Columns Left / 4 Columns Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (8 cols): My Stored Goods + Active Delivery Status */}
-        <div className="lg:col-span-8 space-y-6">
+      {/* 4. Sleek Quick Operational Shortcuts Bar (Compact & Above the Fold) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs space-y-2">
+        <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 px-0.5">
+          <div className="flex items-center gap-2">
+            <Compass className="h-4 w-4 text-emerald-600" />
+            <span className="text-xs font-bold text-slate-800">Quick Actions</span>
+            <span className="text-[10.5px] text-slate-400 hidden sm:inline">• Direct shortcuts for warehouse & logistics operations</span>
+          </div>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider font-mono">Fast Access</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <Link
+            href="/customer/goods/input"
+            className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-100 hover:border-emerald-400 hover:bg-emerald-50/40 transition-all group bg-slate-50/40"
+          >
+            <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <QrCode className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-slate-800 group-hover:text-emerald-700 block truncate">
+                Inbound Intake
+              </span>
+              <span className="text-[10px] text-slate-400 block truncate">
+                Register cargo & barcode
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/customer/logistics/request"
+            className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/40 transition-all group bg-slate-50/40"
+          >
+            <div className="h-7 w-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Truck className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-slate-800 group-hover:text-indigo-700 block truncate">
+                Request Dispatch
+              </span>
+              <span className="text-[10px] text-slate-400 block truncate">
+                Schedule fleet delivery
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/customer/rental"
+            className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-100 hover:border-teal-400 hover:bg-teal-50/40 transition-all group bg-slate-50/40"
+          >
+            <div className="h-7 w-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Warehouse className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-slate-800 group-hover:text-teal-700 block truncate">
+                Extend Lease
+              </span>
+              <span className="text-[10px] text-slate-400 block truncate">
+                Reserve storage space
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/customer/receipt/confirm"
+            className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-100 hover:border-amber-400 hover:bg-amber-50/40 transition-all group bg-slate-50/40"
+          >
+            <div className="h-7 w-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <FileCheck className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-slate-800 group-hover:text-amber-700 block truncate">
+                Confirm Receipt
+              </span>
+              <span className="text-[10px] text-slate-400 block truncate">
+                Verify POD delivery
+              </span>
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      {/* 5. Main Operational Grid: Harmonious Symmetrical Heights */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Left Column (7 cols): My Stored Goods + Active Delivery Status */}
+        <div className="lg:col-span-7 flex flex-col gap-5 h-full">
           {/* My Stored Inventory Goods */}
           <DashboardSectionCard
+            compact={true}
             title="My Stored Inventory Goods"
             subtitle="Active cargo SKUs deposited in warehouse rack slots"
             icon={Boxes}
             headerAction={
               <Link href="/customer/goods">
-                <Button variant="ghost" size="sm" className="text-xs text-indigo-600 font-semibold h-8 px-2 hover:bg-indigo-50">
+                <Button variant="ghost" size="sm" className="text-xs text-indigo-600 font-semibold h-7 px-2 hover:bg-indigo-50">
                   All Goods ({liveGoods.length}) →
                 </Button>
               </Link>
@@ -351,37 +437,37 @@ export default function CustomerDashboardPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
+                  <thead className="bg-slate-50 text-slate-400 uppercase text-[9.5px] font-bold">
                     <tr>
-                      <th className="py-2.5 px-3">SKU & Item Name</th>
-                      <th className="py-2.5 px-3">Quantity & Unit</th>
-                      <th className="py-2.5 px-3">Volume</th>
-                      <th className="py-2.5 px-3">Location / Slot</th>
-                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2 px-2.5">SKU & Item Name</th>
+                      <th className="py-2 px-2.5">Quantity & Unit</th>
+                      <th className="py-2 px-2.5">Volume</th>
+                      <th className="py-2 px-2.5">Location / Slot</th>
+                      <th className="py-2 px-2.5">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {displayGoods.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-3">
-                          <span className="font-bold text-slate-900 block">{item.name}</span>
-                          <span className="font-mono text-[10px] text-indigo-600">{item.barcode}</span>
+                        <td className="py-2.5 px-2.5">
+                          <span className="font-bold text-slate-900 block truncate max-w-[180px]">{item.name}</span>
+                          <span className="font-mono text-[9.5px] text-indigo-600">{item.barcode}</span>
                         </td>
-                        <td className="py-3 px-3 font-mono">
+                        <td className="py-2.5 px-2.5 font-mono">
                           {item.quantity} {item.unit}
                         </td>
-                        <td className="py-3 px-3 font-mono font-bold text-indigo-600">
+                        <td className="py-2.5 px-2.5 font-mono font-bold text-indigo-600">
                           {item.dimensions?.volumeM3 || 0} m³
                         </td>
-                        <td className="py-3 px-3">
-                          <span className="text-slate-800 font-medium block">{item.warehouseName || "Cakung Hub"}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">
+                        <td className="py-2.5 px-2.5">
+                          <span className="text-slate-800 font-medium block truncate max-w-[120px]">{item.warehouseName || "Cakung Hub"}</span>
+                          <span className="text-[9.5px] text-slate-400 font-mono">
                             {item.slotCode ? `Slot ${item.slotCode}` : "Staging Bay"}
                           </span>
                         </td>
-                        <td className="py-3 px-3">
+                        <td className="py-2.5 px-2.5">
                           <Badge
-                            className={`text-[9.5px] font-medium ${
+                            className={`text-[9px] font-medium py-0 px-1.5 ${
                               item.status === "STORED"
                                 ? "bg-emerald-100 text-emerald-900"
                                 : item.status === "PENDING_PICKUP" || item.status === "IN_TRANSIT_INBOUND"
@@ -400,35 +486,42 @@ export default function CustomerDashboardPage() {
             )}
           </DashboardSectionCard>
 
-          {/* Active Delivery & Tracking Status */}
+          {/* Active Delivery & Tracking Status (Flex-1 to stretch & align bottom with Invoices) */}
           <DashboardSectionCard
+            compact={true}
+            className="flex-1 flex flex-col justify-between"
+            bodyClassName="flex-1 flex flex-col justify-between p-3.5 sm:p-4"
             title="Active Delivery & Outbound Dispatch Tracker"
             subtitle="Real-time freight status, route milestones, and driver assignment"
             icon={Truck}
             headerAction={
               <Link href="/customer/logistics/track">
-                <Button variant="ghost" size="sm" className="text-xs text-indigo-600 font-semibold h-8 px-2 hover:bg-indigo-50">
+                <Button variant="ghost" size="sm" className="text-xs text-indigo-600 font-semibold h-7 px-2 hover:bg-indigo-50">
                   Track Delivery →
                 </Button>
               </Link>
             }
           >
             {!activeOrder ? (
-              <DashboardEmptyState
-                icon={Truck}
-                title="No Active Deliveries"
-                description="You currently have no outbound delivery runs in transit. Schedule logistics dispatch whenever you need goods transported."
-                action={
-                  <Link href="/customer/logistics/request">
-                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8">
-                      Request New Delivery
-                    </Button>
-                  </Link>
-                }
-              />
+              <div className="flex-1 flex flex-col items-center justify-center py-6 px-4 text-center bg-slate-50/60 border border-dashed border-slate-200 rounded-xl my-auto space-y-2.5">
+                <div className="h-9 w-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center">
+                  <Truck className="h-4.5 w-4.5" />
+                </div>
+                <div className="space-y-0.5 max-w-sm">
+                  <h3 className="text-xs font-bold text-slate-700">No Active Deliveries</h3>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    You currently have no outbound delivery runs in transit. Schedule logistics dispatch whenever you need goods transported.
+                  </p>
+                </div>
+                <Link href="/customer/logistics/request" className="pt-1">
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs h-8 shadow-xs">
+                    Request New Delivery
+                  </Button>
+                </Link>
+              </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="space-y-3 my-auto">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
                   <div>
                     <span className="text-xs font-mono font-bold text-indigo-600 block">
                       Order #{activeOrder.orderNumber}
@@ -442,29 +535,29 @@ export default function CustomerDashboardPage() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-[11px] text-slate-400 block">Assigned Fleet</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block">Assigned Fleet</span>
                     <span className="font-bold text-slate-800 font-mono mt-0.5 block">
                       {activeOrder.vehiclePlate || "B 9876 XYZ"}
                     </span>
-                    <span className="text-[10px] text-slate-500">{activeOrder.vehicleType?.replace(/_/g, " ") || "Reefer Cold Box"}</span>
+                    <span className="text-[9.5px] text-slate-500">{activeOrder.vehicleType?.replace(/_/g, " ") || "Reefer Cold Box"}</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-[11px] text-slate-400 block">Driver PIC</span>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block">Driver PIC</span>
                     <span className="font-bold text-slate-800 mt-0.5 block">
                       {activeOrder.driverName || "Agus Pratama"}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">{activeOrder.driverPhone || "0857-1122-3344"}</span>
+                    <span className="text-[9.5px] text-slate-500 font-mono">{activeOrder.driverPhone || "0857-1122-3344"}</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-[11px] text-slate-400 block">Dispatch Time</span>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block">Dispatch Time</span>
                     <span className="font-bold text-emerald-600 mt-0.5 block font-mono">
                       {new Date(activeOrder.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className="text-[10px] text-slate-500">Doorstep Delivery</span>
+                    <span className="text-[9.5px] text-slate-500">Doorstep Delivery</span>
                   </div>
                 </div>
               </div>
@@ -472,12 +565,13 @@ export default function CustomerDashboardPage() {
           </DashboardSectionCard>
         </div>
 
-        {/* Right Column (4 cols): Leased Space Breakdown + Invoices Card */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Storage Allocation Summary */}
+        {/* Right Column (5 cols): Leased Space Breakdown + Invoices Card */}
+        <div className="lg:col-span-5 flex flex-col gap-5 h-full">
+          {/* Storage Allocation Summary (Compact Active Lease) */}
           <DashboardSectionCard
-            title="Leased Warehouse Hub"
-            subtitle="Active lease contract & temperature zones"
+            compact={true}
+            title="Active Warehouse Lease"
+            subtitle="Storage space allocation & facility location"
             icon={Building2}
             headerAction={
               <Link href="/customer/rental">
@@ -488,13 +582,13 @@ export default function CustomerDashboardPage() {
             }
           >
             {rentedSpace === 0 || !storageLocation ? (
-              <div className="p-5 bg-slate-50 border border-slate-200/80 rounded-xl text-center space-y-3">
-                <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
-                  <Warehouse className="h-5 w-5" />
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-xl text-center space-y-2.5">
+                <div className="h-9 w-9 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                  <Warehouse className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">No Warehouse Space Leased</h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  <p className="text-[10.5px] text-slate-500 mt-0.5 leading-relaxed">
                     You haven&apos;t leased any storage space yet. Reserve standard dry or sub-zero cold storage capacity to start depositing goods.
                   </p>
                 </div>
@@ -505,98 +599,98 @@ export default function CustomerDashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3.5">
+              <div className="space-y-3">
                 {/* 1. Main Facility Header & Status Badge */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/[0.08] via-teal-500/[0.03] to-slate-50 border border-emerald-500/20 shadow-xs relative overflow-hidden space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0 mt-0.5">
-                        <Warehouse className="h-5 w-5" />
+                <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-500/[0.08] via-teal-500/[0.03] to-slate-50 border border-emerald-500/20 shadow-2xs relative overflow-hidden space-y-2.5">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div className="h-8.5 w-8.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-sm shrink-0 mt-0.5">
+                        <Warehouse className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="text-xs font-extrabold text-slate-900 leading-snug tracking-tight break-words">
                           {storageLocation}
                         </h4>
-                        <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-1">
-                          <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <p className="text-[10.5px] text-slate-600 flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3 w-3 text-emerald-600 shrink-0" />
                           <span className="truncate">{warehouseAddress}</span>
                         </p>
                       </div>
                     </div>
 
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300/80 shrink-0 shadow-2xs">
-                      <span className="relative flex h-2 w-2">
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300/80 shrink-0 shadow-2xs">
+                      <span className="relative flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-600"></span>
                       </span>
-                      <span>Active Lease</span>
+                      <span>Active</span>
                     </div>
                   </div>
 
                   {/* 2. Capacity Utilization Progress Bar */}
-                  <div className="pt-2.5 border-t border-emerald-200/60 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[11px] font-semibold text-slate-600">Space Utilization</span>
-                      <span className="font-bold font-mono text-slate-900 text-[11px]">
+                  <div className="pt-2 border-t border-emerald-200/60 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10.5px]">
+                      <span className="font-semibold text-slate-600">Space Utilization</span>
+                      <span className="font-bold font-mono text-slate-900">
                         {utilPct.toFixed(1)}% <span className="text-slate-500 font-normal">({usedSpace} / {rentedSpace} m³)</span>
                       </span>
                     </div>
 
-                    <div className="h-2 w-full bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+                    <div className="h-1.5 w-full bg-slate-200/80 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
                         style={{ width: `${Math.max(3, Math.min(100, utilPct))}%` }}
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 pt-1">
-                      <div className="p-2 rounded-xl bg-white/90 border border-emerald-100/90 text-center shadow-2xs">
-                        <span className="block text-[9.5px] uppercase tracking-wider text-slate-400 font-bold">Total Leased</span>
-                        <span className="text-xs font-extrabold font-mono text-slate-900">{rentedSpace} m³</span>
+                    <div className="grid grid-cols-3 gap-1.5 pt-0.5">
+                      <div className="p-1.5 rounded-lg bg-white/90 border border-emerald-100/80 text-center shadow-2xs">
+                        <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-bold">Total Lease</span>
+                        <span className="text-[11px] font-extrabold font-mono text-slate-900">{rentedSpace} m³</span>
                       </div>
-                      <div className="p-2 rounded-xl bg-white/90 border border-emerald-100/90 text-center shadow-2xs">
-                        <span className="block text-[9.5px] uppercase tracking-wider text-emerald-700 font-bold">Occupied</span>
-                        <span className="text-xs font-extrabold font-mono text-emerald-700">{usedSpace} m³</span>
+                      <div className="p-1.5 rounded-lg bg-white/90 border border-emerald-100/80 text-center shadow-2xs">
+                        <span className="block text-[9px] uppercase tracking-wider text-emerald-700 font-bold">Occupied</span>
+                        <span className="text-[11px] font-extrabold font-mono text-emerald-700">{usedSpace} m³</span>
                       </div>
-                      <div className="p-2 rounded-xl bg-white/90 border border-emerald-100/90 text-center shadow-2xs">
-                        <span className="block text-[9.5px] uppercase tracking-wider text-teal-700 font-bold">Available</span>
-                        <span className="text-xs font-extrabold font-mono text-teal-700">{(rentedSpace - usedSpace).toFixed(2)} m³</span>
+                      <div className="p-1.5 rounded-lg bg-white/90 border border-emerald-100/80 text-center shadow-2xs">
+                        <span className="block text-[9px] uppercase tracking-wider text-teal-700 font-bold">Available</span>
+                        <span className="text-[11px] font-extrabold font-mono text-teal-700">{(rentedSpace - usedSpace).toFixed(2)} m³</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Specifications & Contract Specs Grid */}
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs space-y-2">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs space-y-1.5">
                   <div className="flex items-center justify-between py-0.5">
-                    <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
-                      <Snowflake className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                    <span className="text-slate-500 flex items-center gap-1.5 text-[10.5px]">
+                      <Snowflake className="h-3 w-3 text-sky-600 shrink-0" />
                       Storage Zone
                     </span>
-                    <span className="font-semibold text-slate-800 text-[11px] flex items-center gap-1.5">
-                      <span>Cold Storage Sub-zero</span>
-                      <span className="font-mono text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                    <span className="font-semibold text-slate-800 text-[10.5px] flex items-center gap-1.5">
+                      <span>Cold Storage</span>
+                      <span className="font-mono text-sky-700 bg-sky-50 border border-sky-200 px-1 py-0.2 rounded text-[9.5px] font-bold">
                         -18°C
                       </span>
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between py-0.5 border-t border-slate-100">
-                    <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
-                      <Calendar className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-                      Contract Period
+                    <span className="text-slate-500 flex items-center gap-1.5 text-[10.5px]">
+                      <Calendar className="h-3 w-3 text-indigo-600 shrink-0" />
+                      Contract Term
                     </span>
-                    <span className="font-semibold text-slate-800 font-mono text-[11px]">
-                      12 Months (Annual Contract)
+                    <span className="font-semibold text-slate-800 font-mono text-[10.5px]">
+                      12 Months (Annual)
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between py-0.5 border-t border-slate-100">
-                    <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
-                      <CreditCard className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                      Billing Rate
+                    <span className="text-slate-500 flex items-center gap-1.5 text-[10.5px]">
+                      <CreditCard className="h-3 w-3 text-emerald-600 shrink-0" />
+                      Rental Rate
                     </span>
-                    <span className="font-bold text-slate-900 font-mono text-[11px]">
+                    <span className="font-bold text-slate-900 font-mono text-[10.5px]">
                       Rp 150.000 <span className="text-slate-500 font-normal">/ m³ / mo</span>
                     </span>
                   </div>
@@ -605,8 +699,11 @@ export default function CustomerDashboardPage() {
             )}
           </DashboardSectionCard>
 
-          {/* Billing & Invoice Summary Card */}
+          {/* Billing & Invoice Summary Card (Flex-1 to stretch & match bottom line) */}
           <DashboardSectionCard
+            compact={true}
+            className="flex-1 flex flex-col justify-between"
+            bodyClassName="flex-1 flex flex-col justify-between p-3.5 sm:p-4"
             title="Invoices & Payments"
             subtitle="Monthly lease billing overview"
             icon={Receipt}
@@ -619,121 +716,40 @@ export default function CustomerDashboardPage() {
             }
           >
             {!invoiceNumber && monthlyBilling === 0 ? (
-              <div className="p-5 bg-slate-50 border border-slate-200/80 rounded-xl text-center space-y-2">
-                <Receipt className="h-8 w-8 text-slate-400 mx-auto" />
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-xl text-center space-y-2 my-auto">
+                <Receipt className="h-7 w-7 text-slate-400 mx-auto" />
                 <h4 className="text-xs font-bold text-slate-800">No Invoices Issued</h4>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[10.5px] text-slate-500">
                   You have no active billing statements. Once you rent warehouse space or schedule deliveries, invoices will appear here.
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="space-y-3 flex-1 flex flex-col justify-between">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-900 font-mono">
+                    <span className="font-bold text-slate-900 font-mono text-[11px]">
                       #{invoiceNumber}
                     </span>
-                    <Badge className={invoiceStatus === "PAID" ? "bg-emerald-600 text-white text-[10px]" : "bg-amber-500 text-slate-950 font-bold text-[10px]"}>
+                    <Badge className={invoiceStatus === "PAID" ? "bg-emerald-600 text-white text-[9.5px]" : "bg-amber-500 text-slate-950 font-bold text-[9.5px]"}>
                       {invoiceStatus || "UNPAID"}
                     </Badge>
                   </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-slate-500">Monthly Subtotal</span>
-                    <span className="text-lg font-extrabold text-slate-900 font-mono">
+                  <div className="flex items-baseline justify-between pt-1">
+                    <span className="text-[11px] text-slate-500">Monthly Subtotal</span>
+                    <span className="text-base font-extrabold text-slate-900 font-mono">
                       Rp {monthlyBilling.toLocaleString("id-ID")}
                     </span>
                   </div>
                 </div>
 
-                <Link href="/customer/billing" className="block">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl h-9 flex items-center justify-center gap-1.5 shadow-sm">
+                <Link href="/customer/billing" className="block pt-1">
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl h-8.5 flex items-center justify-center gap-1.5 shadow-xs">
                     <CreditCard className="h-3.5 w-3.5" />
                     <span>View & Pay Invoices</span>
                   </Button>
                 </Link>
               </div>
             )}
-          </DashboardSectionCard>
-        </div>
-      </div>
-
-      {/* 5. Secondary Grid: Quick Customer Shortcuts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-12">
-          <DashboardSectionCard
-            title="Customer Service Direct Pathways"
-            subtitle="Quick actions for inventory deposit, logistics scheduling, and space management"
-            icon={Compass}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link
-                href="/customer/goods/input"
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group flex items-start gap-3"
-              >
-                <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <QrCode className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-xs text-slate-900 block group-hover:text-emerald-600 transition-colors">
-                    Inbound Goods Intake
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Register new cargo and print SKU barcode labels
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/customer/logistics/request"
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-500 hover:bg-indigo-50/30 transition-all group flex items-start gap-3"
-              >
-                <div className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Truck className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-xs text-slate-900 block group-hover:text-indigo-600 transition-colors">
-                    Request Dispatch
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Schedule refrigerated fleet delivery to destination
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/customer/rental"
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group flex items-start gap-3"
-              >
-                <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Warehouse className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-xs text-slate-900 block group-hover:text-emerald-600 transition-colors">
-                    Extend Storage Lease
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Reserve additional volumetric space in cold hubs
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/customer/receipt/confirm"
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-amber-500 hover:bg-amber-50/30 transition-all group flex items-start gap-3"
-              >
-                <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <FileCheck className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-xs text-slate-900 block group-hover:text-amber-600 transition-colors">
-                    Confirm Goods Receipt
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                    Verify delivered shipments and sign electronic POD
-                  </p>
-                </div>
-              </Link>
-            </div>
           </DashboardSectionCard>
         </div>
       </div>
