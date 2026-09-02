@@ -98,8 +98,6 @@ export type WarehouseWithRelations = {
   }>;
 };
 
-import { EventsService } from '../events/events.service';
-import { DomainEventType } from '../events/events.types';
 import {
   MASTER_STORAGE_RATES,
   DEFAULT_STORAGE_RATE_PER_M3,
@@ -116,10 +114,7 @@ export class WarehouseService {
   // Master rate per m3/month (IDR) from SSOT constants
   private readonly STORAGE_RATES = MASTER_STORAGE_RATES;
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly eventsService: EventsService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Mengambil daftar semua fasilitas gudang beserta ringkasan kapasitas dan utilisasi slot real dari PostgreSQL.
@@ -741,55 +736,6 @@ export class WarehouseService {
       });
 
       return invoice;
-    });
-
-    // Real-Time Event Dispatching
-    this.eventsService.publish({
-      type: DomainEventType.INVOICE_CREATED,
-      payload: {
-        invoiceId: result.id,
-        invoiceNumber,
-        customerId: currentUser.id,
-        billingMonth,
-        totalAmount: grandTotal,
-        status: InvoiceStatus.UNPAID,
-        warehouseCode: warehouse.code,
-        warehouseName: warehouse.name,
-      },
-      targetCustomerId: currentUser.id,
-      targetInvoiceId: result.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.RENTAL_CAPACITY_CHANGED,
-      payload: {
-        customerId: currentUser.id,
-        warehouseId: warehouse.id,
-        storageType: dto.storageType,
-        volumeM3: dto.volumeM3,
-      },
-      targetCustomerId: currentUser.id,
-      targetWarehouseId: warehouse.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.WAREHOUSE_CAPACITY_CHANGED,
-      payload: {
-        warehouseId: warehouse.id,
-        customerId: currentUser.id,
-      },
-      targetWarehouseId: warehouse.id,
-      targetCustomerId: currentUser.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.NOTIFICATION_CREATED,
-      payload: {
-        recipientUserId: currentUser.id,
-        title: 'Warehouse Space Rental Booking Registered',
-        actionUrl: '/customer/billing',
-      },
-      targetCustomerId: currentUser.id,
     });
 
     return {

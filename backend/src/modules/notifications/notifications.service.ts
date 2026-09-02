@@ -11,9 +11,6 @@ import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationResponseDto } from './dto/notification-response.dto';
 
-import { EventsService } from '../events/events.service';
-import { DomainEventType } from '../events/events.types';
-
 export interface CreateNotificationInput {
   recipientUserId: string;
   recipientRole: UserRole;
@@ -29,10 +26,7 @@ export interface CreateNotificationInput {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly eventsService: EventsService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Helper internal untuk memetakan entity Prisma SystemNotification ke DTO
@@ -124,17 +118,6 @@ export class NotificationsService {
     );
 
     const dto = this.mapToDto(created);
-
-    // If standalone (outside tx), publish immediate event. For tx, calling methods publish domain events.
-    this.eventsService.publish({
-      type: DomainEventType.NOTIFICATION_CREATED,
-      payload: dto,
-      targetCustomerId:
-        input.recipientRole === UserRole.CUSTOMER ? input.recipientUserId : undefined,
-      targetDriverId: input.recipientRole === UserRole.DRIVER ? input.recipientUserId : undefined,
-      targetRoles: input.recipientRole === UserRole.ADMIN ? [UserRole.ADMIN] : undefined,
-    });
-
     return dto;
   }
 

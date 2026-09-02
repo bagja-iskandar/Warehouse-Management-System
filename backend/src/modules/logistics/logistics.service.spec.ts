@@ -14,7 +14,6 @@ import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface';
 import { LogisticsService } from './logistics.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { EventsService } from '../events/events.service';
 
 describe('LogisticsService', () => {
   let service: LogisticsService;
@@ -174,13 +173,6 @@ describe('LogisticsService', () => {
           useValue: {
             createNotification: jest.fn().mockResolvedValue({ id: 'notif-1' }),
             notifyRole: jest.fn().mockResolvedValue([{ id: 'notif-2' }]),
-          },
-        },
-        {
-          provide: EventsService,
-          useValue: {
-            publish: jest.fn(),
-            getUserEventStream: jest.fn(),
           },
         },
         {

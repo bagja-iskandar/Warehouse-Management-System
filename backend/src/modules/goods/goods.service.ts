@@ -27,8 +27,6 @@ import { GoodsDetailResponseDto, GoodsListItemDto } from './dto/goods-response.d
 import { TransferGoodsSlotDto } from './dto/transfer-goods-slot.dto';
 import { UpdateGoodsStatusDto } from './dto/update-goods-status.dto';
 
-import { EventsService } from '../events/events.service';
-import { DomainEventType } from '../events/events.types';
 import {
   MASTER_STORAGE_RATES,
   MINIMUM_MONTHLY_RENTAL_FEE,
@@ -72,7 +70,6 @@ export class GoodsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    private readonly eventsService: EventsService,
   ) {}
 
   /**
@@ -388,37 +385,6 @@ export class GoodsService {
       );
 
       return goods;
-    });
-
-    // Publish Real-Time Domain Event after transaction commits
-    this.eventsService.publish({
-      type: DomainEventType.GOODS_REGISTERED,
-      payload: {
-        goodsId: createdGoods.id,
-        barcode: createdGoods.barcode,
-        name: createdGoods.name,
-        customerId: targetCustomerId,
-        warehouseId: warehouse.id,
-        warehouseName: warehouse.name,
-        quantity: createdGoods.quantity,
-        volumeM3: createdGoods.volumeM3,
-        weightKg: createdGoods.weightKg,
-        status: createdGoods.status,
-      },
-      targetCustomerId,
-      targetWarehouseId: warehouse.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.INVENTORY_MUTATED,
-      payload: {
-        goodsId: createdGoods.id,
-        customerId: targetCustomerId,
-        warehouseId: warehouse.id,
-        action: 'CREATED',
-      },
-      targetCustomerId,
-      targetWarehouseId: warehouse.id,
     });
 
     return this.findById(createdGoods.id, currentUser);
@@ -807,54 +773,6 @@ export class GoodsService {
       }
     });
 
-    // Real-Time Event Dispatching after Transaction Commits
-    let eventType: DomainEventType = DomainEventType.INVENTORY_MUTATED;
-    if (dto.status === GoodsStorageStatus.INSPECTING) {
-      eventType = DomainEventType.GOODS_RECEIVED;
-    } else if (dto.status === GoodsStorageStatus.STORED) {
-      eventType = DomainEventType.GOODS_PUT_AWAY;
-    }
-
-    this.eventsService.publish({
-      type: eventType,
-      payload: {
-        goodsId: goods.id,
-        barcode: goods.barcode,
-        name: goods.name,
-        customerId: goods.customerId,
-        warehouseId: goods.warehouseId,
-        previousStatus: goods.status,
-        newStatus: dto.status,
-        slotId: dto.slotId,
-      },
-      targetCustomerId: goods.customerId,
-      targetWarehouseId: goods.warehouseId,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.INVENTORY_MUTATED,
-      payload: {
-        goodsId: goods.id,
-        customerId: goods.customerId,
-        warehouseId: goods.warehouseId,
-        newStatus: dto.status,
-      },
-      targetCustomerId: goods.customerId,
-      targetWarehouseId: goods.warehouseId,
-    });
-
-    if (dto.status === GoodsStorageStatus.STORED || goods.status === GoodsStorageStatus.STORED) {
-      this.eventsService.publish({
-        type: DomainEventType.WAREHOUSE_CAPACITY_CHANGED,
-        payload: {
-          warehouseId: goods.warehouseId,
-          customerId: goods.customerId,
-        },
-        targetWarehouseId: goods.warehouseId,
-        targetCustomerId: goods.customerId,
-      });
-    }
-
     return this.findById(goods.id, currentUser);
   }
 
@@ -1035,30 +953,6 @@ export class GoodsService {
         },
         tx,
       );
-    });
-
-    // Real-Time Event Dispatching
-    this.eventsService.publish({
-      type: DomainEventType.GOODS_TRANSFERRED,
-      payload: {
-        goodsId: goods.id,
-        customerId: goods.customerId,
-        warehouseId: goods.warehouseId,
-        sourceSlotId: goods.slotId,
-        targetSlotId: dto.targetSlotId,
-      },
-      targetCustomerId: goods.customerId,
-      targetWarehouseId: goods.warehouseId,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.WAREHOUSE_CAPACITY_CHANGED,
-      payload: {
-        warehouseId: goods.warehouseId,
-        customerId: goods.customerId,
-      },
-      targetWarehouseId: goods.warehouseId,
-      targetCustomerId: goods.customerId,
     });
 
     return this.findById(goods.id, currentUser);

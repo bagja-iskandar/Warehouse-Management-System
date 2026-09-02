@@ -41,8 +41,6 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { VehicleQueryDto } from './dto/vehicle-query.dto';
 import { VehicleResponseDto } from './dto/vehicle-response.dto';
 
-import { EventsService } from '../events/events.service';
-import { DomainEventType } from '../events/events.types';
 import {
   ALLOWED_ORDER_TRANSITIONS,
   validateRolePermissionOnOrder,
@@ -66,7 +64,6 @@ export class LogisticsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
-    private readonly eventsService: EventsService,
   ) {}
 
   // ===========================================================================
@@ -954,23 +951,6 @@ export class LogisticsService {
       return order;
     });
 
-    // Publish Real-Time Domain Event
-    this.eventsService.publish({
-      type: DomainEventType.ORDER_CREATED,
-      payload: {
-        orderId: createdOrder.id,
-        orderNumber: createdOrder.orderNumber,
-        type: createdOrder.type,
-        customerId: createdOrder.customerId,
-        driverId: createdOrder.driverId,
-        vehicleId: createdOrder.vehicleId,
-        status: createdOrder.status,
-      },
-      targetCustomerId: createdOrder.customerId,
-      targetDriverId: createdOrder.driverId || undefined,
-      targetOrderId: createdOrder.id,
-    });
-
     return this.findOrderById(createdOrder.id, currentUser);
   }
 
@@ -1285,57 +1265,6 @@ export class LogisticsService {
       }
     });
 
-    // Real-Time Domain Event Dispatching
-    const finalDriverId = dto.driverId || order.driverId;
-    const finalVehicleId = dto.vehicleId || order.vehicleId;
-
-    if (newStatus === OrderStatus.DRIVER_ASSIGNED || dto.driverId || dto.vehicleId) {
-      this.eventsService.publish({
-        type: DomainEventType.DRIVER_ASSIGNED,
-        payload: {
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          driverId: finalDriverId,
-          vehicleId: finalVehicleId,
-          customerId: order.customerId,
-          status: newStatus,
-        },
-        targetCustomerId: order.customerId,
-        targetDriverId: finalDriverId || undefined,
-        targetOrderId: order.id,
-      });
-    }
-
-    this.eventsService.publish({
-      type: DomainEventType.DELIVERY_STATUS_CHANGED,
-      payload: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        previousStatus: currentStatus,
-        newStatus,
-        customerId: order.customerId,
-        driverId: finalDriverId,
-      },
-      targetCustomerId: order.customerId,
-      targetDriverId: finalDriverId || undefined,
-      targetOrderId: order.id,
-    });
-
-    if (newStatus === OrderStatus.CONFIRMED) {
-      this.eventsService.publish({
-        type: DomainEventType.DELIVERY_RECEIPT_CONFIRMED,
-        payload: {
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          customerId: order.customerId,
-          driverId: finalDriverId,
-        },
-        targetCustomerId: order.customerId,
-        targetDriverId: finalDriverId || undefined,
-        targetOrderId: order.id,
-      });
-    }
-
     return this.findOrderById(order.id, currentUser);
   }
 
@@ -1485,76 +1414,6 @@ export class LogisticsService {
       );
     });
 
-    // Real-Time Event Dispatching after Transaction Commits
-    const primaryWarehouseId = order.orderItems[0]?.goods?.warehouseId;
-
-    this.eventsService.publish({
-      type: DomainEventType.INBOUND_CONFIRMED,
-      payload: {
-        inboundId: order.id,
-        orderNumber: order.orderNumber,
-        warehouseId: primaryWarehouseId,
-        customerId: order.customerId,
-        status: OrderStatus.DELIVERED,
-        receivedQuantity: dto.receivedQuantity,
-        damagedQuantity: dto.damagedQuantity,
-        missingQuantity: dto.missingQuantity,
-      },
-      targetCustomerId: order.customerId,
-      targetWarehouseId: primaryWarehouseId,
-      targetOrderId: order.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.GOODS_RECEIVED,
-      payload: {
-        orderId: order.id,
-        customerId: order.customerId,
-        warehouseId: primaryWarehouseId,
-        goodsCount: order.orderItems.length,
-      },
-      targetCustomerId: order.customerId,
-      targetWarehouseId: primaryWarehouseId,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.INVENTORY_MUTATED,
-      payload: {
-        orderId: order.id,
-        customerId: order.customerId,
-        action: 'RECEIVED_INBOUND',
-      },
-      targetCustomerId: order.customerId,
-      targetWarehouseId: primaryWarehouseId,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.DELIVERY_STATUS_CHANGED,
-      payload: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        previousStatus: OrderStatus.ARRIVED_DESTINATION,
-        newStatus: OrderStatus.DELIVERED,
-        customerId: order.customerId,
-        driverId: order.driverId,
-      },
-      targetCustomerId: order.customerId,
-      targetDriverId: order.driverId || undefined,
-      targetOrderId: order.id,
-    });
-
-    if (primaryWarehouseId) {
-      this.eventsService.publish({
-        type: DomainEventType.WAREHOUSE_CAPACITY_CHANGED,
-        payload: {
-          warehouseId: primaryWarehouseId,
-          customerId: order.customerId,
-        },
-        targetWarehouseId: primaryWarehouseId,
-        targetCustomerId: order.customerId,
-      });
-    }
-
     return this.findOrderById(order.id, currentUser);
   }
 
@@ -1641,37 +1500,6 @@ export class LogisticsService {
       );
     });
 
-    // Real-Time Event Dispatching
-    this.eventsService.publish({
-      type: DomainEventType.DELIVERY_COMPLETED,
-      payload: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        customerId: order.customerId,
-        driverId: order.driverId,
-        recipientName: dto.recipientName,
-        proofOfDeliveryUrl: dto.proofOfDeliveryUrl,
-      },
-      targetCustomerId: order.customerId,
-      targetDriverId: order.driverId || undefined,
-      targetOrderId: order.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.DELIVERY_STATUS_CHANGED,
-      payload: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        previousStatus: order.status,
-        newStatus: OrderStatus.DELIVERED,
-        customerId: order.customerId,
-        driverId: order.driverId,
-      },
-      targetCustomerId: order.customerId,
-      targetDriverId: order.driverId || undefined,
-      targetOrderId: order.id,
-    });
-
     return this.findOrderById(order.id, currentUser);
   }
 
@@ -1741,23 +1569,6 @@ export class LogisticsService {
       );
 
       return msg;
-    });
-
-    // Real-Time Event Dispatching for Order Message
-    this.eventsService.publish({
-      type: DomainEventType.ORDER_MESSAGE_CREATED,
-      payload: {
-        messageId: message.id,
-        orderId: message.orderId,
-        orderNumber: order.orderNumber,
-        customerId: message.customerId,
-        senderName: message.senderName,
-        title: message.title,
-        content: message.content,
-        createdAt: message.createdAt.toISOString(),
-      },
-      targetCustomerId: order.customerId,
-      targetOrderId: order.id,
     });
 
     return {

@@ -4,7 +4,6 @@ import { SlotStatus, StorageZoneType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../database/prisma.service';
 import { WarehouseService } from './warehouse.service';
-import { EventsService } from '../events/events.service';
 
 describe('WarehouseService', () => {
   let service: WarehouseService;
@@ -81,13 +80,6 @@ describe('WarehouseService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WarehouseService,
-        {
-          provide: EventsService,
-          useValue: {
-            publish: jest.fn(),
-            getUserEventStream: jest.fn(),
-          },
-        },
         {
           provide: PrismaService,
           useValue: {

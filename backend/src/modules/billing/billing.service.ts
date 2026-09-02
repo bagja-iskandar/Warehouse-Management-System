@@ -24,8 +24,6 @@ import {
 } from './dto/invoice-response.dto';
 import { PayInvoiceDto } from './dto/pay-invoice.dto';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
-import { EventsService } from '../events/events.service';
-import { DomainEventType } from '../events/events.types';
 import { StorageService } from './services/storage.service';
 import { OVERDUE_PENALTY_RATE_PER_WEEK } from '../../common/constants/pricing.constants';
 import { calculateOverduePenalty } from '../../common/utils/calculation.util';
@@ -59,7 +57,6 @@ export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
-    private readonly eventsService: EventsService,
   ) {}
 
   // ===========================================================================
@@ -457,48 +454,6 @@ export class BillingService {
       });
     });
 
-    // Real-Time Event Dispatching (Committed to Database)
-    this.eventsService.publish({
-      type: DomainEventType.PAYMENT_SUBMITTED,
-      payload: {
-        invoiceId: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        paymentNumber,
-        customerId: invoice.customerId,
-        amount: penaltyCalc.totalAmount.toNumber(),
-        paymentMethod: dto.paymentMethod,
-        paymentReference: dto.paymentReference || `TRX-${Date.now().toString().slice(-8)}`,
-        status: PaymentStatus.UNDER_REVIEW,
-        submittedAt: now.toISOString(),
-      },
-      targetCustomerId: invoice.customerId,
-      targetInvoiceId: invoice.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.INVOICE_UPDATED,
-      payload: {
-        invoiceId: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        customerId: invoice.customerId,
-        status: InvoiceStatus.PENDING_PAYMENT,
-        latestPaymentStatus: PaymentStatus.UNDER_REVIEW,
-        totalAmount: penaltyCalc.totalAmount.toNumber(),
-      },
-      targetCustomerId: invoice.customerId,
-      targetInvoiceId: invoice.id,
-    });
-
-    this.eventsService.publish({
-      type: DomainEventType.NOTIFICATION_CREATED,
-      payload: {
-        recipientUserId: invoice.customerId,
-        title: 'Proof of Payment Submitted',
-        actionUrl: '/customer/billing',
-      },
-      targetCustomerId: invoice.customerId,
-    });
-
     this.logger.log(
       `Payment proof for invoice '${invoice.invoiceNumber}' (${paymentNumber}) submitted by '${currentUser.name}'. Status: UNDER_REVIEW.`,
     );
@@ -635,97 +590,6 @@ export class BillingService {
         );
       }
     });
-
-    // Real-Time Domain Event Dispatching (Committed to Database)
-    if (dto.action === 'VERIFY') {
-      this.eventsService.publish({
-        type: DomainEventType.PAYMENT_VERIFIED,
-        payload: {
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoiceNumber,
-          paymentId: latestUnderReviewPayment?.id,
-          paymentNumber: latestUnderReviewPayment?.paymentNumber,
-          receiptNumber,
-          customerId: invoice.customerId,
-          status: PaymentStatus.VERIFIED,
-          verifiedAt: now.toISOString(),
-          verifiedByAdminName: currentUser.name,
-        },
-        targetCustomerId: invoice.customerId,
-        targetInvoiceId: invoice.id,
-      });
-
-      this.eventsService.publish({
-        type: DomainEventType.INVOICE_PAID,
-        payload: {
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoiceNumber,
-          receiptNumber,
-          customerId: invoice.customerId,
-          status: InvoiceStatus.PAID,
-          paidDate: now.toISOString(),
-          verifiedByAdminName: currentUser.name,
-        },
-        targetCustomerId: invoice.customerId,
-        targetInvoiceId: invoice.id,
-      });
-
-      this.eventsService.publish({
-        type: DomainEventType.NOTIFICATION_CREATED,
-        payload: {
-          recipientUserId: invoice.customerId,
-          title: 'Payment Verified & Settled',
-          actionUrl: '/customer/billing',
-        },
-        targetCustomerId: invoice.customerId,
-      });
-    } else {
-      const rejectionReason =
-        dto.rejectionReason || dto.note || 'Payment proof is invalid or unrecognized.';
-      const revertStatus =
-        now.getTime() > invoice.dueDate.getTime() ? InvoiceStatus.OVERDUE : InvoiceStatus.UNPAID;
-
-      this.eventsService.publish({
-        type: DomainEventType.PAYMENT_REJECTED,
-        payload: {
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoiceNumber,
-          paymentId: latestUnderReviewPayment?.id,
-          paymentNumber: latestUnderReviewPayment?.paymentNumber,
-          customerId: invoice.customerId,
-          rejectionReason,
-          status: PaymentStatus.REJECTED,
-          verifiedAt: now.toISOString(),
-          verifiedByAdminName: currentUser.name,
-        },
-        targetCustomerId: invoice.customerId,
-        targetInvoiceId: invoice.id,
-      });
-
-      this.eventsService.publish({
-        type: DomainEventType.INVOICE_UPDATED,
-        payload: {
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoiceNumber,
-          customerId: invoice.customerId,
-          status: revertStatus,
-          latestPaymentStatus: PaymentStatus.REJECTED,
-          rejectionReason,
-        },
-        targetCustomerId: invoice.customerId,
-        targetInvoiceId: invoice.id,
-      });
-
-      this.eventsService.publish({
-        type: DomainEventType.NOTIFICATION_CREATED,
-        payload: {
-          recipientUserId: invoice.customerId,
-          title: 'Payment Verification Rejected',
-          actionUrl: '/customer/billing',
-        },
-        targetCustomerId: invoice.customerId,
-      });
-    }
 
     return this.findInvoiceById(invoice.id, currentUser);
   }
