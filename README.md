@@ -6,8 +6,21 @@
 [![Supabase Postgres](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![Prisma ORM](https://img.shields.io/badge/Prisma-ORM%20v6-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Built with Antigravity](https://img.shields.io/badge/Built%20With-Google%20DeepMind%20Antigravity-4285F4?style=for-the-badge&logo=google)](https://deepmind.google/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](./LICENSE)
 
 Platform Enterprise tata kelola pergudangan terpadu (*Warehouse Management System*) dan logistik rantai dingin (*Cold Chain Logistics*) di Indonesia. Sistem ini mengintegrasikan pemantauan suhu IoT real-time, manajemen kapasitas m³ bertingkat (*multi-tier rack allocation*), dispatch armada truk pendingin (*reefer fleet*), serta sistem penagihan kontrak sewa otomatis.
+
+---
+
+## 🎓 Asal-Usul Proyek: Dari SRS Kuliah Menuju Enterprise Rework
+
+Proyek ini bermula dari dokumen akademis **Software Requirements Specification (SRS) Sistem Penyimpanan Gudang** yang disusun saat masa perkuliahan (terdokumentasi di [docs/SRS/](file:///d:/Project/Warehouse/docs/SRS)). Dokumen awal tersebut memuat rancangan 16 Use Cases fungsional inti untuk operasional pergudangan dan logistik.
+
+Pada fase saat ini, proyek telah menjalani **Tahap Rework & Rekayasa Ulang Menyeluruh (Enterprise Rework)**:
+1. **Transformasi Arsitektur**: Mengubah cetak biru akademis menjadi platform cloud-native terdistribusi berskala *production-ready*.
+2. **Implementasi Full-Stack Modern**: Menggantikan pendekatan monolitik konvensional dengan pemisahan **Next.js 15 App Router** di sisi frontend dan **NestJS 10 Modular Clean Architecture** di sisi backend.
+3. **Penyelarasan 16 Use Cases (100% Verified)**: Seluruh 16 Use Cases dari dokumen SRS perkuliahan (mulai dari *Input Barang*, *Pemilihan Kendaraan*, *Penjadwalan*, *Monitoring Suhu IoT*, *Konfirmasi POD*, hingga *Penagihan & Denda Keterlambatan*) telah diimplementasikan penuh dan lolos uji end-to-end (lihat matriks di [docs/qa/SRS_TRACEABILITY.md](file:///d:/Project/Warehouse/docs/qa/SRS_TRACEABILITY.md)).
+4. **Didukung Next-Gen AI**: Proses rekayasa ulang, refactoring arsitektur, dan optimasi performa serverless dikolaborasikan bersama **Google DeepMind Antigravity AI** dan perancangan visual antarmuka dengan **Google Stitch**.
 
 ---
 

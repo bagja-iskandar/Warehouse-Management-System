@@ -1,6 +1,11 @@
 # Cloud Production Deployment Guide
 **Warehouse Management System (WMS Nusantara)**
-*Next.js 15 Frontend on Vercel Edge, NestJS 10 Serverless Backend, and Supabase PostgreSQL on AWS Sydney*
+*Evolusi dari SRS Perkuliahan Menjadi Platform Cloud Enterprise: Next.js 15 Frontend on Vercel Edge, NestJS 10 Serverless Backend, and Supabase PostgreSQL on AWS Sydney*
+
+---
+
+> **Catatan Konteks & Asal-Usul Proyek**:
+> Platform ini berakar dari dokumen akademis spesifikasi kebutuhan sistem (*Software Requirements Specification* - SRS) pergudangan masa kuliah yang mendefinisikan 16 Use Cases fungsional. Melalui fase *Enterprise Rework*, seluruh kebutuhan tersebut direkayasa ulang secara penuh menjadi arsitektur cloud-native modern berstandar industri dengan bantuan Google DeepMind Antigravity AI, Google Stitch, Supabase, dan Vercel.
 
 ---
 
