@@ -39,12 +39,31 @@ import { useCustomerSummary } from "@/hooks/use-analytics";
 import { useGoods } from "@/hooks/use-goods";
 import { useDeliveryOrders } from "@/hooks/use-logistics";
 import { useAuth } from "@/hooks/use-auth";
+import { useCustomerActiveWarehouses } from "@/hooks/use-warehouses";
 
 export default function CustomerDashboardPage() {
   const { user } = useAuth();
   const { data: summary, isLoading, isError, refetch, isFetching } = useCustomerSummary(user?.id);
   const { data: liveGoods = [] } = useGoods(user?.id);
   const { data: liveOrders = [] } = useDeliveryOrders();
+  const { data: customerWarehouses = [] } = useCustomerActiveWarehouses();
+
+  const activeWh =
+    customerWarehouses.find(
+      (w) =>
+        (summary?.activeWarehouseId && w.id === summary.activeWarehouseId) ||
+        (summary?.storageLocationName &&
+          (summary.storageLocationName.toLowerCase().includes(w.name.toLowerCase()) ||
+            summary.storageLocationName.toLowerCase().includes(w.city.toLowerCase()))),
+    ) || customerWarehouses[0];
+
+  const warehouseAddress = activeWh?.address
+    ? `${activeWh.address}, ${activeWh.city}`
+    : summary?.storageLocationName?.includes("Bandung")
+    ? "Jl. Soekarno Hatta No. 788, Gedebage, Bandung"
+    : summary?.storageLocationName?.includes("Surabaya")
+    ? "Kawasan Industri Rungkut Blok C-12, Surabaya"
+    : "Kawasan Industri Cakung Blok B-5, Jakarta Timur";
 
   if (isLoading && !summary) {
     return (
@@ -486,33 +505,100 @@ export default function CustomerDashboardPage() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-emerald-950">{storageLocation}</span>
-                    <Badge className="bg-emerald-600 text-white text-[9.5px]">Active Lease</Badge>
+              <div className="space-y-3.5">
+                {/* 1. Main Facility Header & Status Badge */}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/[0.08] via-teal-500/[0.03] to-slate-50 border border-emerald-500/20 shadow-xs relative overflow-hidden space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0 mt-0.5">
+                        <Warehouse className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-extrabold text-slate-900 leading-snug tracking-tight break-words">
+                          {storageLocation}
+                        </h4>
+                        <p className="text-[11px] text-slate-600 flex items-center gap-1 mt-1">
+                          <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span className="truncate">{warehouseAddress}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300/80 shrink-0 shadow-2xs">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                      </span>
+                      <span>Active Lease</span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-emerald-800">
-                    Kawasan Industri Cakung Blok B-5, Jakarta Timur
-                  </p>
-                  <div className="pt-2 flex items-center justify-between text-[11px] font-mono border-t border-emerald-200/60 text-emerald-900">
-                    <span>Capacity: {rentedSpace} m³</span>
-                    <span>Used: {usedSpace} m³</span>
+
+                  {/* 2. Capacity Utilization Progress Bar */}
+                  <div className="pt-2.5 border-t border-emerald-200/60 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[11px] font-semibold text-slate-600">Space Utilization</span>
+                      <span className="font-bold font-mono text-slate-900 text-[11px]">
+                        {utilPct.toFixed(1)}% <span className="text-slate-500 font-normal">({usedSpace} / {rentedSpace} m³)</span>
+                      </span>
+                    </div>
+
+                    <div className="h-2 w-full bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.max(3, Math.min(100, utilPct))}%` }}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <div className="p-2 rounded-xl bg-white/90 border border-emerald-100/90 text-center shadow-2xs">
+                        <span className="block text-[9.5px] uppercase tracking-wider text-slate-400 font-bold">Total Leased</span>
+                        <span className="text-xs font-extrabold font-mono text-slate-900">{rentedSpace} m³</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-white/90 border border-emerald-100/90 text-center shadow-2xs">
+                        <span className="block text-[9.5px] uppercase tracking-wider text-emerald-700 font-bold">Occupied</span>
+                        <span className="text-xs font-extrabold font-mono text-emerald-700">{usedSpace} m³</span>
+                      </div>
+                      <div className="p-2 rounded-xl bg-white/90 border border-emerald-100/90 text-center shadow-2xs">
+                        <span className="block text-[9.5px] uppercase tracking-wider text-teal-700 font-bold">Available</span>
+                        <span className="text-xs font-extrabold font-mono text-teal-700">{(rentedSpace - usedSpace).toFixed(2)} m³</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Storage Zone</span>
-                    <span className="font-semibold text-slate-800">❄️ Cold Storage (-18°C)</span>
+                {/* 3. Specifications & Contract Specs Grid */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs space-y-2">
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
+                      <Snowflake className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                      Storage Zone
+                    </span>
+                    <span className="font-semibold text-slate-800 text-[11px] flex items-center gap-1.5">
+                      <span>Cold Storage Sub-zero</span>
+                      <span className="font-mono text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        -18°C
+                      </span>
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Contract Period</span>
-                    <span className="font-semibold text-slate-800 font-mono">12 Months</span>
+
+                  <div className="flex items-center justify-between py-0.5 border-t border-slate-100">
+                    <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
+                      <Calendar className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                      Contract Period
+                    </span>
+                    <span className="font-semibold text-slate-800 font-mono text-[11px]">
+                      12 Months (Annual Contract)
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Rate per m³</span>
-                    <span className="font-semibold text-slate-800 font-mono">Rp 150.000 / m³ / mo</span>
+
+                  <div className="flex items-center justify-between py-0.5 border-t border-slate-100">
+                    <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
+                      <CreditCard className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      Billing Rate
+                    </span>
+                    <span className="font-bold text-slate-900 font-mono text-[11px]">
+                      Rp 150.000 <span className="text-slate-500 font-normal">/ m³ / mo</span>
+                    </span>
                   </div>
                 </div>
               </div>

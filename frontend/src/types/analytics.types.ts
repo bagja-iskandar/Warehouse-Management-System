@@ -103,6 +103,7 @@ export interface CustomerSummary {
   currentTempCelsius: number;
   humidityPercent: number;
   storageLocationName: string;
+  activeWarehouseId?: string;
   monthlyBillingRp: number;
   unpaidBillingRp: number;
   paidBillingRp: number;
