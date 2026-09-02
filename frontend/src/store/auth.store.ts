@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserProfile, UserRole } from "@/types";
-import { getStoredAccessToken, clearStoredTokens } from "@/lib/api-client";
+import { getStoredAccessToken, clearStoredTokens, setAuthCookies } from "@/lib/api-client";
 
 interface AuthStoreState {
   user: UserProfile | null;
@@ -22,18 +22,26 @@ export const useAuthStore = create<AuthStoreState>()(
       token: null,
       hasHydrated: false,
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
-      setUser: (user, token) =>
+      setUser: (user, token) => {
+        const resolvedToken =
+          token ?? (typeof window !== "undefined" ? getStoredAccessToken() : null);
+        if (user && resolvedToken) {
+          setAuthCookies(resolvedToken, user.role);
+        }
         set({
           user,
           isAuthenticated: !!user,
-          token:
-            token ??
-            (typeof window !== "undefined" ? getStoredAccessToken() : null),
-        }),
+          token: resolvedToken,
+        });
+      },
       setRole: (role) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, role } : null,
-        }));
+        set((state) => {
+          const updatedUser = state.user ? { ...state.user, role } : null;
+          if (updatedUser && state.token) {
+            setAuthCookies(state.token, role);
+          }
+          return { user: updatedUser };
+        });
       },
       logout: () => {
         clearStoredTokens();
@@ -48,3 +56,10 @@ export const useAuthStore = create<AuthStoreState>()(
     }
   )
 );
+
+// Register global handler for immediate store reset upon fatal 401 or token clearance
+if (typeof window !== "undefined") {
+  (window as any).__wms_auth_store_logout = () => {
+    useAuthStore.setState({ user: null, isAuthenticated: false, token: null });
+  };
+}

@@ -46,7 +46,7 @@ export class HttpAuthService implements IAuthService {
     });
 
     if (res && res.accessToken && res.refreshToken) {
-      setStoredTokens(res.accessToken, res.refreshToken);
+      setStoredTokens(res.accessToken, res.refreshToken, res.user?.role);
     }
 
     return res.user;
@@ -91,7 +91,7 @@ export class HttpAuthService implements IAuthService {
     });
 
     if (res?.accessToken && res?.refreshToken) {
-      setStoredTokens(res.accessToken, res.refreshToken);
+      setStoredTokens(res.accessToken, res.refreshToken, res.user?.role || "CUSTOMER");
     }
 
     if (res?.user) return res.user;

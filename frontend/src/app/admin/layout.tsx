@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Operations Admin — WMS Nusantara",
@@ -12,5 +13,9 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <AuthGuard allowedRoles={["ADMIN"]}>
+      <AdminShell>{children}</AdminShell>
+    </AuthGuard>
+  );
 }

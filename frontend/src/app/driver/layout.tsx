@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { DriverShell } from "@/components/layout/DriverShell";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Driver Fleet — WMS Nusantara",
@@ -12,5 +13,9 @@ export default function DriverLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <DriverShell>{children}</DriverShell>;
+  return (
+    <AuthGuard allowedRoles={["DRIVER"]}>
+      <DriverShell>{children}</DriverShell>
+    </AuthGuard>
+  );
 }

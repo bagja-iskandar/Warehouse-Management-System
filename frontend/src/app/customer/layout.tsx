@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { CustomerShell } from "@/components/layout/CustomerShell";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Customer Portal — WMS Nusantara",
@@ -12,5 +13,9 @@ export default function CustomerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <CustomerShell>{children}</CustomerShell>;
+  return (
+    <AuthGuard allowedRoles={["CUSTOMER"]}>
+      <CustomerShell>{children}</CustomerShell>
+    </AuthGuard>
+  );
 }

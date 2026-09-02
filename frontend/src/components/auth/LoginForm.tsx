@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -12,8 +13,10 @@ import {
   Layers,
   Loader2,
   AlertCircle,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,13 +24,43 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isPending } = useAuth();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const isSessionExpired = searchParams.get("expired") === "true";
+  const returnUrl = searchParams.get("returnUrl");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated && user) {
+      if (returnUrl && returnUrl.startsWith("/")) {
+        router.replace(returnUrl);
+        return;
+      }
+      switch (user.role) {
+        case "ADMIN":
+          router.replace("/admin/dashboard");
+          break;
+        case "CUSTOMER":
+          router.replace("/customer/dashboard");
+          break;
+        case "DRIVER":
+          router.replace("/driver/dashboard");
+          break;
+        default:
+          router.replace("/");
+          break;
+      }
+    }
+  }, [hasHydrated, isAuthenticated, user, router, returnUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +140,18 @@ export function LoginForm() {
             Enter your credentials to access your operational dashboard.
           </p>
         </div>
+
+        {/* Session Expired Notice */}
+        {isSessionExpired && !validationError && (
+          <div className="mt-4 animate-in fade-in duration-200">
+            <Alert className="py-2.5 rounded-xl border-amber-200 bg-amber-50 text-amber-900">
+              <Clock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+              <AlertDescription className="text-xs font-medium leading-tight">
+                Your session has expired. Please sign in again to continue operations.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
 
         {/* Error Feedback State */}
         {validationError && (

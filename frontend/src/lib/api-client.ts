@@ -58,7 +58,28 @@ export class AppApiError extends Error {
   }
 }
 
-// Token Storage Helpers (Client-side safe)
+export const AUTH_COOKIE_NAME = "wms_auth_token";
+export const ROLE_COOKIE_NAME = "wms_user_role";
+
+export function setAuthCookies(accessToken: string, role?: string): void {
+  if (typeof document === "undefined") return;
+  const isSecure = window.location.protocol === "https:";
+  const secureFlag = isSecure ? "; Secure" : "";
+  // 7 days expiration for session cookies
+  const maxAge = 60 * 60 * 24 * 7;
+  document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(accessToken)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+  if (role) {
+    document.cookie = `${ROLE_COOKIE_NAME}=${encodeURIComponent(role)}; path=/; max-age=${maxAge}; SameSite=Lax${secureFlag}`;
+  }
+}
+
+export function clearAuthCookies(): void {
+  if (typeof document === "undefined") return;
+  document.cookie = `${AUTH_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+  document.cookie = `${ROLE_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+}
+
+// Token Storage Helpers (Client-side safe with cookie sync)
 export function getStoredAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -69,16 +90,26 @@ export function getStoredRefreshToken(): string | null {
   return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
-export function setStoredTokens(accessToken: string, refreshToken: string): void {
+export function setStoredTokens(accessToken: string, refreshToken: string, role?: string): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  setAuthCookies(accessToken, role);
 }
 
 export function clearStoredTokens(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  clearAuthCookies();
+  try {
+    const triggerLogout = (window as any).__wms_auth_store_logout;
+    if (typeof triggerLogout === "function") {
+      triggerLogout();
+    }
+  } catch {
+    // Safe fallback
+  }
 }
 
 export interface RequestOptions extends RequestInit {
@@ -304,6 +335,9 @@ export async function apiClient<T = any>(
         } catch (refreshErr) {
           clearStoredTokens();
           isRefreshing = false;
+          if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+            window.location.href = "/login?expired=true";
+          }
           throw refreshErr;
         }
       } else {
@@ -325,6 +359,9 @@ export async function apiClient<T = any>(
       }
     } else {
       clearStoredTokens();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login?expired=true";
+      }
       throw new AppApiError(
         "Your login session is invalid or has expired.",
         401,

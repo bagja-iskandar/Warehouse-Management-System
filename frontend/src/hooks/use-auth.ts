@@ -70,16 +70,16 @@ export function useAuth() {
       // Role-based redirection
       switch (authenticatedUser.role) {
         case "ADMIN":
-          router.push("/admin/dashboard");
+          router.replace("/admin/dashboard");
           break;
         case "CUSTOMER":
-          router.push("/customer/dashboard");
+          router.replace("/customer/dashboard");
           break;
         case "DRIVER":
-          router.push("/driver/dashboard");
+          router.replace("/driver/dashboard");
           break;
         default:
-          router.push("/");
+          router.replace("/");
           break;
       }
     },
@@ -100,7 +100,7 @@ export function useAuth() {
       toast.success("Registration Successful", {
         description: `Corporate account ${newUser.companyName || newUser.name} created successfully.`,
       });
-      router.push("/customer/dashboard");
+      router.replace("/customer/dashboard");
     },
     onError: (error: Error) => {
       toast.error("Registration Failed", {
@@ -162,7 +162,7 @@ export function useAuth() {
     toast.info("Session Ended", {
       description: "You have signed out of WMS operations.",
     });
-    router.push("/login");
+    router.replace("/login");
   };
 
   return {

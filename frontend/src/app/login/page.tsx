@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { Metadata } from "next";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { Loader2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Operations Portal Sign In — WMS Nusantara",
@@ -8,5 +10,15 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  );
 }
