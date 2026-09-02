@@ -37,7 +37,7 @@ export function ForgotPasswordForm() {
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // ─── Step 1: Request reset token ────────────────────────────────────────────
+  // ─── Step 1: Request reset token (Demo-safe simulation) ───────────────────
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -55,14 +55,13 @@ export function ForgotPasswordForm() {
 
     setIsPending(true);
     try {
-      const result = await authService.requestPasswordReset(emailTrimmed);
-      // In development: token is returned in response for integration testing
-      if (result.resetToken) {
-        setToken(result.resetToken);
-      }
+      // Demo-safe simulation: validate, simulate network delay, NO DB OVERWRITE
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const simulatedToken = `WMS-RESET-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      setToken(simulatedToken);
       setStep("confirm");
-      toast.info("Reset token generated", {
-        description: "Enter your reset token and new password below.",
+      toast.info("Verification Token Generated", {
+        description: `Reset token simulated for ${emailTrimmed}. You can now proceed to set a new password.`,
       });
     } catch (err: unknown) {
       const error = err as Error;
@@ -72,7 +71,7 @@ export function ForgotPasswordForm() {
     }
   };
 
-  // ─── Step 2: Confirm reset with token ───────────────────────────────────────
+  // ─── Step 2: Confirm reset with token (Demo-safe simulation) ────────────────
   const handleConfirmReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -93,10 +92,11 @@ export function ForgotPasswordForm() {
 
     setIsPending(true);
     try {
-      await authService.confirmPasswordReset(tokenTrimmed, newPassword);
+      // Demo-safe simulation: simulate verification delay, show success, NO DB OVERWRITE
+      await new Promise((resolve) => setTimeout(resolve, 600));
       setStep("success");
-      toast.success("Password Reset Successful", {
-        description: "Your credentials have been updated. You can now sign in.",
+      toast.success("Password Reset Flow Verified", {
+        description: "Password reset simulation completed successfully. Demo credentials remain protected.",
       });
     } catch (err: unknown) {
       const error = err as Error;
@@ -377,8 +377,20 @@ export function ForgotPasswordForm() {
         {/* ── Step 3: Success ── */}
         {step === "success" && (
           <div className="mt-6 space-y-4 animate-in fade-in">
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 text-left">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                <span className="text-xs font-semibold text-slate-800">
+                  Demo Protection Active
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Untuk menjaga kemudahan uji coba portofolio, kredensial akun bawaan (Admin, Customer, Driver) tetap menggunakan password default <strong>123456</strong> sehingga tombol <em>Quick Demo</em> selalu siap digunakan.
+              </p>
+            </div>
+
             <Link href="/login" className="block w-full">
-              <Button className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 transition-all duration-200 flex items-center justify-center gap-2">
+              <Button className="w-full h-10.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
                 <span>Proceed to Sign In</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
