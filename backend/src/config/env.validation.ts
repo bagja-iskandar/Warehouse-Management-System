@@ -4,9 +4,9 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test', 'provision')
     .default('development'),
-  PORT: Joi.number().default(5000),
-  API_PREFIX: Joi.string().default('api/v1'),
-  CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
+  PORT: Joi.number().empty('').default(5000),
+  API_PREFIX: Joi.string().allow('').default('api/v1'),
+  CORS_ORIGIN: Joi.string().allow('').default('http://localhost:3000'),
 
   DATABASE_URL: Joi.string().required().description('PostgreSQL connection string'),
 
@@ -28,5 +28,6 @@ export const envValidationSchema = Joi.object({
 
   LOG_LEVEL: Joi.string()
     .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent')
+    .allow('')
     .default('debug'),
 });

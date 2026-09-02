@@ -34,7 +34,8 @@ async function bootstrapServerless(expressInstance: Express): Promise<void> {
 
   const configService = app.get(ConfigService);
   const apiPrefix = configService.get<string>('app.apiPrefix') || 'api/v1';
-  const corsOrigin = configService.get<string>('app.corsOrigin') || 'http://localhost:3000';
+  const rawCorsOrigin = configService.get<string>('app.corsOrigin');
+  const corsOrigin = rawCorsOrigin && rawCorsOrigin.trim() ? rawCorsOrigin.trim() : '*';
   const nodeEnv = configService.get<string>('app.nodeEnv') || 'development';
 
   // Security HTTP Headers with Helmet
@@ -141,6 +142,18 @@ async function bootstrapServerless(expressInstance: Express): Promise<void> {
   // Export Swagger JSON spec endpoint at /api/docs-json
   app.getHttpAdapter().get('/api/docs-json', (req: Request, res: Response) => {
     res.json(swaggerDocument);
+  });
+
+  // Root endpoint info
+  app.getHttpAdapter().get('/', (req: Request, res: Response) => {
+    res.json({
+      name: 'WMS Nusantara Backend REST API',
+      status: 'UP',
+      environment: nodeEnv,
+      version: '1.0.0',
+      documentation: '/api/docs',
+      health: '/health/liveness',
+    });
   });
 
   // Initialize without persistent TCP listen
