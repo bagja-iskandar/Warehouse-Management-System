@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -819,6 +820,91 @@ export class LogisticsService {
 
     // 10. Eksekusi Transaksi Database Atomik
     const createdOrder = await this.prisma.$transaction(async (tx) => {
+      // 10.0 Concurrency Control: Exclusive row-level locking on GoodsItem rows in PostgreSQL
+      // Ensures two concurrent requests cannot double-reserve or claim the same physical inventory.
+      for (const g of goodsList) {
+        if (typeof tx.$queryRaw === 'function') {
+          await tx.$queryRaw`SELECT id, quantity FROM "goods_items" WHERE id = ${g.id} FOR UPDATE`;
+        }
+      }
+
+      // 10.1 Active Reservation Enforcement (Inbound & Outbound Duplicate Prevention)
+      const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
+        OrderStatus.PENDING_ASSIGNMENT,
+        OrderStatus.DRIVER_ASSIGNED,
+        OrderStatus.EN_ROUTE_PICKUP,
+        OrderStatus.PICKED_UP,
+        OrderStatus.IN_TRANSIT,
+        OrderStatus.ARRIVED_DESTINATION,
+        OrderStatus.DELAYED,
+      ];
+
+      for (const g of goodsList) {
+        const reqQty = requestedQtyMap.get(g.id) || g.quantity;
+
+        if (dto.type === OrderType.PICKUP) {
+          // Check active Inbound reservations
+          const activeInboundItems = tx.orderItem
+            ? await tx.orderItem.findMany({
+                where: {
+                  goodsId: g.id,
+                  order: {
+                    type: OrderType.PICKUP,
+                    status: { in: ACTIVE_ORDER_STATUSES },
+                  },
+                },
+                select: { quantity: true, order: { select: { orderNumber: true } } },
+              })
+            : [];
+
+          const reservedQty = activeInboundItems.reduce((acc, it) => acc + it.quantity, 0);
+          const availableInboundQty = Math.max(0, g.quantity - reservedQty);
+
+          if (availableInboundQty <= 0) {
+            const activeOrderNos = activeInboundItems.map((it) => it.order.orderNumber).join(', ');
+            throw new ConflictException(
+              `Goods '${g.name}' (${g.barcode}) is already fully reserved by active inbound order(s) [${activeOrderNos}]. No available packages remain to create a new inbound shipment.`,
+            );
+          }
+
+          if (reqQty > availableInboundQty) {
+            throw new ConflictException(
+              `Insufficient available package quantity for '${g.name}'. Total registered: ${g.quantity} ${g.unit || 'packages'}, already reserved in active inbound orders: ${reservedQty}, available: ${availableInboundQty}, requested: ${reqQty}.`,
+            );
+          }
+        } else if (dto.type === OrderType.DELIVERY) {
+          // Check active Outbound reservations
+          const activeOutboundItems = tx.orderItem
+            ? await tx.orderItem.findMany({
+                where: {
+                  goodsId: g.id,
+                  order: {
+                    type: OrderType.DELIVERY,
+                    status: { in: ACTIVE_ORDER_STATUSES },
+                  },
+                },
+                select: { quantity: true, order: { select: { orderNumber: true } } },
+              })
+            : [];
+
+          const reservedOutboundQty = activeOutboundItems.reduce((acc, it) => acc + it.quantity, 0);
+          const availableStoredQty = Math.max(0, g.quantity - reservedOutboundQty);
+
+          if (availableStoredQty <= 0) {
+            const activeOrderNos = activeOutboundItems.map((it) => it.order.orderNumber).join(', ');
+            throw new ConflictException(
+              `Goods '${g.name}' (${g.barcode}) is already fully reserved by active outbound delivery order(s) [${activeOrderNos}]. No available inventory remains to dispatch.`,
+            );
+          }
+
+          if (reqQty > availableStoredQty) {
+            throw new ConflictException(
+              `Insufficient available inventory for '${g.name}'. Current stored: ${g.quantity} ${g.unit || 'units'}, already reserved in active outbound orders: ${reservedOutboundQty}, available: ${availableStoredQty}, requested: ${reqQty}.`,
+            );
+          }
+        }
+      }
+
       // Concurrency check for vehicle & driver within transaction
       if (dto.vehicleId) {
         const conflictOrder = await tx.deliveryOrder.findFirst({
@@ -892,6 +978,18 @@ export class LogisticsService {
           },
         },
       });
+
+      // Synchronize GoodsItem status to PENDING_PICKUP for Inbound orders
+      if (dto.type === OrderType.PICKUP) {
+        for (const g of goodsList) {
+          if (g.status === GoodsStorageStatus.DRAFT) {
+            await tx.goodsItem.update({
+              where: { id: g.id },
+              data: { status: GoodsStorageStatus.PENDING_PICKUP },
+            });
+          }
+        }
+      }
 
       // Update status kendaraan menjadi IN_SERVICE jika sudah dialokasikan
       if (dto.vehicleId) {
@@ -1147,6 +1245,31 @@ export class LogisticsService {
                   actorName: currentUser.name,
                   actorRole: currentUser.role,
                   location: `In Transit (${order.originCity} → ${order.destinationCity})`,
+                  timestamp: new Date(),
+                },
+              });
+            }
+          }
+        } else if (newStatus === OrderStatus.CANCELLED) {
+          for (const item of orderItems) {
+            if (
+              item.goods.status === GoodsStorageStatus.PENDING_PICKUP ||
+              item.goods.status === GoodsStorageStatus.IN_TRANSIT_INBOUND
+            ) {
+              await tx.goodsItem.update({
+                where: { id: item.goodsId },
+                data: { status: GoodsStorageStatus.DRAFT },
+              });
+              await tx.goodsMutation.create({
+                data: {
+                  goodsId: item.goodsId,
+                  status: GoodsStorageStatus.DRAFT,
+                  title: 'Inbound Order Cancelled (Reservation Released)',
+                  description: `Delivery order #${order.orderNumber} was cancelled. Goods status reverted to DRAFT and reserved packages were released.`,
+                  actorId: currentUser.id,
+                  actorName: currentUser.name,
+                  actorRole: currentUser.role,
+                  location: 'Customer Origin Facility',
                   timestamp: new Date(),
                 },
               });

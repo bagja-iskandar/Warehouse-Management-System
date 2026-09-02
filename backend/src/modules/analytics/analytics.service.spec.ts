@@ -258,7 +258,12 @@ describe('AnalyticsService', () => {
       const result = await service.getAdminOverview('wh-bdg-01');
 
       expect(mockPrisma.warehouse.findFirst).toHaveBeenCalledWith({
-        where: { OR: [{ id: 'wh-bdg-01' }, { code: 'wh-bdg-01' }] },
+        where: {
+          OR: [
+            { id: { equals: 'wh-bdg-01', mode: 'insensitive' } },
+            { code: { equals: 'wh-bdg-01', mode: 'insensitive' } },
+          ],
+        },
       });
       expect(result.activeWarehouse).toBeDefined();
       expect(result.activeWarehouse?.code).toBe('WH-BDG-01');
