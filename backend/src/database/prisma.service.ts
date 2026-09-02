@@ -6,7 +6,34 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    let datasourceUrl = process.env.DATABASE_URL;
+
+    // Automatically adapt Supabase Session Pooler (port 5432, max 15 clients)
+    // to Transaction Pooler (port 6543, serverless scalable PgBouncer mode)
+    if (datasourceUrl && datasourceUrl.includes('pooler.supabase.com:5432')) {
+      try {
+        const u = new URL(datasourceUrl);
+        u.port = '6543';
+        if (!u.searchParams.has('pgbouncer')) {
+          u.searchParams.set('pgbouncer', 'true');
+        }
+        if (!u.searchParams.has('connection_limit')) {
+          u.searchParams.set('connection_limit', '1');
+        }
+        datasourceUrl = u.toString();
+      } catch {
+        // Fallback to original url if parsing fails
+      }
+    }
+
     super({
+      datasources: datasourceUrl
+        ? {
+            db: {
+              url: datasourceUrl,
+            },
+          }
+        : undefined,
       log:
         process.env.NODE_ENV === 'development'
           ? ['query', 'info', 'warn', 'error']
