@@ -36,6 +36,11 @@
     "@nestjs/swagger": "^8.1.1",
     "@nestjs/terminus": "^10.2.3",
     "@prisma/client": "^6.3.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.7.5",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.1",
+    "@types/passport-jwt": "^4.0.1",
     "bcryptjs": "^3.0.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -52,16 +57,12 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"
   },
   "devDependencies": {
     "@nestjs/testing": "^10.4.15",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/compression": "^1.7.5",
-    "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.1",
-    "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^8.24.0",
     "@typescript-eslint/parser": "^8.24.0",
@@ -75,8 +76,7 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0"
+    "ts-node": "^10.9.2"
   },
   "jest": {
     "moduleFileExtensions": [
