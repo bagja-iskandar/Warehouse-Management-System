@@ -18,7 +18,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           u.searchParams.set('pgbouncer', 'true');
         }
         if (!u.searchParams.has('connection_limit')) {
-          u.searchParams.set('connection_limit', '1');
+          u.searchParams.set('connection_limit', '5');
+        }
+        if (!u.searchParams.has('pool_timeout')) {
+          u.searchParams.set('pool_timeout', '20');
         }
         datasourceUrl = u.toString();
       } catch {

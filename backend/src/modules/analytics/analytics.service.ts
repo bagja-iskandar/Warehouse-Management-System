@@ -29,7 +29,12 @@ export class AnalyticsService {
   async getAdminOverview(warehouseId?: string): Promise<AdminOverviewDto> {
     const activeWh = warehouseId
       ? await this.prisma.warehouse.findFirst({
-          where: { OR: [{ id: warehouseId }, { code: warehouseId }] },
+          where: {
+            OR: [
+              { id: { equals: warehouseId, mode: 'insensitive' } },
+              { code: { equals: warehouseId, mode: 'insensitive' } },
+            ],
+          },
         })
       : null;
 

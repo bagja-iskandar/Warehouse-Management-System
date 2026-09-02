@@ -3,9 +3,19 @@ import "./globals.css";
 import { AppProviders } from "@/components/providers/AppProviders";
 
 export const metadata: Metadata = {
-  title: "Warehouse Management System — Modern Logistics Platform",
+  title: {
+    default: "WMS Nusantara — Enterprise Warehouse & Logistics Platform",
+    template: "%s — WMS Nusantara",
+  },
   description:
     "Enterprise-grade Warehouse Management System supporting cold storage, general inventory, vehicle selection, dynamic scheduling, and subscription billing.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
