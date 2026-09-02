@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -143,4 +144,24 @@ export class CreateDeliveryOrderDto {
   @IsNumber()
   @Min(0)
   estimatedDurationMins?: number = 0;
+
+  @ApiPropertyOptional({ description: 'Customer Contact Name (Optional)' })
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @ApiPropertyOptional({ description: 'Customer Contact Phone (Optional)' })
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
+
+  @ApiPropertyOptional({ description: 'Goods Summary Description (Optional)' })
+  @IsOptional()
+  @IsString()
+  goodsSummary?: string;
+
+  @ApiPropertyOptional({ description: 'Explicit Reefer truck requirement (Optional)' })
+  @IsOptional()
+  @IsBoolean()
+  requiresReefer?: boolean;
 }
