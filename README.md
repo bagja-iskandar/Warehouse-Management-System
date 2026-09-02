@@ -1,138 +1,152 @@
-# WMS Nusantara (Warehouse Management System)
+# WMS Nusantara (Enterprise Warehouse & Cold Chain Logistics Platform)
 
-Platform tata kelola operasional pergudangan modern dan rantai dingin (*Cold Chain Logistics*) terintegrasi dengan arsitektur **Monorepo** yang memisahkan client frontend dan service backend secara independen.
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-success?style=for-the-badge&logo=vercel)](https://wms-porto.vercel.app)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15.1.12-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10.4-E0234E?style=for-the-badge&logo=nestjs)](https://nestjs.com/)
+[![Supabase Postgres](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
+[![Prisma ORM](https://img.shields.io/badge/Prisma-ORM%20v6-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![Built with Antigravity](https://img.shields.io/badge/Built%20With-Google%20DeepMind%20Antigravity-4285F4?style=for-the-badge&logo=google)](https://deepmind.google/)
+
+Platform Enterprise tata kelola pergudangan terpadu (*Warehouse Management System*) dan logistik rantai dingin (*Cold Chain Logistics*) di Indonesia. Sistem ini mengintegrasikan pemantauan suhu IoT real-time, manajemen kapasitas m³ bertingkat (*multi-tier rack allocation*), dispatch armada truk pendingin (*reefer fleet*), serta sistem penagihan kontrak sewa otomatis.
 
 ---
 
-## 🔐 Kredensial Login Akun (Semua Role)
+## 🌐 Live Production Deployment
 
-Semua akun default terdaftar pada database PostgreSQL dengan password: **`Password123!`**.
+Aplikasi telah berhasil dideploy penuh secara serverless ke cloud production:
 
-| Role / Peran | Email / Username | Password | Nama Pengguna / Instansi | Redirect Portal |
+| Komponen | Lingkungan | Tautan Akses / URL |
+| :--- | :--- | :--- |
+| **Frontend Web App (Client)** | Vercel Edge Network | [**https://wms-porto.vercel.app**](https://wms-porto.vercel.app) |
+| **Backend REST API** | Vercel Serverless Function (`syd1`) | [**https://warehouse-management-system-olive.vercel.app/api/v1**](https://warehouse-management-system-olive.vercel.app/api/v1) |
+| **Interactive API Documentation** | Swagger OpenAPI UI | [**https://warehouse-management-system-olive.vercel.app/api/docs**](https://warehouse-management-system-olive.vercel.app/api/docs) |
+| **System Readiness Probe** | Live Database Healthcheck | [**https://warehouse-management-system-olive.vercel.app/health/readiness**](https://warehouse-management-system-olive.vercel.app/health/readiness) |
+
+---
+
+## 🔐 Kredensial Uji Coba Demo (Instant Persona Login)
+
+Pada halaman login ([wms-porto.vercel.app/login](https://wms-porto.vercel.app/login)), Anda dapat mengklik tombol **Instant Review Persona** di bawah form login tanpa perlu mengetik manual:
+
+| Persona | Tombol Cepat UI | Akun Email | Password | Hak Akses & Kemampuan |
 | :--- | :--- | :--- | :--- | :--- |
-| **Warehouse Administrator** | `admin@wms.id` | `Password123!` | Budi Santoso (PT Logistik Prima Nusantara) | `/admin/dashboard` |
-| **Logistics Fleet Driver (Cakung)** | `driver@wms.id` | `Password123!` | Agus Pratama (Armada Reefer Cakung) | `/driver/dashboard` |
-| **Logistics Fleet Driver (Bandung)** | `dedi.driver@wms.id` | `Password123!` | Dedi Kurniawan (Armada Bandung) | `/driver/dashboard` |
-
-> [!NOTE]
-> Setelah login pada `/login`, sistem secara otomatis mengidentifikasi role dari token JWT dan mengarahkan pengguna ke portal operasional yang sesuai tanpa perlu memilih role secara manual.
+| **Warehouse Administrator** | `[ Login as Admin ]` | `admin@wms.id` | `123456` | Overview kapasitas 3 gudang, monitoring suhu telemetri, penugasan armada (*dispatch*), approval delivery, dan verifikasi invoice. |
+| **Logistics Fleet Driver** | `[ Login as Driver ]` | `driver@wms.id` | `123456` | Penerimaan tugas delivery, seleksi kendaraan reefer, update status perjalanan real-time (*In-Transit* s/d *Arrived*), dan upload Digital POD. |
+| **Corporate Tenant / Customer**| `[ Login as Customer ]` | `customer@wms.id` | `123456` | Registrasi inventaris barang (*inbound*), sewa kapasitas gudang cold/dry, permohonan logistik, dan pelunasan faktur sewa. |
 
 ---
 
-## 📁 Struktur Monorepo & Dokumentasi
+## 🤖 Built With Next-Gen AI & Modern Engineering Tools
+
+Aplikasi ini dirancang, diarsitekkan, dan dikembangkan secara end-to-end menggunakan ekosistem engineering modern:
+
+* **Google DeepMind Antigravity AI**: Bertindak sebagai *Agentic AI Pair Programmer & Lead System Architect* untuk perancangan arsitektur enterprise, implementasi business logic 10 modul NestJS, optimasi query Prisma, decoupling event real-time, hingga adaptasi serverless Vercel.
+* **Google Stitch**: Digunakan untuk *Generative UI/UX Prototyping*, eksplorasi tata letak visual dashboard responsif, pemilihan palet warna logistik harmonis, dan standardisasi komponen antarmuka modern.
+* **Supabase (PostgreSQL 16)**: Penyedia database PostgreSQL enterprise yang dikonfigurasi dengan *Transaction Pooler PgBouncer (Port 6543)* berlatensi rendah untuk menangani ribuan transaksi serverless tanpa *connection exhaustion*.
+* **Vercel Cloud Platform**: Infrastruktur *Edge CDN* untuk pengiriman aset Next.js 15 berkecepatan tinggi di seluruh dunia, dipadukan dengan *Vercel Serverless Functions* ber-region Sydney (`syd1`) yang ter-kolokasi langsung dengan cluster database Supabase untuk latensi sub-detik.
+* **Prisma ORM (v6)**: Abstraksi data relasional bertipe kuat (*type-safe*), pemodelan skema deklaratif, generator client otomatis, dan migrasi zero-downtime.
+* **Docker & Docker Compose**: Lingkungan kontainerisasi lokal untuk pengujian standalone mandiri dengan PostgreSQL 16 Alpine dan MinIO S3 Object Storage.
+
+---
+
+## 🛠️ Tech Stack & Architecture Overview
+
+### 1. Frontend Web Client
+* **Framework:** [Next.js 15.1.12](https://nextjs.org/) (App Router, React 19)
+* **Styling & Design System:** TailwindCSS, Tailwind Animate, Radix UI Primitives
+* **Data Fetching & Cache:** [TanStack React Query v5](https://tanstack.com/query/latest) (dengan automatic query invalidation & prefetching)
+* **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) (Auth session & persistent tokens)
+* **Data Visualization:** [Recharts](https://recharts.org/) (Kapasitas zona gudang, okupansi, tren suhu reefer)
+* **Icons & Feedback:** Lucide React, Sonner Toast Notifications
+
+### 2. Backend API Service
+* **Framework:** [NestJS 10.4](https://nestjs.com/) (Node.js TypeScript, ExpressAdapter)
+* **Architecture:** Modular Clean Architecture (Auth, Users, Warehouse, Goods, Logistics, Billing, Notifications, Analytics, Telemetry, Health)
+* **Data Validation:** Class-Validator & Class-Transformer (Strict Whitelist Validation Pipe)
+* **Logging & Telemetry:** Pino Structured Logger (`nestjs-pino`) dengan redacted sensitive headers
+* **Security & Hardening:** Helmet (CSP, HSTS), Compression (Gzip/Brotli), Strict CORS whitelist
+* **API Documentation:** Swagger OpenAPI v3 (`/api/docs`)
+
+### 3. Database & Storage Layer
+* **Database Engine:** PostgreSQL 16 (Hosted on Supabase AWS Sydney `ap-southeast-2`)
+* **Connection Pooling:** Supabase Transaction Pooler via PgBouncer (Port 6543, `connection_limit=5`, `pool_timeout=20s`)
+* **ORM:** Prisma Client v6.19.3
+* **Object Storage Support:** MinIO S3 Compatible Object Storage
+
+---
+
+## 📁 Struktur Monorepo
 
 ```text
 Warehouse/
 │
-├── backend/                              # NestJS 10.x API Gateway & Service (Port 5000)
+├── backend/                              # NestJS 10 Serverless & Standalone Service
+│   ├── api/index.ts                      # Vercel Serverless Function Entrypoint
+│   ├── vercel.json                       # Konfigurasi routing rewrite & region Sydney (syd1)
 │   ├── src/                              # Source code (10 feature modules & common guards)
-│   ├── prisma/                           # Schema, migrasi, dan seed database
-│   ├── scripts/                          # Script pemeliharaan & diagnostik database
-│   └── test/                             # E2E test suites
+│   ├── prisma/schema.prisma              # Master relational database schema
+│   └── test/                             # Unit testing suites (Jest)
 │
-├── frontend/                             # Next.js 15 App Router Web Client (Port 3000)
-│   ├── src/                              # 44 rute (Auth, Admin, Customer, Driver)
-│   └── public/                           # Static assets
+├── frontend/                             # Next.js 15 App Router Web Client
+│   ├── src/app/                          # 45 rute (Auth, Admin, Customer, Driver, Favicon)
+│   ├── src/components/                   # UI components, layout shell, and design tokens
+│   ├── src/lib/api-client.ts             # Centralized resilient HTTP client
+│   └── public/                           # Static assets, SVG branded favicon
 │
-├── docs/                                 # PUSAT DOKUMENTASI TEKNIS (Single Source of Truth)
-│   ├── architecture/                     # Manual arsitektur (System, Backend, Frontend, Domain, Design)
+├── docs/                                 # PUSAT DOKUMENTASI TEKNIS LENGKAP
+│   ├── architecture/                     # System, Backend, Frontend, Domain, Design System
 │   ├── api/                              # Master REST API contract & envelope specifications
-│   ├── database/                         # PostgreSQL architecture, indexing, dan migrasi cloud
-│   ├── adr/                              # Architecture Decision Records (ADR-001 s.d. ADR-006)
-│   ├── operations/                       # Docker Compose, MinIO, dan infrastruktur
-│   ├── security/                         # Laporan Security Audit Phase 1
-│   └── qa/                               # Pre-QA evaluation, test matrices & stabilization audit
+│   ├── database/                         # Database schema, indexing, dan cloud pooling
+│   ├── operations/                       # Panduan Deployment Cloud & Docker Infrastructure
+│   └── qa/                               # Matriks pengujian & QA verification
 │
-├── project-context/                      # CONTEXT RINGKAS UNTUK AI AGENT & DEVELOPER
-│   ├── PROJECT.md                        # Master konteks project & business capabilities
-│   ├── ROADMAP.md                        # Master riwayat eksekusi Phase 0 s.d. Phase 15
-│   └── SKILLS_MAP.md                     # Indeks skill agen dan panduan workflow
-│
-├── scripts/                              # SCRIPT VERIFIKASI & PENGUJIAN OTOMATIS
-│   ├── verification/                     # Script E2E lifecycle & verification testing
-│   └── maintenance/                      # Script pemeliharaan & data reconciliation
-│
-└── skills/                               # Library skills repositori
+└── project-context/                      # Context ringkas project & roadmap
 ```
 
 ---
 
-## 📚 Indeks Dokumentasi Teknis
+## 🚀 Panduan Menjalankan Secara Lokal (Local Development)
 
-| Kategori | Dokumen | Deskripsi |
-| :--- | :--- | :--- |
-| **Arsitektur Sistem** | [docs/architecture/SYSTEM_OVERVIEW.md](file:///d:/Project/Warehouse/docs/architecture/SYSTEM_OVERVIEW.md) | Topologi Monorepo, alur multi-client, dan workflow data. |
-| **Backend Service** | [docs/architecture/BACKEND.md](file:///d:/Project/Warehouse/docs/architecture/BACKEND.md) | Arsitektur NestJS 10, 10 modul, security pipeline, dan business engine. |
-| **Frontend Web** | [docs/architecture/FRONTEND.md](file:///d:/Project/Warehouse/docs/architecture/FRONTEND.md) | Next.js 15 App Router, Floating Shell, Zustand, TanStack Query, dan error boundaries. |
-| **Domain Models** | [docs/architecture/DOMAIN_MODELS.md](file:///d:/Project/Warehouse/docs/architecture/DOMAIN_MODELS.md) | Entitas domain universal, TypeScript interfaces, dan relasi Prisma. |
-| **Design System** | [docs/architecture/DESIGN_SYSTEM.md](file:///d:/Project/Warehouse/docs/architecture/DESIGN_SYSTEM.md) | UI tokens, tema peran (Indigo/Emerald/Amber), dan 7 UX states. |
-| **API Contract** | [docs/api/API_CONTRACT.md](file:///d:/Project/Warehouse/docs/api/API_CONTRACT.md) | Spesifikasi lengkap endpoint REST API v1 dan format amplop JSON. |
-| **Database** | [docs/database/DATABASE_ARCHITECTURE.md](file:///d:/Project/Warehouse/docs/database/DATABASE_ARCHITECTURE.md) | PostgreSQL 16, indexing, pooling, dan migrasi cloud. |
-| **ADRs** | [docs/adr/README.md](file:///d:/Project/Warehouse/docs/adr/README.md) | Architecture Decision Records (ADR-001 s.d. ADR-006). |
-| **Infrastruktur** | [docs/operations/INFRASTRUCTURE.md](file:///d:/Project/Warehouse/docs/operations/INFRASTRUCTURE.md) | Docker Compose, PostgreSQL 16 Alpine, dan MinIO S3. |
-| **Keamanan** | [docs/security/SECURITY_AUDIT_PHASE_1.md](file:///d:/Project/Warehouse/docs/security/SECURITY_AUDIT_PHASE_1.md) | Laporan audit keamanan tahap 1 (Secret & RBAC exposure). |
-| **Kesiapan QA** | [docs/qa/PRE_QA_READINESS.md](file:///d:/Project/Warehouse/docs/qa/PRE_QA_READINESS.md) | Deklarasi kesiapan Pre-QA dan matriks evaluasi 44 rute. |
-| **Stabilisasi** | [docs/qa/SYSTEM_STABILIZATION_AUDIT.md](file:///d:/Project/Warehouse/docs/qa/SYSTEM_STABILIZATION_AUDIT.md) | Matriks audit stabilisasi & ketahanan error boundary. |
-| **Ketertelusuran SRS** | [docs/qa/SRS_TRACEABILITY.md](file:///d:/Project/Warehouse/docs/qa/SRS_TRACEABILITY.md) | Matriks ketertelusuran 16 SRS Use Cases. |
+Jika ingin menjalankan aplikasi pada mesin lokal pengembang:
 
----
-
-## 🚀 Panduan Menjalankan Aplikasi
-
-### 1. Menjalankan Backend (NestJS + PostgreSQL)
+### 1. Backend Service (Port 5000)
 ```bash
 cd backend
-
-# Install dependencies jika belum
 npm install
-
-# Setup Prisma & seeder
 npx prisma generate
-npx prisma db push
-npx prisma db seed
-
-# Menjalankan server dev (Port 5000)
 npm run start:dev
 ```
-- **API Base URL:** [http://localhost:5000/api/v1](http://localhost:5000/api/v1)
-- **Swagger Documentation:** [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+- Endpoint API Lokal: `http://localhost:5000/api/v1`
+- Swagger UI Lokal: `http://localhost:5000/api/docs`
+- Healthcheck: `http://localhost:5000/health/readiness`
 
-### 2. Menjalankan Frontend (Next.js 15)
+### 2. Frontend Client (Port 3000)
 ```bash
 cd frontend
-
-# Install dependencies jika belum
 npm install
-
-# Menjalankan Next.js dev server (Port 3000)
 npm run dev
 ```
-- **Web Application:** [http://localhost:3000](http://localhost:3000)
-- **Login Portal:** [http://localhost:3000/login](http://localhost:3000/login)
+- Buka browser: `http://localhost:3000`
 
 ---
 
-## 🧪 Pengujian & Verifikasi
+## 🧪 Verifikasi & Pengujian Kode
 
-### Backend Tests
 ```bash
-cd backend
-npx tsc --noEmit    # Validasi TypeScript
-npm run test        # Unit testing (Jest)
-npm run test:e2e    # E2E testing
+# Validasi TypeCheck Backend & Frontend
+cd backend && npm run typecheck
+cd ../frontend && npm run type-check
+
+# Menjalankan Unit Tests (Jest)
+cd backend && npm test
+
+# Kompilasi Production Bundle
+cd backend && npm run build
+cd ../frontend && npm run build
 ```
 
-### Frontend Tests
-```bash
-cd frontend
-npx tsc --noEmit    # Validasi TypeScript
-npm run lint        # Linting ESLint
-npm run build       # Production bundle build
-```
+---
 
-### E2E Lifecycle Verification Scripts
-```bash
-node scripts/verification/verify_customer_logistics_lifecycle.js
-node scripts/verification/verify_customer_track_deliveries.js
-node scripts/verification/verify_full_payment_lifecycle.js
-```
+## 📄 Lisensi
+Hak Cipta © 2026 PT WMS Nusantara Logistik. Seluruh hak cipta dilindungi undang-undang.
+Dikembangkan sebagai sistem portofolio enterprise berstandar industri.
